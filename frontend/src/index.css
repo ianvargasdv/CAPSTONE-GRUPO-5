@@ -1,12 +1,17 @@
 :root {
-  --bg-primary: #0f172a;
-  --bg-card: #1e293b;
-  --accent-blue: #38bdf8;
-  --accent-indigo: #6366f1;
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --border-color: rgba(255, 255, 255, 0.1);
-  --success-color: #22c55e;
+  --bg-app: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-header: #0f172a;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --text-header: #f8fafc;
+  --border-color: #e2e8f0;
+  --accent-primary: #2563eb;
+  --success-color: #16a34a;
+  --success-bg: #f0fdf4;
+  --success-border: #bbf7d0;
+  --badge-bg: #f1f5f9;
+  --badge-text: #475569;
 }
 
 * {
@@ -17,84 +22,144 @@
 
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: var(--bg-primary);
+  background-color: var(--bg-app);
   color: var(--text-main);
   min-height: 100vh;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.15) 0px, transparent 50%);
+  flex-direction: column;
 }
 
-.container {
-  width: 90%;
-  max-width: 600px;
-  padding: 2.5rem;
-  background: var(--bg-card);
+/* Header / Navbar */
+.app-header {
+  background-color: var(--bg-header);
+  color: var(--text-header);
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #1e293b;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.brand-logo {
+  width: 32px;
+  height: 32px;
+  background-color: var(--accent-primary);
+  color: #ffffff;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.brand-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.header-subtitle {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+/* Main Layout */
+.main-content {
+  flex: 1;
+  max-width: 900px;
+  width: 100%;
+  margin: 2.5rem auto;
+  padding: 0 1.5rem;
+}
+
+.dashboard-card {
+  background-color: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
-  text-align: center;
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-main);
 }
 
 .badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  background: rgba(56, 189, 248, 0.1);
-  color: var(--accent-blue);
-  border: 1px solid rgba(56, 189, 248, 0.2);
-  border-radius: 20px;
-  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.75rem;
+  background-color: var(--badge-bg);
+  color: var(--badge-text);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.8rem;
   font-weight: 500;
-  margin-bottom: 1.5rem;
 }
 
-h1 {
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-  background: linear-gradient(135deg, #ffffff 0%, var(--text-muted) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-p {
+.card-description {
   color: var(--text-muted);
+  font-size: 0.95rem;
   line-height: 1.6;
-  margin-bottom: 2rem;
-  font-size: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+/* Status section */
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
 }
 
 .status-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 1.25rem;
-  background: rgba(15, 23, 42, 0.5);
+  padding: 0.85rem 1.15rem;
+  background-color: #fafafa;
   border: 1px solid var(--border-color);
-  border-radius: 10px;
+  border-radius: 6px;
 }
 
 .status-label {
   font-weight: 500;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
+  color: var(--text-main);
 }
 
 .status-indicator {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   color: var(--success-color);
   font-weight: 600;
+  background-color: var(--success-bg);
+  border: 1px solid var(--success-border);
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
 }
 
 .dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   background-color: var(--success-color);
   border-radius: 50%;
-  box-shadow: 0 0 8px var(--success-color);
 }
