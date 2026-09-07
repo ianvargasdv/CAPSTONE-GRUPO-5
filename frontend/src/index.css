@@ -687,3 +687,125 @@ body {
 .form-group-full {
   grid-column: 1 / -1;
 }
+
+/* ── Badge contador en el tab de Tareas ── */
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  background-color: #dc2626;
+  color: #ffffff;
+  border-radius: 9px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  margin-left: 0.4rem;
+  line-height: 1;
+}
+
+/* Badge de pendientes en el card header */
+.badge-pendientes {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+/* ── Badges de estado de tarea ── */
+.badge-estado-tarea {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.estado-pendiente {
+  background-color: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.estado-en-progreso {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.estado-completada {
+  background-color: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+/* ── Indicadores de vencimiento ── */
+.fecha-vencida {
+  color: #dc2626;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.badge-vencida {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+/* ── Fila de tarea completada ── */
+.fila-completada td {
+  opacity: 0.55;
+}
+
+.fila-completada .col-nombre {
+  text-decoration: line-through;
+}
+
+/* ── Descripción breve debajo del título ── */
+.tarea-descripcion {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-top: 0.2rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 260px;
+}
+
+/* ── Badge de lead asociado en tabla ── */
+.tarea-lead-badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  background-color: #f5f3ff;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* ── Botón completar tarea (✓) ── */
+.btn-completar {
+  background-color: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 0.3rem 0.55rem;
+}
+
+.btn-completar:hover:not(:disabled) {
+  background-color: #dcfce7;
+}

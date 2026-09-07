@@ -10,6 +10,10 @@ import {
   eliminarPropiedad,
   obtenerInteracciones,
   crearInteraccion,
+  obtenerTareas,
+  crearTarea,
+  actualizarTarea,
+  eliminarTarea,
 } from './api';
 import FormularioLead from './components/FormularioLead';
 import TablaLeads from './components/TablaLeads';
@@ -17,17 +21,15 @@ import FormularioPropiedad from './components/FormularioPropiedad';
 import TablaPropiedades from './components/TablaPropiedades';
 import FormularioInteraccion from './components/FormularioInteraccion';
 import HistorialInteracciones from './components/HistorialInteracciones';
+import FormularioTarea from './components/FormularioTarea';
+import TablaTareas from './components/TablaTareas';
 
 function App() {
   const [pestañaActiva, setPestañaActiva] = useState('leads');
 
-  // Estado del toast — mensaje temporal que desaparece solo
+  // Estado del toast
   const [toast, setToast] = useState(null);
 
-  /**
-   * Muestra un mensaje de notificación breve en pantalla.
-   * Se oculta automáticamente después de 3 segundos.
-   */
   const mostrarToast = (mensaje) => {
     setToast(mensaje);
     setTimeout(() => setToast(null), 3000);
@@ -46,19 +48,25 @@ function App() {
   const [propiedadEditar, setPropiedadEditar] = useState(null);
 
   // --- Estado del panel de Interacciones ---
-  // leadSeleccionado: objeto lead cuyo historial está visible, o null si el panel está cerrado
   const [leadSeleccionado, setLeadSeleccionado] = useState(null);
   const [interacciones, setInteracciones] = useState([]);
   const [cargandoInteracciones, setCargandoInteracciones] = useState(false);
   const [errorInteracciones, setErrorInteracciones] = useState(null);
 
+  // --- Estado de Tareas ---
+  const [tareas, setTareas] = useState([]);
+  const [cargandoTareas, setCargandoTareas] = useState(true);
+  const [errorTareas, setErrorTareas] = useState(null);
+  const [tareaEditar, setTareaEditar] = useState(null);
+
+  // Carga inicial de todas las entidades
   const cargarLeads = async () => {
     try {
       setCargandoLeads(true);
       setErrorLeads(null);
       const datos = await obtenerLeads();
       setLeads(datos);
-    } catch (err) {
+    } catch {
       setErrorLeads('No se pudo conectar con el backend para cargar los leads.');
     } finally {
       setCargandoLeads(false);
@@ -71,16 +79,30 @@ function App() {
       setErrorPropiedades(null);
       const datos = await obtenerPropiedades();
       setPropiedades(datos);
-    } catch (err) {
+    } catch {
       setErrorPropiedades('No se pudo conectar con el backend para cargar las propiedades.');
     } finally {
       setCargandoPropiedades(false);
     }
   };
 
+  const cargarTareas = async () => {
+    try {
+      setCargandoTareas(true);
+      setErrorTareas(null);
+      const datos = await obtenerTareas();
+      setTareas(datos);
+    } catch {
+      setErrorTareas('No se pudo conectar con el backend para cargar las tareas.');
+    } finally {
+      setCargandoTareas(false);
+    }
+  };
+
   useEffect(() => {
     cargarLeads();
     cargarPropiedades();
+    cargarTareas();
   }, []);
 
   // --- Handlers de Leads ---
@@ -88,9 +110,7 @@ function App() {
   const manejarGuardarLead = async (datosLead) => {
     if (leadEditar) {
       const leadActualizado = await actualizarLead(leadEditar.id, datosLead);
-      setLeads((prev) =>
-        prev.map((l) => (l.id === leadActualizado.id ? leadActualizado : l))
-      );
+      setLeads((prev) => prev.map((l) => (l.id === leadActualizado.id ? leadActualizado : l)));
       setLeadEditar(null);
       mostrarToast('Lead actualizado con éxito ✓');
     } else {
@@ -108,7 +128,6 @@ function App() {
   const manejarEliminarLead = async (id) => {
     await eliminarLead(id);
     setLeads((prev) => prev.filter((l) => l.id !== id));
-    // Si el lead eliminado tenía el historial abierto, cerrarlo
     if (leadSeleccionado?.id === id) {
       setLeadSeleccionado(null);
       setInteracciones([]);
@@ -116,9 +135,7 @@ function App() {
     mostrarToast('Lead eliminado ✓');
   };
 
-  const manejarCancelarEdicionLead = () => {
-    setLeadEditar(null);
-  };
+  const manejarCancelarEdicionLead = () => setLeadEditar(null);
 
   // --- Handlers de Propiedades ---
 
@@ -148,34 +165,24 @@ function App() {
     mostrarToast('Propiedad eliminada ✓');
   };
 
-  const manejarCancelarEdicionPropiedad = () => {
-    setPropiedadEditar(null);
-  };
+  const manejarCancelarEdicionPropiedad = () => setPropiedadEditar(null);
 
   // --- Handlers de Interacciones ---
 
-  /**
-   * Abre o cierra el panel de historial de un lead.
-   * Si se hace clic en el mismo lead que ya está abierto, cierra el panel.
-   * Si se hace clic en otro lead, carga su historial y lo muestra.
-   */
   const manejarVerHistorial = async (lead) => {
     if (leadSeleccionado?.id === lead.id) {
-      // Cierra el panel si ya estaba abierto para este lead
       setLeadSeleccionado(null);
       setInteracciones([]);
       return;
     }
-
     setLeadSeleccionado(lead);
     setInteracciones([]);
     setCargandoInteracciones(true);
     setErrorInteracciones(null);
-
     try {
       const datos = await obtenerInteracciones(lead.id);
       setInteracciones(datos);
-    } catch (err) {
+    } catch {
       setErrorInteracciones('No se pudo cargar el historial de interacciones.');
     } finally {
       setCargandoInteracciones(false);
@@ -184,19 +191,60 @@ function App() {
 
   const manejarGuardarInteraccion = async (datosInteraccion) => {
     const nuevaInteraccion = await crearInteraccion(leadSeleccionado.id, datosInteraccion);
-    // Agrega la nueva interacción al inicio de la lista (más reciente primero)
     setInteracciones((prev) => [nuevaInteraccion, ...prev]);
     mostrarToast('Interacción registrada ✓');
   };
 
+  // --- Handlers de Tareas ---
+
+  const manejarGuardarTarea = async (datosTarea) => {
+    if (tareaEditar) {
+      const tareaActualizada = await actualizarTarea(tareaEditar.id, datosTarea);
+      setTareas((prev) =>
+        prev.map((t) => (t.id === tareaActualizada.id ? tareaActualizada : t))
+      );
+      setTareaEditar(null);
+      mostrarToast('Tarea actualizada con éxito ✓');
+    } else {
+      const tareaGuardada = await crearTarea(datosTarea);
+      setTareas((prev) => [tareaGuardada, ...prev]);
+      mostrarToast('Tarea creada con éxito ✓');
+    }
+  };
+
+  const manejarEditarTarea = (tarea) => {
+    setTareaEditar(tarea);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const manejarEliminarTarea = async (id) => {
+    await eliminarTarea(id);
+    setTareas((prev) => prev.filter((t) => t.id !== id));
+    mostrarToast('Tarea eliminada ✓');
+  };
+
+  const manejarCancelarEdicionTarea = () => setTareaEditar(null);
+
+  /**
+   * Marca una tarea como Completada directamente desde la tabla,
+   * sin necesidad de abrir el formulario de edición.
+   */
+  const manejarCompletarTarea = async (tarea) => {
+    const tareaActualizada = await actualizarTarea(tarea.id, { estado: 'Completada' });
+    setTareas((prev) =>
+      prev.map((t) => (t.id === tareaActualizada.id ? tareaActualizada : t))
+    );
+    mostrarToast('Tarea marcada como completada ✓');
+  };
+
+  // Contador de tareas pendientes para mostrar en el tab
+  const tareasPendientes = tareas.filter(
+    (t) => t.estado === 'Pendiente' || t.estado === 'En Progreso'
+  ).length;
+
   return (
     <>
-      {/* Toast de notificación — aparece en la esquina inferior derecha */}
-      {toast && (
-        <div className="toast-notification">
-          {toast}
-        </div>
-      )}
+      {toast && <div className="toast-notification">{toast}</div>}
 
       <header className="app-header">
         <div className="header-brand">
@@ -226,12 +274,23 @@ function App() {
             >
               Propiedades ({propiedades.length})
             </button>
+            <button
+              className={`tab-btn ${pestañaActiva === 'tareas' ? 'active' : ''}`}
+              onClick={() => setPestañaActiva('tareas')}
+            >
+              Tareas
+              {tareasPendientes > 0 && (
+                <span className="tab-badge">{tareasPendientes}</span>
+              )}
+            </button>
           </nav>
         </div>
       </header>
 
       <main className="main-content">
-        {pestañaActiva === 'leads' ? (
+
+        {/* ── Pestaña Leads ── */}
+        {pestañaActiva === 'leads' && (
           <>
             <div className="dashboard-card">
               <div className="card-header">
@@ -262,37 +321,28 @@ function App() {
               />
             </div>
 
-            {/* Panel de historial — solo visible cuando hay un lead seleccionado */}
             {leadSeleccionado && (
               <div className="dashboard-card panel-historial">
                 <div className="card-header">
                   <div>
-                    <h2 className="card-title">
-                      Historial — {leadSeleccionado.nombre}
-                    </h2>
+                    <h2 className="card-title">Historial — {leadSeleccionado.nombre}</h2>
                     <span className="historial-subtitulo">{leadSeleccionado.email}</span>
                   </div>
                   <button
                     className="btn-cerrar-panel"
-                    onClick={() => {
-                      setLeadSeleccionado(null);
-                      setInteracciones([]);
-                    }}
+                    onClick={() => { setLeadSeleccionado(null); setInteracciones([]); }}
                     title="Cerrar historial"
                   >
                     ✕
                   </button>
                 </div>
-
                 <FormularioInteraccion
                   leadNombre={leadSeleccionado.nombre}
                   alGuardar={manejarGuardarInteraccion}
                 />
-
                 <div className="historial-separador">
                   <span>Interacciones anteriores ({interacciones.length})</span>
                 </div>
-
                 <HistorialInteracciones
                   interacciones={interacciones}
                   cargando={cargandoInteracciones}
@@ -301,7 +351,10 @@ function App() {
               </div>
             )}
           </>
-        ) : (
+        )}
+
+        {/* ── Pestaña Propiedades ── */}
+        {pestañaActiva === 'propiedades' && (
           <>
             <div className="dashboard-card">
               <div className="card-header">
@@ -331,6 +384,49 @@ function App() {
             </div>
           </>
         )}
+
+        {/* ── Pestaña Tareas ── */}
+        {pestañaActiva === 'tareas' && (
+          <>
+            <div className="dashboard-card">
+              <div className="card-header">
+                <h2 className="card-title">
+                  {tareaEditar ? `Editando Tarea #${tareaEditar.id}` : 'Nueva Tarea'}
+                </h2>
+                <span className="badge">Gestión de Tareas</span>
+              </div>
+              <FormularioTarea
+                alGuardar={manejarGuardarTarea}
+                tareaEditar={tareaEditar}
+                alCancelar={manejarCancelarEdicionTarea}
+                leads={leads}
+              />
+            </div>
+
+            <div className="dashboard-card">
+              <div className="card-header">
+                <h2 className="card-title">
+                  Tareas ({tareas.length})
+                </h2>
+                {tareasPendientes > 0 && (
+                  <span className="badge badge-pendientes">
+                    {tareasPendientes} pendiente{tareasPendientes !== 1 ? 's' : ''}
+                  </span>
+                )}
+              </div>
+              <TablaTareas
+                tareas={tareas}
+                leads={leads}
+                cargando={cargandoTareas}
+                error={errorTareas}
+                alEditar={manejarEditarTarea}
+                alEliminar={manejarEliminarTarea}
+                alCompletar={manejarCompletarTarea}
+              />
+            </div>
+          </>
+        )}
+
       </main>
     </>
   );
