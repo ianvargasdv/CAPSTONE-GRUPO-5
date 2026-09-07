@@ -540,3 +540,150 @@ body {
   color: var(--text-muted);
   white-space: nowrap;
 }
+
+/* ── Botón Historial en tabla ── */
+.btn-historial {
+  background-color: #f5f3ff;
+  color: #7c3aed;
+  border: 1px solid #ddd6fe;
+}
+
+.btn-historial:hover:not(:disabled) {
+  background-color: #ede9fe;
+}
+
+.btn-historial.active {
+  background-color: #7c3aed;
+  color: #ffffff;
+  border-color: #7c3aed;
+}
+
+/* Fila resaltada cuando su historial está abierto */
+.fila-seleccionada {
+  background-color: #faf5ff;
+}
+
+/* ── Panel de historial ── */
+.panel-historial {
+  border-left: 3px solid #7c3aed;
+}
+
+.historial-subtitulo {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+  display: block;
+}
+
+.btn-cerrar-panel {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  line-height: 1;
+  transition: background-color 0.15s ease;
+}
+
+.btn-cerrar-panel:hover {
+  background-color: #f1f5f9;
+  color: var(--text-main);
+}
+
+/* Separador entre formulario e historial anterior */
+.historial-separador {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0 1rem;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.historial-separador::before,
+.historial-separador::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: var(--border-color);
+}
+
+/* ── Lista de interacciones ── */
+.historial-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.historial-item {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  background-color: #fafafa;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+}
+
+.historial-icono {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.historial-contenido {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.historial-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.historial-tipo {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.historial-fecha {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.historial-notas {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ── Textarea en formulario de interacción ── */
+.form-textarea {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: var(--text-main);
+  background-color: #ffffff;
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+  transition: border-color 0.15s ease;
+}
+
+.form-textarea:focus {
+  border-color: var(--accent-primary);
+}
+
+/* Campo que ocupa toda la fila en el grid */
+.form-group-full {
+  grid-column: 1 / -1;
+}

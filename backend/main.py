@@ -140,3 +140,44 @@ def eliminar_propiedad(propiedad_id: int, db: Session = Depends(database.obtener
     db.commit()
 
 
+@app.get("/api/leads/{lead_id}/interacciones", response_model=List[schemas.InteraccionRespuesta])
+def listar_interacciones(lead_id: int, db: Session = Depends(database.obtener_db)):
+    """
+    Obtiene el historial de interacciones de un lead específico.
+    Devuelve 404 si el lead no existe.
+    Las interacciones se ordenan de más reciente a más antigua.
+    """
+    lead = db.query(models.Lead).filter(models.Lead.id == lead_id).first()
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead no encontrado")
+
+    interacciones = (
+        db.query(models.Interaccion)
+        .filter(models.Interaccion.lead_id == lead_id)
+        .order_by(models.Interaccion.fecha_creacion.desc())
+        .all()
+    )
+    return interacciones
+
+
+@app.post("/api/leads/{lead_id}/interacciones", response_model=schemas.InteraccionRespuesta, status_code=status.HTTP_201_CREATED)
+def crear_interaccion(lead_id: int, datos: schemas.InteraccionCrear, db: Session = Depends(database.obtener_db)):
+    """
+    Registra una nueva interacción para un lead.
+    Devuelve 404 si el lead no existe.
+    """
+    lead = db.query(models.Lead).filter(models.Lead.id == lead_id).first()
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead no encontrado")
+
+    nueva_interaccion = models.Interaccion(
+        lead_id=lead_id,
+        tipo=datos.tipo,
+        notas=datos.notas,
+    )
+    db.add(nueva_interaccion)
+    db.commit()
+    db.refresh(nueva_interaccion)
+    return nueva_interaccion
+
+

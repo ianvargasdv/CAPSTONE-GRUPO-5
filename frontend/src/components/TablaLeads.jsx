@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 /**
- * Tabla de leads con búsqueda en tiempo real y acciones de editar/eliminar por fila.
+ * Tabla de leads con búsqueda en tiempo real y acciones de editar/eliminar/historial por fila.
  *
  * Props:
  * - leads: lista de leads a mostrar
@@ -9,8 +9,10 @@ import React, { useState } from 'react';
  * - error: mensaje de error si la carga falló
  * - alEditar: función que recibe el objeto lead a editar
  * - alEliminar: función que recibe el id del lead a eliminar
+ * - alVerHistorial: función que recibe el objeto lead para abrir su historial
+ * - leadSeleccionadoId: id del lead cuyo historial está abierto actualmente (para resaltar la fila)
  */
-function TablaLeads({ leads, cargando, error, alEditar, alEliminar }) {
+function TablaLeads({ leads, cargando, error, alEditar, alEliminar, alVerHistorial, leadSeleccionadoId }) {
   const [busqueda, setBusqueda] = useState('');
   const [eliminandoId, setEliminandoId] = useState(null);
 
@@ -87,7 +89,10 @@ function TablaLeads({ leads, cargando, error, alEditar, alEliminar }) {
             </thead>
             <tbody>
               {leadsFiltrados.map((lead) => (
-                <tr key={lead.id}>
+                <tr
+                  key={lead.id}
+                  className={leadSeleccionadoId === lead.id ? 'fila-seleccionada' : ''}
+                >
                   <td>#{lead.id}</td>
                   <td className="col-nombre">{lead.nombre}</td>
                   <td>{lead.email}</td>
@@ -111,6 +116,13 @@ function TablaLeads({ leads, cargando, error, alEditar, alEliminar }) {
                   </td>
                   <td>
                     <div className="acciones-celda">
+                      <button
+                        className={`btn-accion btn-historial ${leadSeleccionadoId === lead.id ? 'active' : ''}`}
+                        onClick={() => alVerHistorial(lead)}
+                        title="Ver historial de interacciones"
+                      >
+                        Historial
+                      </button>
                       <button
                         className="btn-accion btn-editar"
                         onClick={() => alEditar(lead)}
