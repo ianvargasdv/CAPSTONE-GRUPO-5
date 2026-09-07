@@ -23,3 +23,26 @@ class LeadRespuesta(LeadBase):
 
     class Config:
         from_attributes = True
+
+
+class PropiedadBase(BaseModel):
+    titulo: str
+    tipo: Optional[str] = "Departamento"
+    precio: int
+    direccion: str
+    estado: Optional[str] = "Disponible"
+
+
+class PropiedadCrear(PropiedadBase):
+    """Esquema utilizado para registrar una nueva propiedad."""
+    pass
+
+
+class PropiedadRespuesta(PropiedadBase):
+    """Esquema utilizado para responder información de la propiedad."""
+    id: int
+    fecha_creacion: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+

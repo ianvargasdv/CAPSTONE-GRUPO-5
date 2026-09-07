@@ -50,3 +50,27 @@ def crear_lead(lead: schemas.LeadCrear, db: Session = Depends(database.obtener_d
     db.refresh(nuevo_lead)
     return nuevo_lead
 
+
+@app.get("/api/propiedades", response_model=List[schemas.PropiedadRespuesta])
+def listar_propiedades(db: Session = Depends(database.obtener_db)):
+    """Obtiene el catálogo de todas las propiedades registradas."""
+    propiedades = db.query(models.Propiedad).all()
+    return propiedades
+
+
+@app.post("/api/propiedades", response_model=schemas.PropiedadRespuesta, status_code=status.HTTP_201_CREATED)
+def crear_propiedad(propiedad: schemas.PropiedadCrear, db: Session = Depends(database.obtener_db)):
+    """Registra una nueva propiedad en la base de datos."""
+    nueva_propiedad = models.Propiedad(
+        titulo=propiedad.titulo,
+        tipo=propiedad.tipo,
+        precio=propiedad.precio,
+        direccion=propiedad.direccion,
+        estado=propiedad.estado,
+    )
+    db.add(nueva_propiedad)
+    db.commit()
+    db.refresh(nueva_propiedad)
+    return nueva_propiedad
+
+
