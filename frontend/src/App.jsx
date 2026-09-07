@@ -23,9 +23,10 @@ import FormularioInteraccion from './components/FormularioInteraccion';
 import HistorialInteracciones from './components/HistorialInteracciones';
 import FormularioTarea from './components/FormularioTarea';
 import TablaTareas from './components/TablaTareas';
+import Dashboard from './components/Dashboard';
 
 function App() {
-  const [pestañaActiva, setPestañaActiva] = useState('leads');
+  const [pestañaActiva, setPestañaActiva] = useState('inicio');
 
   // Estado del toast
   const [toast, setToast] = useState(null);
@@ -242,6 +243,9 @@ function App() {
     (t) => t.estado === 'Pendiente' || t.estado === 'En Progreso'
   ).length;
 
+  // El dashboard está cargando si cualquiera de las 3 entidades aún no terminó
+  const cargandoDashboard = cargandoLeads || cargandoPropiedades || cargandoTareas;
+
   return (
     <>
       {toast && <div className="toast-notification">{toast}</div>}
@@ -262,6 +266,12 @@ function App() {
           </div>
 
           <nav className="nav-tabs">
+            <button
+              className={`tab-btn ${pestañaActiva === 'inicio' ? 'active' : ''}`}
+              onClick={() => setPestañaActiva('inicio')}
+            >
+              Inicio
+            </button>
             <button
               className={`tab-btn ${pestañaActiva === 'leads' ? 'active' : ''}`}
               onClick={() => setPestañaActiva('leads')}
@@ -288,6 +298,16 @@ function App() {
       </header>
 
       <main className="main-content">
+
+        {/* ── Pestaña Inicio (Dashboard) ── */}
+        {pestañaActiva === 'inicio' && (
+          <Dashboard
+            leads={leads}
+            propiedades={propiedades}
+            tareas={tareas}
+            cargando={cargandoDashboard}
+          />
+        )}
 
         {/* ── Pestaña Leads ── */}
         {pestañaActiva === 'leads' && (

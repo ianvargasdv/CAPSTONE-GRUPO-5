@@ -809,3 +809,197 @@ body {
 .btn-completar:hover:not(:disabled) {
   background-color: #dcfce7;
 }
+
+/* ══════════════════════════════════════
+   DASHBOARD / INICIO
+══════════════════════════════════════ */
+
+/* Contenedor principal del dashboard — ancho mayor que el main estándar */
+.dashboard-contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+/* ── Grid de KPIs (4 columnas) ── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 780px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.kpi-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+}
+
+.kpi-numero {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+  line-height: 1;
+}
+
+.kpi-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.kpi-detalle {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+/* Detalle en rojo cuando hay alertas (ej: tareas vencidas) */
+.kpi-alerta {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+/* ── Grid de 2 columnas para secciones de resumen ── */
+.resumen-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .resumen-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Barras de distribución por estado ── */
+.distribucion-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.distribucion-item {
+  display: grid;
+  grid-template-columns: 90px 1fr 28px;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.distribucion-label {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.distribucion-barra-wrapper {
+  height: 8px;
+  background-color: #f1f5f9;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.distribucion-barra {
+  height: 100%;
+  background-color: var(--accent-primary);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+  min-width: 3px;
+}
+
+/* Colores diferenciados por estado de propiedad */
+.barra-disponible {
+  background-color: #16a34a;
+}
+
+.barra-reservada {
+  background-color: #d97706;
+}
+
+.barra-vendida {
+  background-color: #64748b;
+}
+
+.distribucion-valor {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-main);
+  text-align: right;
+}
+
+/* ── Listas de elementos recientes ── */
+.lista-reciente {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.lista-reciente-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.lista-reciente-item:last-child {
+  border-bottom: none;
+}
+
+.lista-reciente-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.lista-reciente-nombre {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lista-reciente-sub {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lista-reciente-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+  flex-shrink: 0;
+}
+
+.lista-reciente-fecha {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
