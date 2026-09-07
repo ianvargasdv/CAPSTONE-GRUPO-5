@@ -16,6 +16,18 @@ class LeadCrear(LeadBase):
     pass
 
 
+class LeadActualizar(BaseModel):
+    """
+    Esquema para actualizar un lead existente.
+    Todos los campos son opcionales para permitir actualizaciones parciales.
+    """
+    nombre: Optional[str] = None
+    email: Optional[str] = None
+    telefono: Optional[str] = None
+    estado: Optional[str] = None
+    prioridad: Optional[str] = None
+
+
 class LeadRespuesta(LeadBase):
     """Esquema utilizado para responder información del lead con su ID y fecha de creación."""
     id: int
@@ -36,6 +48,18 @@ class PropiedadBase(BaseModel):
 class PropiedadCrear(PropiedadBase):
     """Esquema utilizado para registrar una nueva propiedad."""
     pass
+
+
+class PropiedadActualizar(BaseModel):
+    """
+    Esquema para actualizar una propiedad existente.
+    Todos los campos son opcionales para permitir actualizaciones parciales.
+    """
+    titulo: Optional[str] = None
+    tipo: Optional[str] = None
+    precio: Optional[int] = None
+    direccion: Optional[str] = None
+    estado: Optional[str] = None
 
 
 class PropiedadRespuesta(PropiedadBase):
