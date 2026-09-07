@@ -1,6 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-function FormularioLead({ alGuardar }) {
+/**
+ * Formulario para registrar o editar un lead.
+ *
+ * Props:
+ * - alGuardar: función que recibe los datos del formulario (crear o editar)
+ * - leadEditar: objeto lead con datos precargados cuando se está editando (opcional)
+ * - alCancelar: función para cancelar el modo edición (opcional)
+ */
+function FormularioLead({ alGuardar, leadEditar, alCancelar }) {
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [telefono, setTelefono] = useState('');
@@ -8,6 +16,20 @@ function FormularioLead({ alGuardar }) {
   const [prioridad, setPrioridad] = useState('Media');
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(null);
+
+  const modoEdicion = Boolean(leadEditar);
+
+  // Cuando se recibe un lead para editar, precarga sus datos en el formulario
+  useEffect(() => {
+    if (leadEditar) {
+      setNombre(leadEditar.nombre || '');
+      setEmail(leadEditar.email || '');
+      setTelefono(leadEditar.telefono || '');
+      setEstado(leadEditar.estado || 'Nuevo');
+      setPrioridad(leadEditar.prioridad || 'Media');
+      setError(null);
+    }
+  }, [leadEditar]);
 
   const manejarEnvio = async (e) => {
     e.preventDefault();
@@ -27,12 +49,14 @@ function FormularioLead({ alGuardar }) {
         prioridad,
       });
 
-      // Limpiar el formulario tras guardar exitosamente
-      setNombre('');
-      setEmail('');
-      setTelefono('');
-      setEstado('Nuevo');
-      setPrioridad('Media');
+      // Solo limpiar el formulario si es modo creación
+      if (!modoEdicion) {
+        setNombre('');
+        setEmail('');
+        setTelefono('');
+        setEstado('Nuevo');
+        setPrioridad('Media');
+      }
     } catch (err) {
       setError(err.message || 'Error al intentar guardar el lead');
     } finally {
@@ -42,7 +66,9 @@ function FormularioLead({ alGuardar }) {
 
   return (
     <form className="form-lead" onSubmit={manejarEnvio}>
-      <h3 className="section-subtitle">Registrar Nuevo Lead</h3>
+      <h3 className="section-subtitle">
+        {modoEdicion ? `Editando Lead #${leadEditar.id}` : 'Registrar Nuevo Lead'}
+      </h3>
 
       {error && <div className="alert-error">{error}</div>}
 
@@ -98,11 +124,43 @@ function FormularioLead({ alGuardar }) {
             <option value="Baja">Baja</option>
           </select>
         </div>
+
+        {/* Estado solo visible en modo edición */}
+        {modoEdicion && (
+          <div className="form-group">
+            <label htmlFor="estado">Estado</label>
+            <select
+              id="estado"
+              value={estado}
+              onChange={(e) => setEstado(e.target.value)}
+              disabled={cargando}
+            >
+              <option value="Nuevo">Nuevo</option>
+              <option value="Contactado">Contactado</option>
+              <option value="Calificado">Calificado</option>
+              <option value="Cerrado">Cerrado</option>
+            </select>
+          </div>
+        )}
       </div>
 
       <div className="form-actions">
+        {modoEdicion && alCancelar && (
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={alCancelar}
+            disabled={cargando}
+          >
+            Cancelar
+          </button>
+        )}
         <button type="submit" className="btn-primary" disabled={cargando}>
-          {cargando ? 'Guardando...' : 'Guardar Lead'}
+          {cargando
+            ? 'Guardando...'
+            : modoEdicion
+            ? 'Guardar Cambios'
+            : 'Guardar Lead'}
         </button>
       </div>
     </form>

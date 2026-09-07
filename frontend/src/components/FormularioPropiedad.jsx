@@ -1,6 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-function FormularioPropiedad({ alGuardar }) {
+/**
+ * Formulario para registrar o editar una propiedad.
+ *
+ * Props:
+ * - alGuardar: función que recibe los datos del formulario (crear o editar)
+ * - propiedadEditar: objeto propiedad con datos precargados cuando se está editando (opcional)
+ * - alCancelar: función para cancelar el modo edición (opcional)
+ */
+function FormularioPropiedad({ alGuardar, propiedadEditar, alCancelar }) {
   const [titulo, setTitulo] = useState('');
   const [tipo, setTipo] = useState('Departamento');
   const [precio, setPrecio] = useState('');
@@ -8,6 +16,20 @@ function FormularioPropiedad({ alGuardar }) {
   const [estado, setEstado] = useState('Disponible');
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(null);
+
+  const modoEdicion = Boolean(propiedadEditar);
+
+  // Cuando se recibe una propiedad para editar, precarga sus datos en el formulario
+  useEffect(() => {
+    if (propiedadEditar) {
+      setTitulo(propiedadEditar.titulo || '');
+      setTipo(propiedadEditar.tipo || 'Departamento');
+      setPrecio(propiedadEditar.precio?.toString() || '');
+      setDireccion(propiedadEditar.direccion || '');
+      setEstado(propiedadEditar.estado || 'Disponible');
+      setError(null);
+    }
+  }, [propiedadEditar]);
 
   const manejarEnvio = async (e) => {
     e.preventDefault();
@@ -27,12 +49,14 @@ function FormularioPropiedad({ alGuardar }) {
         estado,
       });
 
-      // Limpiar formulario tras guardar
-      setTitulo('');
-      setTipo('Departamento');
-      setPrecio('');
-      setDireccion('');
-      setEstado('Disponible');
+      // Solo limpiar si es modo creación
+      if (!modoEdicion) {
+        setTitulo('');
+        setTipo('Departamento');
+        setPrecio('');
+        setDireccion('');
+        setEstado('Disponible');
+      }
     } catch (err) {
       setError(err.message || 'Error al registrar la propiedad');
     } finally {
@@ -42,7 +66,9 @@ function FormularioPropiedad({ alGuardar }) {
 
   return (
     <form className="form-lead" onSubmit={manejarEnvio}>
-      <h3 className="section-subtitle">Registrar Nueva Propiedad</h3>
+      <h3 className="section-subtitle">
+        {modoEdicion ? `Editando Propiedad #${propiedadEditar.id}` : 'Registrar Nueva Propiedad'}
+      </h3>
 
       {error && <div className="alert-error">{error}</div>}
 
@@ -117,8 +143,22 @@ function FormularioPropiedad({ alGuardar }) {
       </div>
 
       <div className="form-actions">
+        {modoEdicion && alCancelar && (
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={alCancelar}
+            disabled={cargando}
+          >
+            Cancelar
+          </button>
+        )}
         <button type="submit" className="btn-primary" disabled={cargando}>
-          {cargando ? 'Guardando...' : 'Guardar Propiedad'}
+          {cargando
+            ? 'Guardando...'
+            : modoEdicion
+            ? 'Guardar Cambios'
+            : 'Guardar Propiedad'}
         </button>
       </div>
     </form>

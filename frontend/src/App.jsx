@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { obtenerLeads, crearLead, obtenerPropiedades, crearPropiedad } from './api';
+import {
+  obtenerLeads,
+  crearLead,
+  actualizarLead,
+  eliminarLead,
+  obtenerPropiedades,
+  crearPropiedad,
+  actualizarPropiedad,
+  eliminarPropiedad,
+} from './api';
 import FormularioLead from './components/FormularioLead';
 import TablaLeads from './components/TablaLeads';
 import FormularioPropiedad from './components/FormularioPropiedad';
@@ -8,15 +17,31 @@ import TablaPropiedades from './components/TablaPropiedades';
 function App() {
   const [pestañaActiva, setPestañaActiva] = useState('leads');
 
-  // Estado de Leads
+  // Estado del toast — mensaje temporal que desaparece solo
+  const [toast, setToast] = useState(null);
+
+  /**
+   * Muestra un mensaje de notificación breve en pantalla.
+   * Se oculta automáticamente después de 3 segundos.
+   */
+  const mostrarToast = (mensaje) => {
+    setToast(mensaje);
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  // --- Estado de Leads ---
   const [leads, setLeads] = useState([]);
   const [cargandoLeads, setCargandoLeads] = useState(true);
   const [errorLeads, setErrorLeads] = useState(null);
+  // leadEditar contiene el objeto lead que está siendo editado, o null si es modo creación
+  const [leadEditar, setLeadEditar] = useState(null);
 
-  // Estado de Propiedades
+  // --- Estado de Propiedades ---
   const [propiedades, setPropiedades] = useState([]);
   const [cargandoPropiedades, setCargandoPropiedades] = useState(true);
   const [errorPropiedades, setErrorPropiedades] = useState(null);
+  // propiedadEditar contiene el objeto propiedad que está siendo editado, o null si es modo creación
+  const [propiedadEditar, setPropiedadEditar] = useState(null);
 
   const cargarLeads = async () => {
     try {
@@ -49,18 +74,84 @@ function App() {
     cargarPropiedades();
   }, []);
 
-  const manejarGuardarLead = async (nuevoLead) => {
-    const leadGuardado = await crearLead(nuevoLead);
-    setLeads((prev) => [...prev, leadGuardado]);
+  // --- Handlers de Leads ---
+
+  const manejarGuardarLead = async (datosLead) => {
+    if (leadEditar) {
+      // Modo edición: actualiza el lead existente
+      const leadActualizado = await actualizarLead(leadEditar.id, datosLead);
+      setLeads((prev) =>
+        prev.map((l) => (l.id === leadActualizado.id ? leadActualizado : l))
+      );
+      setLeadEditar(null);
+      mostrarToast('Lead actualizado con éxito ✓');
+    } else {
+      // Modo creación: agrega el nuevo lead a la lista
+      const leadGuardado = await crearLead(datosLead);
+      setLeads((prev) => [...prev, leadGuardado]);
+      mostrarToast('Lead registrado con éxito en Supabase ✓');
+    }
   };
 
-  const manejarGuardarPropiedad = async (nuevaPropiedad) => {
-    const propiedadGuardada = await crearPropiedad(nuevaPropiedad);
-    setPropiedades((prev) => [...prev, propiedadGuardada]);
+  const manejarEditarLead = (lead) => {
+    setLeadEditar(lead);
+    // Desplaza la vista hacia arriba para mostrar el formulario
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const manejarEliminarLead = async (id) => {
+    await eliminarLead(id);
+    setLeads((prev) => prev.filter((l) => l.id !== id));
+    mostrarToast('Lead eliminado ✓');
+  };
+
+  const manejarCancelarEdicionLead = () => {
+    setLeadEditar(null);
+  };
+
+  // --- Handlers de Propiedades ---
+
+  const manejarGuardarPropiedad = async (datosPropiedad) => {
+    if (propiedadEditar) {
+      // Modo edición: actualiza la propiedad existente
+      const propiedadActualizada = await actualizarPropiedad(propiedadEditar.id, datosPropiedad);
+      setPropiedades((prev) =>
+        prev.map((p) => (p.id === propiedadActualizada.id ? propiedadActualizada : p))
+      );
+      setPropiedadEditar(null);
+      mostrarToast('Propiedad actualizada con éxito ✓');
+    } else {
+      // Modo creación: agrega la nueva propiedad a la lista
+      const propiedadGuardada = await crearPropiedad(datosPropiedad);
+      setPropiedades((prev) => [...prev, propiedadGuardada]);
+      mostrarToast('Propiedad registrada con éxito en Supabase ✓');
+    }
+  };
+
+  const manejarEditarPropiedad = (propiedad) => {
+    setPropiedadEditar(propiedad);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const manejarEliminarPropiedad = async (id) => {
+    await eliminarPropiedad(id);
+    setPropiedades((prev) => prev.filter((p) => p.id !== id));
+    mostrarToast('Propiedad eliminada ✓');
+  };
+
+  const manejarCancelarEdicionPropiedad = () => {
+    setPropiedadEditar(null);
   };
 
   return (
     <>
+      {/* Toast de notificación — aparece en la esquina inferior derecha */}
+      {toast && (
+        <div className="toast-notification">
+          {toast}
+        </div>
+      )}
+
       <header className="app-header">
         <div className="header-brand">
           <div className="brand-logo">CRM</div>
@@ -70,20 +161,28 @@ function App() {
           </div>
         </div>
 
-        <nav className="nav-tabs">
-          <button
-            className={`tab-btn ${pestañaActiva === 'leads' ? 'active' : ''}`}
-            onClick={() => setPestañaActiva('leads')}
-          >
-            Leads ({leads.length})
-          </button>
-          <button
-            className={`tab-btn ${pestañaActiva === 'propiedades' ? 'active' : ''}`}
-            onClick={() => setPestañaActiva('propiedades')}
-          >
-            Propiedades ({propiedades.length})
-          </button>
-        </nav>
+        <div className="header-right">
+          {/* Indicador de conexión a la base de datos */}
+          <div className="db-indicator">
+            <span className="dot"></span>
+            <span>Base de Datos: Supabase</span>
+          </div>
+
+          <nav className="nav-tabs">
+            <button
+              className={`tab-btn ${pestañaActiva === 'leads' ? 'active' : ''}`}
+              onClick={() => setPestañaActiva('leads')}
+            >
+              Leads ({leads.length})
+            </button>
+            <button
+              className={`tab-btn ${pestañaActiva === 'propiedades' ? 'active' : ''}`}
+              onClick={() => setPestañaActiva('propiedades')}
+            >
+              Propiedades ({propiedades.length})
+            </button>
+          </nav>
+        </div>
       </header>
 
       <main className="main-content">
@@ -91,27 +190,45 @@ function App() {
           <>
             <div className="dashboard-card">
               <div className="card-header">
-                <h2 className="card-title">Nuevo Lead</h2>
+                <h2 className="card-title">
+                  {leadEditar ? `Editando Lead #${leadEditar.id}` : 'Nuevo Lead'}
+                </h2>
                 <span className="badge">Gestión de Leads</span>
               </div>
-              <FormularioLead alGuardar={manejarGuardarLead} />
+              <FormularioLead
+                alGuardar={manejarGuardarLead}
+                leadEditar={leadEditar}
+                alCancelar={manejarCancelarEdicionLead}
+              />
             </div>
 
             <div className="dashboard-card">
               <div className="card-header">
                 <h2 className="card-title">Leads Registrados ({leads.length})</h2>
               </div>
-              <TablaLeads leads={leads} cargando={cargandoLeads} error={errorLeads} />
+              <TablaLeads
+                leads={leads}
+                cargando={cargandoLeads}
+                error={errorLeads}
+                alEditar={manejarEditarLead}
+                alEliminar={manejarEliminarLead}
+              />
             </div>
           </>
         ) : (
           <>
             <div className="dashboard-card">
               <div className="card-header">
-                <h2 className="card-title">Nueva Propiedad</h2>
+                <h2 className="card-title">
+                  {propiedadEditar ? `Editando Propiedad #${propiedadEditar.id}` : 'Nueva Propiedad'}
+                </h2>
                 <span className="badge">Catálogo Inmobiliario</span>
               </div>
-              <FormularioPropiedad alGuardar={manejarGuardarPropiedad} />
+              <FormularioPropiedad
+                alGuardar={manejarGuardarPropiedad}
+                propiedadEditar={propiedadEditar}
+                alCancelar={manejarCancelarEdicionPropiedad}
+              />
             </div>
 
             <div className="dashboard-card">
@@ -122,6 +239,8 @@ function App() {
                 propiedades={propiedades}
                 cargando={cargandoPropiedades}
                 error={errorPropiedades}
+                alEditar={manejarEditarPropiedad}
+                alEliminar={manejarEliminarPropiedad}
               />
             </div>
           </>
