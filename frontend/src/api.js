@@ -122,3 +122,34 @@ export async function eliminarPropiedad(id) {
   }
 }
 
+
+/**
+ * Obtiene el historial de interacciones de un lead específico.
+ * Recibe el ID del lead y devuelve la lista ordenada de más reciente a más antigua.
+ */
+export async function obtenerInteracciones(leadId) {
+  const respuesta = await fetch(`${API_URL}/leads/${leadId}/interacciones`);
+  if (!respuesta.ok) {
+    throw new Error('No se pudo cargar el historial de interacciones');
+  }
+  return await respuesta.json();
+}
+
+/**
+ * Registra una nueva interacción para un lead.
+ * Recibe el ID del lead y un objeto con tipo y notas.
+ */
+export async function crearInteraccion(leadId, datosInteraccion) {
+  const respuesta = await fetch(`${API_URL}/leads/${leadId}/interacciones`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(datosInteraccion),
+  });
+
+  if (!respuesta.ok) {
+    throw new Error('No se pudo registrar la interacción');
+  }
+  return await respuesta.json();
+}

@@ -70,3 +70,28 @@ class PropiedadRespuesta(PropiedadBase):
     class Config:
         from_attributes = True
 
+
+class InteraccionCrear(BaseModel):
+    """
+    Esquema para registrar una nueva interacción con un lead.
+    Recibe el tipo de contacto y notas opcionales.
+    El lead_id se obtiene de la URL, no del body.
+    """
+    tipo: str
+    notas: Optional[str] = None
+
+
+class InteraccionRespuesta(BaseModel):
+    """
+    Esquema de respuesta para una interacción.
+    Incluye el id, lead_id, tipo, notas y fecha de registro.
+    """
+    id: int
+    lead_id: int
+    tipo: str
+    notas: Optional[str] = None
+    fecha_creacion: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+

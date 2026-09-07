@@ -8,11 +8,15 @@ import {
   crearPropiedad,
   actualizarPropiedad,
   eliminarPropiedad,
+  obtenerInteracciones,
+  crearInteraccion,
 } from './api';
 import FormularioLead from './components/FormularioLead';
 import TablaLeads from './components/TablaLeads';
 import FormularioPropiedad from './components/FormularioPropiedad';
 import TablaPropiedades from './components/TablaPropiedades';
+import FormularioInteraccion from './components/FormularioInteraccion';
+import HistorialInteracciones from './components/HistorialInteracciones';
 
 function App() {
   const [pestañaActiva, setPestañaActiva] = useState('leads');
@@ -33,15 +37,20 @@ function App() {
   const [leads, setLeads] = useState([]);
   const [cargandoLeads, setCargandoLeads] = useState(true);
   const [errorLeads, setErrorLeads] = useState(null);
-  // leadEditar contiene el objeto lead que está siendo editado, o null si es modo creación
   const [leadEditar, setLeadEditar] = useState(null);
 
   // --- Estado de Propiedades ---
   const [propiedades, setPropiedades] = useState([]);
   const [cargandoPropiedades, setCargandoPropiedades] = useState(true);
   const [errorPropiedades, setErrorPropiedades] = useState(null);
-  // propiedadEditar contiene el objeto propiedad que está siendo editado, o null si es modo creación
   const [propiedadEditar, setPropiedadEditar] = useState(null);
+
+  // --- Estado del panel de Interacciones ---
+  // leadSeleccionado: objeto lead cuyo historial está visible, o null si el panel está cerrado
+  const [leadSeleccionado, setLeadSeleccionado] = useState(null);
+  const [interacciones, setInteracciones] = useState([]);
+  const [cargandoInteracciones, setCargandoInteracciones] = useState(false);
+  const [errorInteracciones, setErrorInteracciones] = useState(null);
 
   const cargarLeads = async () => {
     try {
@@ -78,7 +87,6 @@ function App() {
 
   const manejarGuardarLead = async (datosLead) => {
     if (leadEditar) {
-      // Modo edición: actualiza el lead existente
       const leadActualizado = await actualizarLead(leadEditar.id, datosLead);
       setLeads((prev) =>
         prev.map((l) => (l.id === leadActualizado.id ? leadActualizado : l))
@@ -86,7 +94,6 @@ function App() {
       setLeadEditar(null);
       mostrarToast('Lead actualizado con éxito ✓');
     } else {
-      // Modo creación: agrega el nuevo lead a la lista
       const leadGuardado = await crearLead(datosLead);
       setLeads((prev) => [...prev, leadGuardado]);
       mostrarToast('Lead registrado con éxito en Supabase ✓');
@@ -95,13 +102,17 @@ function App() {
 
   const manejarEditarLead = (lead) => {
     setLeadEditar(lead);
-    // Desplaza la vista hacia arriba para mostrar el formulario
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const manejarEliminarLead = async (id) => {
     await eliminarLead(id);
     setLeads((prev) => prev.filter((l) => l.id !== id));
+    // Si el lead eliminado tenía el historial abierto, cerrarlo
+    if (leadSeleccionado?.id === id) {
+      setLeadSeleccionado(null);
+      setInteracciones([]);
+    }
     mostrarToast('Lead eliminado ✓');
   };
 
@@ -113,7 +124,6 @@ function App() {
 
   const manejarGuardarPropiedad = async (datosPropiedad) => {
     if (propiedadEditar) {
-      // Modo edición: actualiza la propiedad existente
       const propiedadActualizada = await actualizarPropiedad(propiedadEditar.id, datosPropiedad);
       setPropiedades((prev) =>
         prev.map((p) => (p.id === propiedadActualizada.id ? propiedadActualizada : p))
@@ -121,7 +131,6 @@ function App() {
       setPropiedadEditar(null);
       mostrarToast('Propiedad actualizada con éxito ✓');
     } else {
-      // Modo creación: agrega la nueva propiedad a la lista
       const propiedadGuardada = await crearPropiedad(datosPropiedad);
       setPropiedades((prev) => [...prev, propiedadGuardada]);
       mostrarToast('Propiedad registrada con éxito en Supabase ✓');
@@ -143,6 +152,43 @@ function App() {
     setPropiedadEditar(null);
   };
 
+  // --- Handlers de Interacciones ---
+
+  /**
+   * Abre o cierra el panel de historial de un lead.
+   * Si se hace clic en el mismo lead que ya está abierto, cierra el panel.
+   * Si se hace clic en otro lead, carga su historial y lo muestra.
+   */
+  const manejarVerHistorial = async (lead) => {
+    if (leadSeleccionado?.id === lead.id) {
+      // Cierra el panel si ya estaba abierto para este lead
+      setLeadSeleccionado(null);
+      setInteracciones([]);
+      return;
+    }
+
+    setLeadSeleccionado(lead);
+    setInteracciones([]);
+    setCargandoInteracciones(true);
+    setErrorInteracciones(null);
+
+    try {
+      const datos = await obtenerInteracciones(lead.id);
+      setInteracciones(datos);
+    } catch (err) {
+      setErrorInteracciones('No se pudo cargar el historial de interacciones.');
+    } finally {
+      setCargandoInteracciones(false);
+    }
+  };
+
+  const manejarGuardarInteraccion = async (datosInteraccion) => {
+    const nuevaInteraccion = await crearInteraccion(leadSeleccionado.id, datosInteraccion);
+    // Agrega la nueva interacción al inicio de la lista (más reciente primero)
+    setInteracciones((prev) => [nuevaInteraccion, ...prev]);
+    mostrarToast('Interacción registrada ✓');
+  };
+
   return (
     <>
       {/* Toast de notificación — aparece en la esquina inferior derecha */}
@@ -162,7 +208,6 @@ function App() {
         </div>
 
         <div className="header-right">
-          {/* Indicador de conexión a la base de datos */}
           <div className="db-indicator">
             <span className="dot"></span>
             <span>Base de Datos: Supabase</span>
@@ -212,8 +257,49 @@ function App() {
                 error={errorLeads}
                 alEditar={manejarEditarLead}
                 alEliminar={manejarEliminarLead}
+                alVerHistorial={manejarVerHistorial}
+                leadSeleccionadoId={leadSeleccionado?.id}
               />
             </div>
+
+            {/* Panel de historial — solo visible cuando hay un lead seleccionado */}
+            {leadSeleccionado && (
+              <div className="dashboard-card panel-historial">
+                <div className="card-header">
+                  <div>
+                    <h2 className="card-title">
+                      Historial — {leadSeleccionado.nombre}
+                    </h2>
+                    <span className="historial-subtitulo">{leadSeleccionado.email}</span>
+                  </div>
+                  <button
+                    className="btn-cerrar-panel"
+                    onClick={() => {
+                      setLeadSeleccionado(null);
+                      setInteracciones([]);
+                    }}
+                    title="Cerrar historial"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <FormularioInteraccion
+                  leadNombre={leadSeleccionado.nombre}
+                  alGuardar={manejarGuardarInteraccion}
+                />
+
+                <div className="historial-separador">
+                  <span>Interacciones anteriores ({interacciones.length})</span>
+                </div>
+
+                <HistorialInteracciones
+                  interacciones={interacciones}
+                  cargando={cargandoInteracciones}
+                  error={errorInteracciones}
+                />
+              </div>
+            )}
           </>
         ) : (
           <>

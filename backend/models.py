@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
 from sqlalchemy.sql import func
 from database import Base
 
@@ -30,5 +30,20 @@ class Propiedad(Base):
     precio = Column(Integer, nullable=False)
     direccion = Column(String(200), nullable=False)
     estado = Column(String(50), default="Disponible")
+    fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class Interaccion(Base):
+    """
+    Modelo ORM que representa una interacción registrada con un lead.
+    Permite llevar historial de contacto: llamadas, visitas, emails, etc.
+    Cada interacción pertenece a un lead mediante clave foránea.
+    """
+    __tablename__ = "interacciones"
+
+    id = Column(Integer, primary_key=True, index=True)
+    lead_id = Column(Integer, ForeignKey("leads.id", ondelete="CASCADE"), nullable=False)
+    tipo = Column(String(50), nullable=False)        # Llamada, Visita, Email, WhatsApp
+    notas = Column(Text, nullable=True)
     fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())
 
