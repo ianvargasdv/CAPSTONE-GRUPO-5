@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Date
 from sqlalchemy.sql import func
 from database import Base
 
@@ -47,3 +47,20 @@ class Interaccion(Base):
     notas = Column(Text, nullable=True)
     fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())
 
+
+
+class Tarea(Base):
+    """
+    Modelo ORM que representa una tarea pendiente en el CRM.
+    Permite al ejecutivo registrar trabajo a realizar, opcionalmente vinculado a un lead.
+    """
+    __tablename__ = "tareas"
+
+    id = Column(Integer, primary_key=True, index=True)
+    titulo = Column(String(200), nullable=False)
+    descripcion = Column(Text, nullable=True)
+    estado = Column(String(50), default="Pendiente")       # Pendiente, En Progreso, Completada
+    prioridad = Column(String(50), default="Media")        # Alta, Media, Baja
+    fecha_limite = Column(Date, nullable=True)
+    lead_id = Column(Integer, ForeignKey("leads.id", ondelete="SET NULL"), nullable=True)
+    fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())

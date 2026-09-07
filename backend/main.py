@@ -181,3 +181,105 @@ def crear_interaccion(lead_id: int, datos: schemas.InteraccionCrear, db: Session
     return nueva_interaccion
 
 
+
+
+@app.get("/api/tareas", response_model=List[schemas.TareaRespuesta])
+def listar_tareas(db: Session = Depends(database.obtener_db)):
+    """
+    Obtiene todas las tareas ordenadas por fecha de creación descendente.
+    """
+    tareas = db.query(models.Tarea).order_by(models.Tarea.fecha_creacion.desc()).all()
+    # Convertir fecha_limite de date a string para que Pydantic lo serialice correctamente
+    for tarea in tareas:
+        if tarea.fecha_limite:
+            tarea.fecha_limite = tarea.fecha_limite.isoformat()
+    return tareas
+
+
+@app.post("/api/tareas", response_model=schemas.TareaRespuesta, status_code=status.HTTP_201_CREATED)
+def crear_tarea(datos: schemas.TareaCrear, db: Session = Depends(database.obtener_db)):
+    """
+    Registra una nueva tarea en la base de datos.
+    Si se indica lead_id, verifica que el lead exista antes de asociarlo.
+    """
+    from datetime import date as date_type
+
+    if datos.lead_id:
+        lead = db.query(models.Lead).filter(models.Lead.id == datos.lead_id).first()
+        if not lead:
+            raise HTTPException(status_code=404, detail="Lead no encontrado")
+
+    # Convertir fecha_limite de string ISO a objeto date si se proporcionó
+    fecha_limite_obj = None
+    if datos.fecha_limite:
+        try:
+            fecha_limite_obj = date_type.fromisoformat(datos.fecha_limite)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Formato de fecha inválido. Use YYYY-MM-DD")
+
+    nueva_tarea = models.Tarea(
+        titulo=datos.titulo,
+        descripcion=datos.descripcion,
+        estado=datos.estado,
+        prioridad=datos.prioridad,
+        fecha_limite=fecha_limite_obj,
+        lead_id=datos.lead_id,
+    )
+    db.add(nueva_tarea)
+    db.commit()
+    db.refresh(nueva_tarea)
+
+    if nueva_tarea.fecha_limite:
+        nueva_tarea.fecha_limite = nueva_tarea.fecha_limite.isoformat()
+    return nueva_tarea
+
+
+@app.put("/api/tareas/{tarea_id}", response_model=schemas.TareaRespuesta)
+def actualizar_tarea(tarea_id: int, datos: schemas.TareaActualizar, db: Session = Depends(database.obtener_db)):
+    """
+    Actualiza los campos de una tarea existente.
+    Solo modifica los campos enviados en el body.
+    Devuelve 404 si la tarea no existe.
+    """
+    from datetime import date as date_type
+
+    tarea = db.query(models.Tarea).filter(models.Tarea.id == tarea_id).first()
+    if not tarea:
+        raise HTTPException(status_code=404, detail="Tarea no encontrada")
+
+    campos = datos.model_dump(exclude_unset=True)
+
+    # Tratar fecha_limite por separado para convertirla a objeto date
+    if "fecha_limite" in campos:
+        valor_fecha = campos.pop("fecha_limite")
+        if valor_fecha:
+            try:
+                tarea.fecha_limite = date_type.fromisoformat(valor_fecha)
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Formato de fecha inválido. Use YYYY-MM-DD")
+        else:
+            tarea.fecha_limite = None
+
+    for campo, valor in campos.items():
+        setattr(tarea, campo, valor)
+
+    db.commit()
+    db.refresh(tarea)
+
+    if tarea.fecha_limite:
+        tarea.fecha_limite = tarea.fecha_limite.isoformat()
+    return tarea
+
+
+@app.delete("/api/tareas/{tarea_id}", status_code=status.HTTP_204_NO_CONTENT)
+def eliminar_tarea(tarea_id: int, db: Session = Depends(database.obtener_db)):
+    """
+    Elimina una tarea por su ID.
+    Devuelve 404 si la tarea no existe.
+    """
+    tarea = db.query(models.Tarea).filter(models.Tarea.id == tarea_id).first()
+    if not tarea:
+        raise HTTPException(status_code=404, detail="Tarea no encontrada")
+
+    db.delete(tarea)
+    db.commit()

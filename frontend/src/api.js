@@ -153,3 +153,61 @@ export async function crearInteraccion(leadId, datosInteraccion) {
   }
   return await respuesta.json();
 }
+
+/**
+ * Obtiene todas las tareas ordenadas de más reciente a más antigua.
+ */
+export async function obtenerTareas() {
+  const respuesta = await fetch(`${API_URL}/tareas`);
+  if (!respuesta.ok) {
+    throw new Error('No se pudo cargar la lista de tareas');
+  }
+  return await respuesta.json();
+}
+
+/**
+ * Registra una nueva tarea en el backend.
+ * Recibe un objeto con titulo, descripcion, estado, prioridad, fecha_limite y lead_id opcionales.
+ */
+export async function crearTarea(datosTarea) {
+  const respuesta = await fetch(`${API_URL}/tareas`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(datosTarea),
+  });
+
+  if (!respuesta.ok) {
+    throw new Error('No se pudo guardar la tarea');
+  }
+  return await respuesta.json();
+}
+
+/**
+ * Actualiza los campos de una tarea existente.
+ * Recibe el ID de la tarea y un objeto con los campos a modificar.
+ */
+export async function actualizarTarea(id, datosTarea) {
+  const respuesta = await fetch(`${API_URL}/tareas/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(datosTarea),
+  });
+
+  if (!respuesta.ok) {
+    throw new Error('No se pudo actualizar la tarea');
+  }
+  return await respuesta.json();
+}
+
+/**
+ * Elimina una tarea por su ID.
+ */
+export async function eliminarTarea(id) {
+  const respuesta = await fetch(`${API_URL}/tareas/${id}`, {
+    method: 'DELETE',
+  });
+
+  if (!respuesta.ok) {
+    throw new Error('No se pudo eliminar la tarea');
+  }
+}
