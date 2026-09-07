@@ -1,6 +1,35 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { obtenerLeads, crearLead } from './api';
+import FormularioLead from './components/FormularioLead';
+import TablaLeads from './components/TablaLeads';
 
 function App() {
+  const [leads, setLeads] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(null);
+
+  const cargarLeads = async () => {
+    try {
+      setCargando(true);
+      setError(null);
+      const datos = await obtenerLeads();
+      setLeads(datos);
+    } catch (err) {
+      setError('No se pudo conectar con el servidor backend. Verifica que FastAPI esté ejecutándose.');
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  useEffect(() => {
+    cargarLeads();
+  }, []);
+
+  const manejarGuardarLead = async (nuevoLead) => {
+    const leadGuardado = await crearLead(nuevoLead);
+    setLeads((leadsPrevios) => [...leadsPrevios, leadGuardado]);
+  };
+
   return (
     <>
       <header className="app-header">
@@ -16,23 +45,17 @@ function App() {
       <main className="main-content">
         <div className="dashboard-card">
           <div className="card-header">
-            <h2 className="card-title">Estado del Sistema</h2>
-            <span className="badge">Estado Inicial</span>
+            <h2 className="card-title">Nuevo Lead</h2>
+            <span className="badge">Módulo Leads</span>
           </div>
+          <FormularioLead alGuardar={manejarGuardarLead} />
+        </div>
 
-          <p className="card-description">
-            Estructura base iniciada con éxito. Listo para incorporar componentes y lógica requerida.
-          </p>
-
-          <div className="status-grid">
-            <div className="status-card">
-              <span className="status-label">Sistema Frontend</span>
-              <div className="status-indicator">
-                <span className="dot"></span>
-                Activo
-              </div>
-            </div>
+        <div className="dashboard-card">
+          <div className="card-header">
+            <h2 className="card-title">Leads Registrados ({leads.length})</h2>
           </div>
+          <TablaLeads leads={leads} cargando={cargando} error={error} />
         </div>
       </main>
     </>
