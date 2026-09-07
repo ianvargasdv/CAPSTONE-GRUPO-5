@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, status
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -10,6 +11,16 @@ import schemas
 models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI(title="Capstone API")
+
+# Configuración de CORS para permitir solicitudes desde el frontend en desarrollo
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 
 @app.get("/health")
