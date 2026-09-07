@@ -28,3 +28,33 @@ export async function crearLead(datosLead) {
   }
   return await respuesta.json();
 }
+
+/**
+ * Obtiene el catálogo completo de propiedades desde el backend.
+ */
+export async function obtenerPropiedades() {
+  const respuesta = await fetch(`${API_URL}/propiedades`);
+  if (!respuesta.ok) {
+    throw new Error('No se pudo cargar el catálogo de propiedades');
+  }
+  return await respuesta.json();
+}
+
+/**
+ * Envía los datos de una nueva propiedad para registrarla en el backend.
+ */
+export async function crearPropiedad(datosPropiedad) {
+  const respuesta = await fetch(`${API_URL}/propiedades`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(datosPropiedad),
+  });
+
+  if (!respuesta.ok) {
+    throw new Error('No se pudo guardar la propiedad');
+  }
+  return await respuesta.json();
+}
+

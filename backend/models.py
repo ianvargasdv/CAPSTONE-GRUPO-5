@@ -16,3 +16,19 @@ class Lead(Base):
     estado = Column(String(50), default="Nuevo")
     prioridad = Column(String(50), default="Media")
     fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class Propiedad(Base):
+    """
+    Modelo ORM que representa una propiedad o inmueble en el sistema CRM.
+    """
+    __tablename__ = "propiedades"
+
+    id = Column(Integer, primary_key=True, index=True)
+    titulo = Column(String(150), nullable=False)
+    tipo = Column(String(50), default="Departamento")
+    precio = Column(Integer, nullable=False)
+    direccion = Column(String(200), nullable=False)
+    estado = Column(String(50), default="Disponible")
+    fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())
+
