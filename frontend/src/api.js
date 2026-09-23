@@ -248,12 +248,16 @@ export function obtenerAnalisis(leadId) {
 }
 
 /**
- * Pide al backend que genere un resumen del lead con el modelo de lenguaje.
+ * Pide al backend que genere un análisis del lead con el modelo de lenguaje.
+ *
+ * El tipo puede ser "resumen", que describe la situación del prospecto, o
+ * "recomendacion", que propone la siguiente acción.
+ *
  * Puede tardar varios segundos: el backend espera la respuesta del proveedor.
  */
-export function generarAnalisis(leadId) {
-  return pedir(`/leads/${leadId}/analisis`, {
+export function generarAnalisis(leadId, tipo = 'resumen') {
+  return pedir(`/leads/${leadId}/analisis?tipo=${tipo}`, {
     metodo: 'POST',
-    mensajeError: 'No se pudo generar el resumen',
+    mensajeError: 'No se pudo generar el análisis',
   });
 }

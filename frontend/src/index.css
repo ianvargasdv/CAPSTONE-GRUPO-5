@@ -1726,3 +1726,43 @@ textarea {
   font-size: 0.6875rem;
   color: var(--texto-suave);
 }
+
+/* ══════════════════════════════════════
+   ASISTENTE: RESUMEN Y RECOMENDACIÓN
+══════════════════════════════════════ */
+
+.asistente-bloques {
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+}
+
+.asistente-bloque {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.asistente-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.asistente-titulo {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+/* Estado vacío compacto: hay dos bloques y no conviene que ocupen media pantalla */
+.asistente-vacio {
+  padding: 0.75rem 1rem;
+  background-color: var(--superficie-alt);
+  border: 1px dashed var(--borde-fuerte);
+  border-radius: var(--radio);
+  font-size: 0.75rem;
+  color: var(--texto-suave);
+  line-height: 1.5;
+}
