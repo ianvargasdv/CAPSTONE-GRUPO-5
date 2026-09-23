@@ -26,9 +26,12 @@ backend/
   models.py          Modelos ORM (tablas)
   schemas.py         Esquemas de entrada y salida
   database.py        Conexión a PostgreSQL
-  seguridad.py       Contraseñas, tokens y autenticación
+  seguridad.py       Contraseñas, tokens, roles y autorización
   prioridad.py       Reglas de priorización de leads
+  ia.py              Integración con el modelo de lenguaje
   crear_usuario.py   Script para dar de alta usuarios
+  cambiar_rol.py     Script para cambiar el rol de un usuario
+  migrar.py          Aplica cambios de estructura sobre tablas existentes
 
 frontend/src/
   App.jsx            Estado general y navegación
@@ -95,7 +98,18 @@ entorno virtual activado:
 python crear_usuario.py
 ```
 
-Pide nombre, correo y contraseña. Sin al menos un usuario no se puede entrar.
+Pide nombre, correo, rol y contraseña. Sin al menos un usuario no se puede entrar.
+
+Hay dos roles. El **ejecutivo** trabaja la cartera: leads, propiedades, tareas y el
+asistente. El **admin** además ve el panel de consumo del agente de IA. No existe un
+rol para clientes porque los clientes no acceden al CRM: se comunican con la
+inmobiliaria y sus datos los registra el ejecutivo.
+
+Para cambiar el rol de un usuario que ya existe:
+
+```powershell
+python cambiar_rol.py
+```
 
 ### Frontend
 
@@ -159,6 +173,25 @@ parten de la misma ficha y se diferencian solo en las instrucciones.
 Cada generación ocurre al presionar el botón. No hay procesos automáticos ni
 llamadas al abrir la ficha, porque cada llamada al proveedor tiene costo.
 
+### Consumo y costo
+
+De cada llamada se guardan los tokens que informa el proveedor y el costo estimado
+calculado con los precios de `IA_PRECIO_ENTRADA_USD_MILLON` e
+`IA_PRECIO_SALIDA_USD_MILLON`. El costo se calcula al momento de generar el análisis
+y se almacena, para que cambiar de modelo o de precio después no altere el histórico.
+
+Es una estimación para tener referencia mientras se usa el sistema. El valor que
+manda es el del panel de facturación del proveedor.
+
+Si el proveedor no informa el consumo, los tokens y el costo quedan en nulo. No se
+guarda cero, porque un cero se leería como que la llamada fue gratis.
+
+El rol admin tiene una sección que muestra el gasto acumulado, el desglose por tipo
+de análisis, por modelo y por día, y cuánto queda del presupuesto declarado en
+`IA_PRESUPUESTO_USD`. También muestra la configuración vigente del proceso, porque
+la configuración se lee al arrancar: si se cambia el `.env` hay que reiniciar el
+servidor para que tome efecto.
+
 Se guarda la entrada además de la salida para poder verificar de dónde salió cada
 resumen. La ficha permite desplegar esa información, y el texto siempre aparece
 identificado como generado automáticamente con su fecha y el modelo que lo produjo.
@@ -178,12 +211,15 @@ clave viajaría al cliente y cualquiera podría leerla.
 - No hay límite de intentos de login. Solo frena el costo de bcrypt.
 - `/docs` es accesible sin autenticación. En producción habría que deshabilitarlo.
 - `create_all()` crea las tablas que faltan pero no agrega columnas a tablas que ya
-  existen. Al modificar un modelo existente hay que aplicar el cambio a mano en
-  Supabase.
+  existen. Para eso está `migrar.py`, que aplica los cambios de estructura con
+  `IF NOT EXISTS` y se puede correr las veces que sea necesario. Hay que ejecutarlo
+  después de traer cambios que agreguen columnas a una tabla existente.
 - CORS está limitado a `localhost:3000`. Al desplegar hay que agregar el dominio en
   `backend/main.py`.
-- No hay roles, ni asignación de leads por ejecutivo, ni cambio de contraseña desde
-  la interfaz, ni paginación en los listados.
+- No hay asignación de leads por ejecutivo: todos ven la misma cartera.
+- No hay cambio de contraseña desde la interfaz ni paginación en los listados.
+- Los roles se asignan por terminal, no desde la aplicación. Es deliberado: un
+  endpoint para cambiar roles sería una vía para que alguien se diera permisos.
 
 ## Problemas (evitables pero probables)
 
@@ -203,7 +239,7 @@ y en Windows `localhost` se resuelve primero a IPv6. Se corrige creando
 ## Alcance del proyecto actual (MVP) 
 
 Implementado: leads, propiedades, interacciones, tareas, propiedades de interés,
-autenticación, priorización de leads, asistente con IA (resumen y recomendación) y
-vista de inicio.
+autenticación con roles, priorización de leads, asistente con IA (resumen y
+recomendación), seguimiento del consumo del agente y vista de inicio.
 
 Pendiente: documentos y auditoría.

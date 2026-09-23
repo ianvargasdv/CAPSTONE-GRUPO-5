@@ -20,6 +20,7 @@ import {
   obtenerEstadoIA,
   obtenerAnalisis,
   generarAnalisis,
+  obtenerConsumoIA,
   iniciarSesion,
   obtenerPerfil,
   obtenerToken,
@@ -43,6 +44,7 @@ import FormularioInteraccion from './components/FormularioInteraccion';
 import PropiedadesInteres from './components/PropiedadesInteres';
 import HistorialInteracciones from './components/HistorialInteracciones';
 import AsistenteIA from './components/AsistenteIA';
+import ConsumoIA from './components/ConsumoIA';
 
 /** Configuración de cada vista: título de la barra superior y su acción principal. */
 const VISTAS = {
@@ -50,6 +52,7 @@ const VISTAS = {
   leads: { titulo: 'Leads', accion: 'Nuevo lead', entidad: 'lead' },
   propiedades: { titulo: 'Propiedades', accion: 'Nueva propiedad', entidad: 'propiedad' },
   tareas: { titulo: 'Tareas', accion: 'Nueva tarea', entidad: 'tarea' },
+  consumo: { titulo: 'Consumo de IA', subtitulo: 'Gasto del agente' },
 };
 
 /** Título del panel lateral según la entidad y si se está creando o editando. */
@@ -142,6 +145,11 @@ function App() {
   // Si el backend no tiene proveedor de IA configurado, la ficha no ofrece generar
   const [iaConfigurada, setIaConfigurada] = useState(false);
 
+  // --- Consumo del agente, solo para admin ---
+  const [consumo, setConsumo] = useState(null);
+  const [cargandoConsumo, setCargandoConsumo] = useState(false);
+  const [errorConsumo, setErrorConsumo] = useState(null);
+
   // ── Confirmación de borrado: { entidad, registro } o null ──
   const [confirmacion, setConfirmacion] = useState(null);
   const [eliminando, setEliminando] = useState(false);
@@ -203,6 +211,8 @@ function App() {
     setLeads([]);
     setPropiedades([]);
     setTareas([]);
+    setConsumo(null);
+    setErrorConsumo(null);
     setCargandoLeads(true);
     setCargandoPropiedades(true);
     setCargandoTareas(true);
@@ -262,6 +272,32 @@ function App() {
   const abrirCrear = (entidad) => setPanelForm({ entidad, registro: null });
   const abrirEditar = (entidad, registro) => setPanelForm({ entidad, registro });
   const cerrarPanelForm = () => setPanelForm(null);
+
+  // ══════════ Consumo del agente ══════════
+
+  /**
+   * Pide el consumo acumulado. Solo tiene sentido para un admin: al ejecutivo el
+   * backend le responde 403 y la sección ni aparece en el menú.
+   */
+  const cargarConsumo = async () => {
+    try {
+      setCargandoConsumo(true);
+      setErrorConsumo(null);
+      setConsumo(await obtenerConsumoIA());
+    } catch (err) {
+      setErrorConsumo(err.message || 'No se pudo cargar el consumo del agente.');
+    } finally {
+      setCargandoConsumo(false);
+    }
+  };
+
+  // Se pide al entrar a la sección, no al iniciar sesión: así un ejecutivo nunca
+  // dispara una petición que va a ser rechazada.
+  useEffect(() => {
+    if (vista === 'consumo' && usuario?.rol === 'admin') {
+      cargarConsumo();
+    }
+  }, [vista, usuario]);
 
   // ══════════ Ficha del lead ══════════
 
@@ -588,6 +624,17 @@ function App() {
                 alPedirEliminar={(prop) => pedirEliminar('propiedad', prop)}
               />
             </div>
+          )}
+
+          {/* Solo para admin. El menú tampoco muestra la sección a un ejecutivo, y
+              el backend la rechaza con 403 si se la pide de todos modos. */}
+          {vista === 'consumo' && usuario.rol === 'admin' && (
+            <ConsumoIA
+              consumo={consumo}
+              cargando={cargandoConsumo}
+              error={errorConsumo}
+              alRecargar={cargarConsumo}
+            />
           )}
 
           {vista === 'tareas' && (

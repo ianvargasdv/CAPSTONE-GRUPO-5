@@ -25,6 +25,8 @@ function iniciales(nombre = '') {
     .join('');
 }
 
+// soloAdmin marca las secciones que no se muestran a un ejecutivo. Ocultarlas es
+// una comodidad, no la protección: quien realmente bloquea el acceso es el backend.
 const SECCIONES = [
   {
     titulo: 'General',
@@ -37,6 +39,11 @@ const SECCIONES = [
       { id: 'propiedades', etiqueta: 'Propiedades', icono: 'edificio', contador: 'propiedades' },
       { id: 'tareas', etiqueta: 'Tareas', icono: 'tareas', contador: 'tareasPendientes', destacar: true },
     ],
+  },
+  {
+    titulo: 'Administración',
+    soloAdmin: true,
+    items: [{ id: 'consumo', etiqueta: 'Consumo de IA', icono: 'tendencia' }],
   },
 ];
 
@@ -52,7 +59,9 @@ function Sidebar({ vistaActiva, alCambiarVista, contadores, usuario, alCerrarSes
       </div>
 
       <nav className="sidebar-nav">
-        {SECCIONES.map((seccion) => (
+        {SECCIONES.filter(
+          (seccion) => !seccion.soloAdmin || usuario?.rol === 'admin'
+        ).map((seccion) => (
           <div key={seccion.titulo} style={{ marginBottom: '1rem' }}>
             <p className="nav-grupo-titulo">{seccion.titulo}</p>
 
@@ -87,7 +96,9 @@ function Sidebar({ vistaActiva, alCambiarVista, contadores, usuario, alCerrarSes
             <div className="usuario-inicial">{iniciales(usuario.nombre)}</div>
             <div className="usuario-datos">
               <span className="usuario-nombre">{usuario.nombre}</span>
-              <span className="usuario-email">{usuario.email}</span>
+              <span className="usuario-email">
+                {usuario.rol === 'admin' ? 'Administrador' : 'Ejecutivo'}
+              </span>
             </div>
             <button className="btn-icono" onClick={alCerrarSesion} title="Cerrar sesión">
               <Icono nombre="salir" />

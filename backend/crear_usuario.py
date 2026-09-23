@@ -56,6 +56,23 @@ def pedir_password() -> str:
         return password
 
 
+def pedir_rol() -> str:
+    """
+    Pide el rol del usuario. El valor por omisión es el de menos permisos.
+    """
+    print("\nRoles disponibles:")
+    print("  1) ejecutivo  trabaja la cartera: leads, propiedades, tareas y asistente")
+    print("  2) admin      además supervisa el sistema y el gasto del agente de IA")
+
+    while True:
+        opcion = input("Rol [1]: ").strip() or "1"
+        if opcion in ("1", "ejecutivo"):
+            return seguridad.ROL_EJECUTIVO
+        if opcion in ("2", "admin"):
+            return seguridad.ROL_ADMIN
+        print("  Escribe 1 o 2.")
+
+
 def main() -> int:
     # Asegura que la tabla de usuarios exista antes de insertar
     models.Base.metadata.create_all(bind=database.engine)
@@ -73,19 +90,21 @@ def main() -> int:
             print(f"\nYa existe un usuario con el correo {email}.")
             return 1
 
+        rol = pedir_rol()
         password = pedir_password()
 
         usuario = models.Usuario(
             nombre=nombre,
             email=email,
             password_hash=seguridad.hashear_password(password),
+            rol=rol,
             activo=True,
         )
         db.add(usuario)
         db.commit()
         db.refresh(usuario)
 
-        print(f"\nUsuario creado. id={usuario.id}  correo={usuario.email}")
+        print(f"\nUsuario creado. id={usuario.id}  correo={usuario.email}  rol={usuario.rol}")
         print("Ya puedes iniciar sesión en el CRM con estas credenciales.")
         return 0
 
