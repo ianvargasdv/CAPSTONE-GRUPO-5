@@ -232,3 +232,28 @@ export function eliminarInteres(id) {
     mensajeError: 'No se pudo quitar el interés',
   });
 }
+
+/* ══════════════════ Análisis con IA ══════════════════ */
+
+/** Indica si hay proveedor de IA configurado en el backend. */
+export function obtenerEstadoIA() {
+  return pedir('/ia/estado', { mensajeError: 'No se pudo consultar el estado del servicio de IA' });
+}
+
+/** Devuelve los análisis ya generados para un lead, del más reciente al más antiguo. */
+export function obtenerAnalisis(leadId) {
+  return pedir(`/leads/${leadId}/analisis`, {
+    mensajeError: 'No se pudieron cargar los análisis del lead',
+  });
+}
+
+/**
+ * Pide al backend que genere un resumen del lead con el modelo de lenguaje.
+ * Puede tardar varios segundos: el backend espera la respuesta del proveedor.
+ */
+export function generarAnalisis(leadId) {
+  return pedir(`/leads/${leadId}/analisis`, {
+    metodo: 'POST',
+    mensajeError: 'No se pudo generar el resumen',
+  });
+}

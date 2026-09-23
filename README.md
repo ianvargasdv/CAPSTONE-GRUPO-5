@@ -68,6 +68,15 @@ python -c "import secrets; print(secrets.token_urlsafe(48))"
 Cada persona genera su propia clave. El archivo `.env` está en el `.gitignore` y no
 se sube al repositorio.
 
+Opcionalmente se puede configurar el proveedor de IA que genera los resúmenes. Si se
+deja vacío el sistema funciona igual, solo no ofrece generarlos:
+
+```
+IA_BASE_URL=http://localhost:11434/v1
+IA_API_KEY=local
+IA_MODELO=llama3
+```
+
 Levantar el servidor:
 
 ```powershell
@@ -134,6 +143,24 @@ El puntaje no se guarda en la base: se recalcula en cada consulta, porque uno
 almacenado quedaría desactualizado en cuanto se registra una interacción. Para no
 consultar la base una vez por lead, la actividad se obtiene con consultas agrupadas.
 
+## Resumen con IA
+
+Desde la ficha de un lead se puede pedir un resumen de su situación. El backend arma
+un texto con los datos registrados (historial de contacto, propiedades de interés y
+prioridad calculada), lo envía al modelo y guarda en `analisis_ia` tanto lo que se
+envió como lo que respondió.
+
+Se guarda la entrada además de la salida para poder verificar de dónde salió cada
+resumen. La ficha permite desplegar esa información, y el texto siempre aparece
+identificado como generado automáticamente con su fecha y el modelo que lo produjo.
+
+La integración usa el formato de chat completions compatible con OpenAI, así que
+sirve tanto un servicio alojado como un modelo local. Cambiar de proveedor es cambiar
+`IA_BASE_URL` e `IA_MODELO` en el `.env`.
+
+La llamada al proveedor se hace desde el backend. Si se hiciera desde el navegador la
+clave viajaría al cliente y cualquiera podría leerla.
+
 ## Limitaciones conocidas
 
 - El token se guarda en `localStorage`, que es accesible desde JavaScript y por lo
@@ -167,6 +194,6 @@ y en Windows `localhost` se resuelve primero a IPv6. Se corrige creando
 ## Estado del proyecto
 
 Implementado: leads, propiedades, interacciones, tareas, propiedades de interés,
-autenticación, priorización de leads y vista de inicio.
+autenticación, priorización de leads, resumen con IA y vista de inicio.
 
-Pendiente: agente de IA, documentos y auditoría.
+Pendiente: recomendación de próxima acción, documentos y auditoría.

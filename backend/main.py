@@ -7,6 +7,7 @@ from sqlalchemy import case, func
 from sqlalchemy.orm import Session
 
 import database
+import ia
 import models
 import prioridad
 import schemas
@@ -533,6 +534,118 @@ def eliminar_interes(interes_id: int, db: Session = Depends(database.obtener_db)
 
     db.delete(interes)
     db.commit()
+
+
+# ══════════════════════════════════════════════════════════════
+# Análisis con IA
+# ══════════════════════════════════════════════════════════════
+
+
+@router_privado.get("/ia/estado", response_model=schemas.EstadoIARespuesta)
+def estado_ia():
+    """
+    Informa si hay proveedor de IA configurado, para que la interfaz no ofrezca
+    generar resúmenes cuando no es posible.
+    """
+    configurada = ia.esta_configurada()
+    return schemas.EstadoIARespuesta(
+        configurada=configurada,
+        modelo=ia.MODELO if configurada else None,
+    )
+
+
+@router_privado.get("/leads/{lead_id}/analisis", response_model=List[schemas.AnalisisRespuesta])
+def listar_analisis(lead_id: int, db: Session = Depends(database.obtener_db)):
+    """
+    Devuelve los análisis generados para un lead, del más reciente al más antiguo.
+    """
+    lead = db.query(models.Lead).filter(models.Lead.id == lead_id).first()
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead no encontrado")
+
+    return (
+        db.query(models.AnalisisIA)
+        .filter(models.AnalisisIA.lead_id == lead_id)
+        .order_by(models.AnalisisIA.fecha_creacion.desc())
+        .all()
+    )
+
+
+@router_privado.post(
+    "/leads/{lead_id}/analisis",
+    response_model=schemas.AnalisisRespuesta,
+    status_code=status.HTTP_201_CREATED,
+)
+def crear_analisis(
+    lead_id: int,
+    db: Session = Depends(database.obtener_db),
+    usuario: models.Usuario = Depends(seguridad.usuario_actual),
+):
+    """
+    Genera un resumen del lead con el modelo de lenguaje y lo guarda.
+
+    Reúne los datos del lead, su prioridad calculada, sus propiedades de interés y
+    su historial de contacto, arma con eso un texto y se lo envía al modelo. Queda
+    registrado qué se envió, qué respondió, con qué modelo y quién lo pidió.
+
+    El router ya exige autenticación; acá se pide además el usuario porque hace
+    falta saber quién solicitó el análisis.
+
+    Es una función sincrónica que puede tardar varios segundos. FastAPI ejecuta este
+    tipo de endpoint en un hilo aparte, así que la espera no bloquea al resto.
+    """
+    if not ia.esta_configurada():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="El servicio de IA no está configurado. Revisa IA_BASE_URL e IA_MODELO en el archivo .env del backend.",
+        )
+
+    lead = db.query(models.Lead).filter(models.Lead.id == lead_id).first()
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead no encontrado")
+
+    # La prioridad y sus motivos forman parte del contexto que recibe el modelo
+    por_interacciones, por_intereses = _actividad_de_leads(db, [lead.id])
+    _agregar_prioridad(lead, por_interacciones, por_intereses, datetime.now(timezone.utc))
+
+    interacciones = (
+        db.query(models.Interaccion)
+        .filter(models.Interaccion.lead_id == lead_id)
+        .order_by(models.Interaccion.fecha_creacion.desc())
+        .all()
+    )
+
+    intereses = db.query(models.Interes).filter(models.Interes.lead_id == lead_id).all()
+
+    # Una sola consulta para todas las propiedades referenciadas
+    propiedades_por_id = {}
+    if intereses:
+        ids = [i.propiedad_id for i in intereses]
+        propiedades_por_id = {
+            p.id: p for p in db.query(models.Propiedad).filter(models.Propiedad.id.in_(ids)).all()
+        }
+
+    ficha = ia.construir_ficha(lead, interacciones, intereses, propiedades_por_id)
+
+    try:
+        resumen, modelo_usado = ia.generar_resumen(ficha)
+    except ia.IANoConfigurada as error:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(error))
+    except ia.IAFallo as error:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(error))
+
+    analisis = models.AnalisisIA(
+        lead_id=lead_id,
+        usuario_id=usuario.id,
+        tipo="resumen",
+        entrada=ficha,
+        salida=resumen,
+        modelo=modelo_usado,
+    )
+    db.add(analisis)
+    db.commit()
+    db.refresh(analisis)
+    return analisis
 
 
 # Los routers se registran al final, cuando ya tienen todos sus endpoints
