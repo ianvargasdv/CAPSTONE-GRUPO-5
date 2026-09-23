@@ -42,7 +42,7 @@ import FormularioTarea from './components/FormularioTarea';
 import FormularioInteraccion from './components/FormularioInteraccion';
 import PropiedadesInteres from './components/PropiedadesInteres';
 import HistorialInteracciones from './components/HistorialInteracciones';
-import ResumenIA from './components/ResumenIA';
+import AsistenteIA from './components/AsistenteIA';
 
 /** Configuración de cada vista: título de la barra superior y su acción principal. */
 const VISTAS = {
@@ -310,11 +310,12 @@ function App() {
   };
 
   /**
-   * Pide un resumen nuevo al backend y lo pone al principio de la lista.
-   * Los errores se propagan para que los muestre el componente del resumen.
+   * Pide un análisis nuevo al backend y lo pone al principio de la lista.
+   * El tipo puede ser "resumen" o "recomendacion".
+   * Los errores se propagan para que los muestre el componente del asistente.
    */
-  const generarResumen = async () => {
-    const nuevo = await generarAnalisis(fichaLead.id);
+  const generarAnalisisDeLead = async (tipo) => {
+    const nuevo = await generarAnalisis(fichaLead.id, tipo);
     setAnalisis((prev) => [nuevo, ...prev]);
   };
 
@@ -741,12 +742,12 @@ function App() {
             )}
 
             <div className="ficha-seccion">
-              <ResumenIA
+              <AsistenteIA
                 analisis={analisis}
                 cargando={cargandoAnalisis}
                 error={errorAnalisis}
                 iaConfigurada={iaConfigurada}
-                alGenerar={generarResumen}
+                alGenerar={generarAnalisisDeLead}
               />
             </div>
 

@@ -59,15 +59,39 @@ class IAFallo(Exception):
     """El proveedor no respondió o respondió algo que no se pudo interpretar."""
 
 
-INSTRUCCIONES = """Eres un asistente para ejecutivos inmobiliarios. Recibes la ficha de un prospecto con su historial real registrado en el CRM y escribes un resumen breve para que el ejecutivo se ponga al día antes de contactarlo.
-
-Reglas que debes seguir sin excepción:
-- Usa únicamente la información que aparece en la ficha. No agregues datos, nombres, fechas, montos ni supuestos que no estén escritos.
+# Reglas comunes a todos los análisis. Son la defensa principal contra que el
+# modelo agregue información que no está en los registros del CRM.
+_REGLAS_BASE = """- Usa únicamente la información que aparece en la ficha. No agregues datos, nombres, fechas, montos ni supuestos que no estén escritos.
 - Si la ficha tiene poca información, dilo con claridad en lugar de rellenar.
 - No inventes el motivo de compra, la situación económica ni las intenciones del cliente si no están registradas.
 - Escribe en español de Chile, en tono profesional y directo.
-- Máximo cuatro oraciones, en un solo párrafo. Sin títulos ni listas.
-- Cierra indicando cuál sería el siguiente paso razonable según lo registrado."""
+- Responde en un solo párrafo, sin títulos ni listas."""
+
+INSTRUCCIONES_RESUMEN = f"""Eres un asistente para ejecutivos inmobiliarios. Recibes la ficha de un prospecto con su historial real registrado en el CRM y escribes un resumen breve para que el ejecutivo se ponga al día antes de contactarlo.
+
+Describe la situación del prospecto: en qué punto está, qué se ha conversado y qué le interesa. No propongas acciones: de eso se encarga otro análisis.
+
+Reglas que debes seguir sin excepción:
+{_REGLAS_BASE}
+- Máximo cuatro oraciones."""
+
+INSTRUCCIONES_RECOMENDACION = f"""Eres un asistente para ejecutivos inmobiliarios. Recibes la ficha de un prospecto con su historial real registrado en el CRM y recomiendas la siguiente acción concreta a realizar con él.
+
+Reglas que debes seguir sin excepción:
+{_REGLAS_BASE}
+- Máximo tres oraciones.
+- Propón una sola acción concreta y verificable, por ejemplo llamar, enviar información, agendar una visita o cerrar el lead.
+- Justifica la acción con un dato específico de la ficha.
+- Revisa las tareas pendientes antes de responder. Si ya existe una tarea que cubre lo que ibas a proponer, no la repitas: recomienda avanzar sobre esa tarea.
+- Si el prospecto está cerrado o no hay acción razonable que tomar, dilo en lugar de inventar una."""
+
+# Qué instrucciones corresponden a cada tipo de análisis
+INSTRUCCIONES_POR_TIPO = {
+    "resumen": INSTRUCCIONES_RESUMEN,
+    "recomendacion": INSTRUCCIONES_RECOMENDACION,
+}
+
+TIPOS_VALIDOS = tuple(INSTRUCCIONES_POR_TIPO)
 
 
 def esta_configurada() -> bool:
@@ -143,18 +167,22 @@ def _fecha(valor) -> str:
     return valor.astimezone(timezone.utc).strftime("%d-%m-%Y")
 
 
-def construir_ficha(lead, interacciones, intereses, propiedades_por_id) -> str:
+def construir_ficha(lead, interacciones, intereses, propiedades_por_id, tareas=()) -> str:
     """
     Arma el texto que se le envía al modelo a partir de los registros del lead.
 
     Se construye acá y no en el endpoint para que quede en un solo lugar revisable
     qué información sale del sistema hacia el proveedor.
 
+    Las tareas pendientes se incluyen para que la recomendación no proponga algo que
+    el ejecutivo ya tiene agendado.
+
     Parámetros:
         lead                  el lead, ya con su prioridad calculada
         interacciones         sus interacciones, de más reciente a más antigua
         intereses             sus propiedades de interés
         propiedades_por_id    diccionario id -> propiedad, para describir cada interés
+        tareas                sus tareas sin completar
     """
     lineas = [
         "FICHA DEL PROSPECTO",
@@ -199,12 +227,30 @@ def construir_ficha(lead, interacciones, intereses, propiedades_por_id) -> str:
     else:
         lineas.append("- Sin contactos registrados")
 
+    lineas.append("")
+    lineas.append("TAREAS PENDIENTES")
+    if tareas:
+        for tarea in tareas:
+            texto = f"- {tarea.titulo} (estado: {tarea.estado}, prioridad: {tarea.prioridad}"
+            if tarea.fecha_limite:
+                texto += f", vence el {tarea.fecha_limite}"
+            texto += ")"
+            if tarea.descripcion:
+                texto += f". Detalle: {tarea.descripcion}"
+            lineas.append(texto)
+    else:
+        lineas.append("- Ninguna")
+
     return "\n".join(lineas)
 
 
-def generar_resumen(ficha: str) -> tuple[str, str]:
+def generar_analisis(ficha: str, tipo: str = "resumen") -> tuple[str, str]:
     """
-    Envía la ficha al modelo y devuelve (resumen, nombre del modelo).
+    Envía la ficha al modelo y devuelve (texto generado, nombre del modelo).
+
+    El tipo determina qué instrucciones recibe el modelo: "resumen" describe la
+    situación del prospecto y "recomendacion" propone la siguiente acción. La ficha
+    que se envía es la misma en ambos casos.
 
     Lanza IANoConfigurada si falta la configuración e IAFallo si el proveedor no
     responde o responde algo inesperado.
@@ -214,10 +260,14 @@ def generar_resumen(ficha: str) -> tuple[str, str]:
             "El servicio de IA no está configurado. Falta IA_BASE_URL o IA_MODELO en el .env"
         )
 
+    instrucciones = INSTRUCCIONES_POR_TIPO.get(tipo)
+    if instrucciones is None:
+        raise ValueError(f"Tipo de análisis desconocido: {tipo}")
+
     peticion_json = {
         "model": MODELO,
         "messages": [
-            {"role": "system", "content": INSTRUCCIONES},
+            {"role": "system", "content": instrucciones},
             {"role": "user", "content": ficha},
         ],
         # max_completion_tokens y no max_tokens: este último quedó deprecado en la
@@ -276,10 +326,10 @@ def generar_resumen(ficha: str) -> tuple[str, str]:
         # parecería una falla del proveedor en lugar de un límite mal configurado.
         if eleccion.get("finish_reason") == "length":
             raise IAFallo(
-                f"El modelo agotó el límite de {MAX_TOKENS} tokens antes de escribir el "
-                "resumen. Sube IA_MAX_TOKENS en el .env del backend."
+                f"El modelo agotó el límite de {MAX_TOKENS} tokens antes de escribir la "
+                "respuesta. Sube IA_MAX_TOKENS en el .env del backend."
             )
-        raise IAFallo("El proveedor devolvió un resumen vacío")
+        raise IAFallo("El proveedor devolvió una respuesta vacía")
 
     # El modelo informado por el proveedor puede diferir del solicitado
     modelo_usado = datos.get("model") or MODELO

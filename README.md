@@ -143,12 +143,21 @@ El puntaje no se guarda en la base: se recalcula en cada consulta, porque uno
 almacenado quedaría desactualizado en cuanto se registra una interacción. Para no
 consultar la base una vez por lead, la actividad se obtiene con consultas agrupadas.
 
-## Resumen con IA
+## Asistente con IA
 
-Desde la ficha de un lead se puede pedir un resumen de su situación. El backend arma
-un texto con los datos registrados (historial de contacto, propiedades de interés y
-prioridad calculada), lo envía al modelo y guarda en `analisis_ia` tanto lo que se
-envió como lo que respondió.
+Desde la ficha de un lead se pueden pedir dos análisis:
+
+- **Resumen de la situación**: describe en qué punto está el prospecto.
+- **Siguiente acción recomendada**: propone qué hacer, revisando las tareas
+  pendientes para no proponer algo que ya está agendado.
+
+El backend arma un texto con los datos registrados (historial de contacto,
+propiedades de interés, prioridad calculada y tareas pendientes), lo envía al modelo
+y guarda en `analisis_ia` tanto lo que se envió como lo que respondió. Los dos tipos
+parten de la misma ficha y se diferencian solo en las instrucciones.
+
+Cada generación ocurre al presionar el botón. No hay procesos automáticos ni
+llamadas al abrir la ficha, porque cada llamada al proveedor tiene costo.
 
 Se guarda la entrada además de la salida para poder verificar de dónde salió cada
 resumen. La ficha permite desplegar esa información, y el texto siempre aparece
@@ -194,6 +203,7 @@ y en Windows `localhost` se resuelve primero a IPv6. Se corrige creando
 ## Alcance del proyecto actual (MVP) 
 
 Implementado: leads, propiedades, interacciones, tareas, propiedades de interés,
-autenticación, priorización de leads, resumen con IA y vista de inicio.
+autenticación, priorización de leads, asistente con IA (resumen y recomendación) y
+vista de inicio.
 
-Pendiente: recomendación de próxima acción, documentos y auditoría.
+Pendiente: documentos y auditoría.

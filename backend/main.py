@@ -1,5 +1,5 @@
 from datetime import date, datetime, timezone
-from typing import List
+from typing import List, Literal
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -578,15 +578,21 @@ def listar_analisis(lead_id: int, db: Session = Depends(database.obtener_db)):
 )
 def crear_analisis(
     lead_id: int,
+    tipo: Literal["resumen", "recomendacion"] = "resumen",
     db: Session = Depends(database.obtener_db),
     usuario: models.Usuario = Depends(seguridad.usuario_actual),
 ):
     """
-    Genera un resumen del lead con el modelo de lenguaje y lo guarda.
+    Genera un análisis del lead con el modelo de lenguaje y lo guarda.
 
-    Reúne los datos del lead, su prioridad calculada, sus propiedades de interés y
-    su historial de contacto, arma con eso un texto y se lo envía al modelo. Queda
-    registrado qué se envió, qué respondió, con qué modelo y quién lo pidió.
+    El tipo define qué se pide: "resumen" describe la situación del prospecto y
+    "recomendacion" propone la siguiente acción. Ambos parten de la misma ficha.
+    FastAPI valida el valor contra los dos permitidos.
+
+    Reúne los datos del lead, su prioridad calculada, sus propiedades de interés, su
+    historial de contacto y sus tareas pendientes, arma con eso un texto y se lo
+    envía al modelo. Queda registrado qué se envió, qué respondió, con qué modelo y
+    quién lo pidió.
 
     El router ya exige autenticación; acá se pide además el usuario porque hace
     falta saber quién solicitó el análisis.
@@ -625,10 +631,21 @@ def crear_analisis(
             p.id: p for p in db.query(models.Propiedad).filter(models.Propiedad.id.in_(ids)).all()
         }
 
-    ficha = ia.construir_ficha(lead, interacciones, intereses, propiedades_por_id)
+    # Solo las tareas sin completar: sirven para que la recomendación no proponga
+    # algo que el ejecutivo ya tiene agendado
+    tareas = (
+        db.query(models.Tarea)
+        .filter(models.Tarea.lead_id == lead_id, models.Tarea.estado != "Completada")
+        .all()
+    )
+    for tarea in tareas:
+        if tarea.fecha_limite:
+            tarea.fecha_limite = tarea.fecha_limite.isoformat()
+
+    ficha = ia.construir_ficha(lead, interacciones, intereses, propiedades_por_id, tareas)
 
     try:
-        resumen, modelo_usado = ia.generar_resumen(ficha)
+        texto, modelo_usado = ia.generar_analisis(ficha, tipo)
     except ia.IANoConfigurada as error:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(error))
     except ia.IAFallo as error:
@@ -637,9 +654,9 @@ def crear_analisis(
     analisis = models.AnalisisIA(
         lead_id=lead_id,
         usuario_id=usuario.id,
-        tipo="resumen",
+        tipo=tipo,
         entrada=ficha,
-        salida=resumen,
+        salida=texto,
         modelo=modelo_usado,
     )
     db.add(analisis)
