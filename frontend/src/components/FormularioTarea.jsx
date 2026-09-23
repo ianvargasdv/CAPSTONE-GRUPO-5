@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 
 /**
- * Formulario para registrar o editar una tarea.
+ * Formulario para crear o editar una tarea. Se muestra dentro de un panel lateral.
  *
  * Props:
  * - alGuardar: función que recibe los datos del formulario
- * - tareaEditar: objeto tarea con datos precargados en modo edición (opcional)
- * - alCancelar: función para cancelar el modo edición (opcional)
- * - leads: lista de leads disponibles para vincular a la tarea
+ * - tareaEditar: tarea con datos precargados en modo edición (opcional)
+ * - alCancelar: cierra el panel sin guardar
+ * - leads: lista de leads disponibles para vincular
  */
 function FormularioTarea({ alGuardar, tareaEditar, alCancelar, leads = [] }) {
   const [titulo, setTitulo] = useState('');
@@ -21,7 +21,6 @@ function FormularioTarea({ alGuardar, tareaEditar, alCancelar, leads = [] }) {
 
   const modoEdicion = Boolean(tareaEditar);
 
-  // Precarga los datos cuando se recibe una tarea a editar
   useEffect(() => {
     if (tareaEditar) {
       setTitulo(tareaEditar.titulo || '');
@@ -30,8 +29,15 @@ function FormularioTarea({ alGuardar, tareaEditar, alCancelar, leads = [] }) {
       setPrioridad(tareaEditar.prioridad || 'Media');
       setFechaLimite(tareaEditar.fecha_limite || '');
       setLeadId(tareaEditar.lead_id ? String(tareaEditar.lead_id) : '');
-      setError(null);
+    } else {
+      setTitulo('');
+      setDescripcion('');
+      setEstado('Pendiente');
+      setPrioridad('Media');
+      setFechaLimite('');
+      setLeadId('');
     }
+    setError(null);
   }, [tareaEditar]);
 
   const manejarEnvio = async (e) => {
@@ -52,18 +58,8 @@ function FormularioTarea({ alGuardar, tareaEditar, alCancelar, leads = [] }) {
         fecha_limite: fechaLimite || null,
         lead_id: leadId ? parseInt(leadId, 10) : null,
       });
-
-      // Solo limpiar en modo creación
-      if (!modoEdicion) {
-        setTitulo('');
-        setDescripcion('');
-        setEstado('Pendiente');
-        setPrioridad('Media');
-        setFechaLimite('');
-        setLeadId('');
-      }
     } catch (err) {
-      setError(err.message || 'Error al guardar la tarea');
+      setError(err.message || 'No se pudo guardar la tarea');
     } finally {
       setCargando(false);
     }
@@ -71,23 +67,19 @@ function FormularioTarea({ alGuardar, tareaEditar, alCancelar, leads = [] }) {
 
   return (
     <form className="form-lead" onSubmit={manejarEnvio}>
-      <h3 className="section-subtitle">
-        {modoEdicion ? `Editando Tarea #${tareaEditar.id}` : 'Nueva Tarea'}
-      </h3>
-
       {error && <div className="alert-error">{error}</div>}
 
       <div className="form-grid">
         <div className="form-group form-group-full">
-          <label htmlFor="titulo-tarea">Título *</label>
+          <label htmlFor="titulo-tarea">Título</label>
           <input
             id="titulo-tarea"
             type="text"
-            placeholder="Ej: Llamar a cliente para agendar visita"
+            placeholder="Llamar para agendar visita"
             value={titulo}
             onChange={(e) => setTitulo(e.target.value)}
             disabled={cargando}
-            required
+            autoFocus
           />
         </div>
 
@@ -138,10 +130,10 @@ function FormularioTarea({ alGuardar, tareaEditar, alCancelar, leads = [] }) {
             onChange={(e) => setLeadId(e.target.value)}
             disabled={cargando}
           >
-            <option value="">Sin lead asociado</option>
+            <option value="">Ninguno</option>
             {leads.map((lead) => (
               <option key={lead.id} value={lead.id}>
-                {lead.nombre} — {lead.email}
+                {lead.nombre}
               </option>
             ))}
           </select>
@@ -152,7 +144,7 @@ function FormularioTarea({ alGuardar, tareaEditar, alCancelar, leads = [] }) {
           <textarea
             id="descripcion-tarea"
             className="form-textarea"
-            placeholder="Detalles adicionales sobre la tarea..."
+            placeholder="Detalles adicionales de la tarea"
             value={descripcion}
             onChange={(e) => setDescripcion(e.target.value)}
             disabled={cargando}
@@ -162,22 +154,13 @@ function FormularioTarea({ alGuardar, tareaEditar, alCancelar, leads = [] }) {
       </div>
 
       <div className="form-actions">
-        {modoEdicion && alCancelar && (
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={alCancelar}
-            disabled={cargando}
-          >
+        {alCancelar && (
+          <button type="button" className="btn-secondary" onClick={alCancelar} disabled={cargando}>
             Cancelar
           </button>
         )}
         <button type="submit" className="btn-primary" disabled={cargando}>
-          {cargando
-            ? 'Guardando...'
-            : modoEdicion
-            ? 'Guardar Cambios'
-            : 'Crear Tarea'}
+          {cargando ? 'Guardando...' : modoEdicion ? 'Guardar cambios' : 'Crear tarea'}
         </button>
       </div>
     </form>

@@ -139,3 +139,29 @@ class TareaRespuesta(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class InteresCrear(BaseModel):
+    """
+    Esquema para registrar el interés de un lead en una propiedad.
+    El lead_id se obtiene de la URL, no del body.
+    """
+    propiedad_id: int
+    nivel_interes: Optional[str] = "Medio"
+    notas: Optional[str] = None
+
+
+class InteresRespuesta(BaseModel):
+    """
+    Esquema de respuesta para un interés registrado.
+    Devuelve el propiedad_id para que el frontend lo cruce con el catálogo que ya tiene cargado.
+    """
+    id: int
+    lead_id: int
+    propiedad_id: int
+    nivel_interes: str
+    notas: Optional[str] = None
+    fecha_creacion: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True

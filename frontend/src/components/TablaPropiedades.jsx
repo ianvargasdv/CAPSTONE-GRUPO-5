@@ -1,145 +1,174 @@
 import React, { useState } from 'react';
+import Icono from './Iconos';
 
 /**
- * Tabla de propiedades con búsqueda, filtro por tipo y acciones de editar/eliminar.
+ * Listado del catálogo de propiedades con búsqueda y filtros por tipo y estado.
  *
  * Props:
- * - propiedades: lista de propiedades a mostrar
- * - cargando: boolean que indica si los datos están cargando
- * - error: mensaje de error si la carga falló
- * - alEditar: función que recibe el objeto propiedad a editar
- * - alEliminar: función que recibe el id de la propiedad a eliminar
+ * - propiedades: lista de propiedades
+ * - cargando / error: estado de la carga
+ * - alEditar: abre el panel de edición
+ * - alPedirEliminar: solicita la eliminación (la confirmación la maneja App)
  */
-function TablaPropiedades({ propiedades, cargando, error, alEditar, alEliminar }) {
+
+const TIPOS = ['Departamento', 'Casa', 'Terreno', 'Oficina'];
+
+// Tono de la etiqueta según disponibilidad comercial
+const TONO_ESTADO = {
+  Disponible: 'exito',
+  Reservada: 'alerta',
+  Vendida: 'neutra',
+};
+
+const ICONO_TIPO = {
+  Departamento: 'edificio',
+  Casa: 'casa',
+  Terreno: 'etiqueta',
+  Oficina: 'edificio',
+};
+
+function TablaPropiedades({ propiedades, cargando, error, alEditar, alPedirEliminar }) {
   const [busqueda, setBusqueda] = useState('');
-  const [tipoFiltro, setTipoFiltro] = useState('Todos');
-  const [eliminandoId, setEliminandoId] = useState(null);
+  const [filtroTipo, setFiltroTipo] = useState('Todos');
+  const [filtroEstado, setFiltroEstado] = useState('Todos');
 
   if (cargando) {
-    return <div className="state-message">Cargando catálogo de propiedades...</div>;
+    return <div className="state-message">Cargando catálogo...</div>;
   }
 
   if (error) {
-    return <div className="alert-error">{error}</div>;
+    return (
+      <div className="panel-cuerpo">
+        <div className="alert-error">
+          <Icono nombre="alerta" />
+          <span>{error}</span>
+        </div>
+      </div>
+    );
   }
 
   if (!propiedades || propiedades.length === 0) {
     return (
       <div className="state-message empty">
-        No hay propiedades registradas aún en Supabase.
+        <Icono nombre="edificio" tamano={20} />
+        <span className="vacio-titulo">El catálogo está vacío</span>
+        <span className="vacio-detalle">
+          Carga las propiedades disponibles para poder asociarlas a los leads interesados.
+        </span>
       </div>
     );
   }
 
-  const propiedadesFiltradas = propiedades.filter((prop) => {
+  const filtradas = propiedades.filter((prop) => {
     const termino = busqueda.toLowerCase().trim();
-    const coincideBusqueda =
+    const coincideTexto =
       !termino ||
       prop.titulo.toLowerCase().includes(termino) ||
       prop.direccion.toLowerCase().includes(termino);
-
-    const coincideTipo =
-      tipoFiltro === 'Todos' || prop.tipo.toLowerCase() === tipoFiltro.toLowerCase();
-
-    return coincideBusqueda && coincideTipo;
+    const coincideTipo = filtroTipo === 'Todos' || prop.tipo === filtroTipo;
+    const coincideEstado = filtroEstado === 'Todos' || prop.estado === filtroEstado;
+    return coincideTexto && coincideTipo && coincideEstado;
   });
 
-  const manejarEliminar = (prop) => {
-    // Pide confirmación antes de eliminar
-    const confirmado = window.confirm(
-      `¿Eliminar la propiedad "${prop.titulo}"?\nEsta acción no se puede deshacer.`
-    );
-    if (confirmado) {
-      setEliminandoId(prop.id);
-      alEliminar(prop.id).finally(() => setEliminandoId(null));
-    }
-  };
-
   return (
-    <div className="table-container">
-      <div className="filter-bar">
-        <input
-          type="text"
-          className="search-input"
-          placeholder="Buscar propiedad por título o dirección..."
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-        />
+    <>
+      <div className="barra-herramientas">
+        <div className="campo-busqueda">
+          <Icono nombre="buscar" tamano={14} />
+          <input
+            type="search"
+            className="search-input"
+            placeholder="Buscar por título o dirección"
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            aria-label="Buscar propiedades"
+          />
+        </div>
 
         <select
           className="filter-select"
-          value={tipoFiltro}
-          onChange={(e) => setTipoFiltro(e.target.value)}
+          value={filtroTipo}
+          onChange={(e) => setFiltroTipo(e.target.value)}
         >
           <option value="Todos">Todos los tipos</option>
-          <option value="Departamento">Departamento</option>
-          <option value="Casa">Casa</option>
-          <option value="Terreno">Terreno</option>
-          <option value="Oficina">Oficina</option>
+          {TIPOS.map((tipo) => (
+            <option key={tipo} value={tipo}>
+              {tipo}
+            </option>
+          ))}
+        </select>
+
+        <select
+          className="filter-select"
+          value={filtroEstado}
+          onChange={(e) => setFiltroEstado(e.target.value)}
+        >
+          <option value="Todos">Todos los estados</option>
+          <option value="Disponible">Disponible</option>
+          <option value="Reservada">Reservada</option>
+          <option value="Vendida">Vendida</option>
         </select>
 
         <span className="results-count">
-          Mostrando {propiedadesFiltradas.length} de {propiedades.length} propiedades
+          {filtradas.length} de {propiedades.length}
         </span>
       </div>
 
-      {propiedadesFiltradas.length === 0 ? (
+      {filtradas.length === 0 ? (
         <div className="state-message empty">
-          No se encontraron propiedades que coincidan con los filtros aplicados.
+          <span className="vacio-titulo">Sin resultados</span>
+          <span className="vacio-detalle">Ajusta la búsqueda o los filtros aplicados.</span>
         </div>
       ) : (
         <div className="table-wrapper">
           <table className="leads-table">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Título</th>
+                <th>Propiedad</th>
                 <th>Tipo</th>
                 <th>Precio</th>
-                <th>Dirección</th>
                 <th>Estado</th>
-                <th>Acciones</th>
+                <th />
               </tr>
             </thead>
             <tbody>
-              {propiedadesFiltradas.map((prop) => (
+              {filtradas.map((prop) => (
                 <tr key={prop.id}>
-                  <td>#{prop.id}</td>
-                  <td className="col-nombre">{prop.titulo}</td>
-                  <td>{prop.tipo}</td>
                   <td>
-                    <strong>
-                      {prop.precio
-                        ? `$${prop.precio.toLocaleString('es-CL')}`
-                        : '$0'}
-                    </strong>
+                    <div className="celda-doble">
+                      <span className="celda-principal">{prop.titulo}</span>
+                      <span className="celda-secundaria">{prop.direccion}</span>
+                    </div>
                   </td>
-                  <td>{prop.direccion}</td>
+
                   <td>
-                    <span
-                      className={`badge-priority priority-${
-                        prop.estado ? prop.estado.toLowerCase() : 'disponible'
-                      }`}
-                    >
+                    <span className="etiqueta neutra">
+                      <Icono nombre={ICONO_TIPO[prop.tipo] || 'edificio'} tamano={11} />
+                      {prop.tipo}
+                    </span>
+                  </td>
+
+                  <td className="col-numero">
+                    {prop.precio ? prop.precio.toLocaleString('es-CL') : '—'}
+                  </td>
+
+                  <td>
+                    <span className={`etiqueta ${TONO_ESTADO[prop.estado] || 'neutra'}`}>
                       {prop.estado}
                     </span>
                   </td>
-                  <td>
+
+                  <td className="col-acciones">
                     <div className="acciones-celda">
-                      <button
-                        className="btn-accion btn-editar"
-                        onClick={() => alEditar(prop)}
-                        title="Editar propiedad"
-                      >
-                        Editar
+                      <button className="btn-icono" onClick={() => alEditar(prop)} title="Editar">
+                        <Icono nombre="editar" />
                       </button>
                       <button
-                        className="btn-accion btn-eliminar"
-                        onClick={() => manejarEliminar(prop)}
-                        disabled={eliminandoId === prop.id}
-                        title="Eliminar propiedad"
+                        className="btn-icono peligro"
+                        onClick={() => alPedirEliminar(prop)}
+                        title="Eliminar"
                       >
-                        {eliminandoId === prop.id ? '...' : 'Eliminar'}
+                        <Icono nombre="eliminar" />
                       </button>
                     </div>
                   </td>
@@ -149,7 +178,7 @@ function TablaPropiedades({ propiedades, cargando, error, alEditar, alEliminar }
           </table>
         </div>
       )}
-    </div>
+    </>
   );
 }
 

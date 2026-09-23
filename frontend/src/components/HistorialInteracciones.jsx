@@ -1,20 +1,20 @@
 import React from 'react';
+import Icono from './Iconos';
 
 /**
- * Muestra el historial de interacciones de un lead en orden cronológico inverso.
+ * Línea de tiempo con el historial de contacto de un lead, del más reciente al más antiguo.
  *
  * Props:
  * - interacciones: lista de interacciones del lead
- * - cargando: boolean que indica si los datos están cargando
- * - error: mensaje de error si la carga falló
+ * - cargando / error: estado de la carga
  */
 
-// Mapa de íconos de texto por tipo de interacción
+// Cada tipo de contacto tiene su propio icono para poder recorrer el historial de un vistazo
 const ICONO_TIPO = {
-  Llamada: '📞',
-  Email: '✉️',
-  Visita: '🏠',
-  WhatsApp: '💬',
+  Llamada: 'telefono',
+  Email: 'correo',
+  Visita: 'casa',
+  WhatsApp: 'mensaje',
 };
 
 function HistorialInteracciones({ interacciones, cargando, error }) {
@@ -23,46 +23,54 @@ function HistorialInteracciones({ interacciones, cargando, error }) {
   }
 
   if (error) {
-    return <div className="alert-error">{error}</div>;
+    return (
+      <div className="alert-error">
+        <Icono nombre="alerta" />
+        <span>{error}</span>
+      </div>
+    );
   }
 
   if (!interacciones || interacciones.length === 0) {
     return (
       <div className="state-message empty">
-        No hay interacciones registradas para este lead.
+        <span className="vacio-titulo">Sin interacciones registradas</span>
+        <span className="vacio-detalle">
+          Registra la primera llamada, visita o correo para empezar el historial.
+        </span>
       </div>
     );
   }
 
   return (
-    <div className="historial-lista">
+    <ul className="historial-lista">
       {interacciones.map((interaccion) => (
-        <div key={interaccion.id} className="historial-item">
-          <div className="historial-icono">
-            {ICONO_TIPO[interaccion.tipo] || '📋'}
+        <li key={interaccion.id} className="historial-item">
+          <div className="historial-marcador">
+            <Icono nombre={ICONO_TIPO[interaccion.tipo] || 'mensaje'} tamano={13} />
           </div>
+
           <div className="historial-contenido">
             <div className="historial-encabezado">
               <span className="historial-tipo">{interaccion.tipo}</span>
               <span className="historial-fecha">
                 {interaccion.fecha_creacion
-                  ? new Date(interaccion.fecha_creacion).toLocaleDateString('es-CL', {
+                  ? new Date(interaccion.fecha_creacion).toLocaleString('es-CL', {
                       day: '2-digit',
-                      month: 'short',
+                      month: '2-digit',
                       year: 'numeric',
                       hour: '2-digit',
                       minute: '2-digit',
                     })
-                  : '-'}
+                  : '—'}
               </span>
             </div>
-            {interaccion.notas && (
-              <p className="historial-notas">{interaccion.notas}</p>
-            )}
+
+            {interaccion.notas && <p className="historial-notas">{interaccion.notas}</p>}
           </div>
-        </div>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }
 

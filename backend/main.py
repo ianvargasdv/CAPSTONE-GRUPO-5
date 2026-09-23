@@ -283,3 +283,74 @@ def eliminar_tarea(tarea_id: int, db: Session = Depends(database.obtener_db)):
 
     db.delete(tarea)
     db.commit()
+
+
+@app.get("/api/leads/{lead_id}/intereses", response_model=List[schemas.InteresRespuesta])
+def listar_intereses(lead_id: int, db: Session = Depends(database.obtener_db)):
+    """
+    Obtiene las propiedades en las que un lead mostró interés.
+    Devuelve 404 si el lead no existe.
+    """
+    lead = db.query(models.Lead).filter(models.Lead.id == lead_id).first()
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead no encontrado")
+
+    intereses = (
+        db.query(models.Interes)
+        .filter(models.Interes.lead_id == lead_id)
+        .order_by(models.Interes.fecha_creacion.desc())
+        .all()
+    )
+    return intereses
+
+
+@app.post("/api/leads/{lead_id}/intereses", response_model=schemas.InteresRespuesta, status_code=status.HTTP_201_CREATED)
+def crear_interes(lead_id: int, datos: schemas.InteresCrear, db: Session = Depends(database.obtener_db)):
+    """
+    Registra el interés de un lead en una propiedad del catálogo.
+    Valida que el lead y la propiedad existan, y que el interés no esté ya registrado.
+    """
+    lead = db.query(models.Lead).filter(models.Lead.id == lead_id).first()
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead no encontrado")
+
+    propiedad = db.query(models.Propiedad).filter(models.Propiedad.id == datos.propiedad_id).first()
+    if not propiedad:
+        raise HTTPException(status_code=404, detail="Propiedad no encontrada")
+
+    # Evita duplicar la misma propiedad para el mismo lead
+    existente = (
+        db.query(models.Interes)
+        .filter(
+            models.Interes.lead_id == lead_id,
+            models.Interes.propiedad_id == datos.propiedad_id,
+        )
+        .first()
+    )
+    if existente:
+        raise HTTPException(status_code=400, detail="Esta propiedad ya está registrada como interés del lead")
+
+    nuevo_interes = models.Interes(
+        lead_id=lead_id,
+        propiedad_id=datos.propiedad_id,
+        nivel_interes=datos.nivel_interes,
+        notas=datos.notas,
+    )
+    db.add(nuevo_interes)
+    db.commit()
+    db.refresh(nuevo_interes)
+    return nuevo_interes
+
+
+@app.delete("/api/intereses/{interes_id}", status_code=status.HTTP_204_NO_CONTENT)
+def eliminar_interes(interes_id: int, db: Session = Depends(database.obtener_db)):
+    """
+    Quita un interés registrado por su ID.
+    Devuelve 404 si el interés no existe.
+    """
+    interes = db.query(models.Interes).filter(models.Interes.id == interes_id).first()
+    if not interes:
+        raise HTTPException(status_code=404, detail="Interés no encontrado")
+
+    db.delete(interes)
+    db.commit()
