@@ -16,10 +16,17 @@ from database import Base
 
 class Usuario(Base):
     """
-    Modelo ORM de los usuarios que acceden al sistema (ejecutivos inmobiliarios).
+    Modelo ORM de los usuarios que acceden al sistema.
 
     La contraseña nunca se guarda en texto plano: solo se almacena su hash bcrypt.
     El campo activo permite dar de baja un acceso sin borrar el registro.
+
+    Hay dos roles. El ejecutivo trabaja la cartera: leads, propiedades, tareas y el
+    asistente. El admin además supervisa el sistema, incluido el gasto del agente de
+    IA. No existe un rol para los clientes porque los clientes no acceden al CRM:
+    se comunican con la inmobiliaria y sus datos los registra el ejecutivo.
+
+    El valor por omisión es ejecutivo, que es el rol con menos permisos.
     """
     __tablename__ = "usuarios"
 
@@ -27,6 +34,7 @@ class Usuario(Base):
     nombre = Column(String(100), nullable=False)
     email = Column(String(150), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
+    rol = Column(String(20), nullable=False, default="ejecutivo")
     activo = Column(Boolean, nullable=False, default=True)
     fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())
 

@@ -261,3 +261,11 @@ export function generarAnalisis(leadId, tipo = 'resumen') {
     mensajeError: 'No se pudo generar el análisis',
   });
 }
+
+/**
+ * Consumo acumulado del agente de IA. Solo responde a usuarios con rol admin:
+ * a un ejecutivo el backend le devuelve 403.
+ */
+export function obtenerConsumoIA() {
+  return pedir('/ia/consumo', { mensajeError: 'No se pudo cargar el consumo del agente' });
+}

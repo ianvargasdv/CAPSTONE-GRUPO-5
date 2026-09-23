@@ -124,6 +124,12 @@ const TRAZOS = {
     </>
   ),
   chevron: <path d="M9 18l6-6-6-6" />,
+  tendencia: (
+    <>
+      <path d="M3 3v18h18" />
+      <path d="M19 9l-5 5-4-4-3 3" />
+    </>
+  ),
   salir: (
     <>
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />

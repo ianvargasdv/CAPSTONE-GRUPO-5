@@ -54,6 +54,12 @@ TEMPERATURA = float(_TEMPERATURA_CRUDA) if _TEMPERATURA_CRUDA else None
 PRECIO_ENTRADA_POR_MILLON = float(os.getenv("IA_PRECIO_ENTRADA_USD_MILLON", "0") or 0)
 PRECIO_SALIDA_POR_MILLON = float(os.getenv("IA_PRECIO_SALIDA_USD_MILLON", "0") or 0)
 
+# Presupuesto declarado para el agente, en dólares. Sirve para mostrar cuánto queda.
+# Es un dato informativo que se declara en la configuración: no se consulta al
+# proveedor.
+_PRESUPUESTO_CRUDO = os.getenv("IA_PRESUPUESTO_USD", "").strip()
+PRESUPUESTO_USD = float(_PRESUPUESTO_CRUDO) if _PRESUPUESTO_CRUDO else None
+
 # Límite de caracteres de la respuesta que se guarda, por si el modelo se extiende
 MAX_CARACTERES_RESPUESTA = 4000
 

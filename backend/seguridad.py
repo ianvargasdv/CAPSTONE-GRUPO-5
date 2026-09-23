@@ -33,6 +33,12 @@ if not SECRET_KEY:
 ALGORITMO = "HS256"
 TOKEN_EXPIRA_MINUTOS = int(os.getenv("TOKEN_EXPIRA_MINUTOS", "480"))
 
+# Roles del sistema. El ejecutivo trabaja la cartera; el admin además supervisa.
+# No hay rol para clientes: los clientes no acceden al CRM.
+ROL_ADMIN = "admin"
+ROL_EJECUTIVO = "ejecutivo"
+ROLES_VALIDOS = (ROL_ADMIN, ROL_EJECUTIVO)
+
 # bcrypt solo considera los primeros 72 bytes de la contraseña. En lugar de
 # truncar en silencio, se rechazan las contraseñas más largas.
 LIMITE_BYTES_PASSWORD = 72
@@ -143,4 +149,23 @@ def usuario_actual(
     if not usuario or not usuario.activo:
         raise _no_autorizado()
 
+    return usuario
+
+
+def solo_admin(
+    usuario: models.Usuario = Depends(usuario_actual),
+) -> models.Usuario:
+    """
+    Dependencia para los endpoints reservados al rol admin.
+
+    Se apoya en usuario_actual, así que primero valida el token y después el rol.
+    Devuelve 403 y no 401 a propósito: el 401 significa "no sé quién eres" y el 403
+    significa "sé quién eres y no te corresponde". Responder 401 haría que el
+    frontend cerrara la sesión de un usuario que está correctamente autenticado.
+    """
+    if usuario.rol != ROL_ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Esta sección está reservada para administradores",
+        )
     return usuario

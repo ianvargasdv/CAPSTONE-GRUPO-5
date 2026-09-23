@@ -1784,3 +1784,38 @@ textarea {
   font-weight: 600;
   color: var(--texto-medio);
 }
+
+/* ══════════════════════════════════════
+   PANEL DE CONSUMO DE IA
+══════════════════════════════════════ */
+
+/* La fila diaria lleva una columna más que la distribución normal */
+.distribucion-item.dia {
+  grid-template-columns: 64px 1fr 96px 84px;
+}
+
+.distribucion-valor.ancho {
+  font-variant-numeric: tabular-nums;
+}
+
+.distribucion-extra {
+  font-size: 0.6875rem;
+  color: var(--texto-suave);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* El resumen de configuración va dentro de un panel que ya tiene borde */
+.ficha-resumen.sin-borde {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+@media (max-width: 640px) {
+  .distribucion-item.dia {
+    grid-template-columns: 56px 1fr 80px;
+  }
+  .distribucion-extra {
+    display: none;
+  }
+}

@@ -37,6 +37,10 @@ CAMBIOS = [
         "analisis_ia: costo estimado en dólares al momento de generarlo",
         "ALTER TABLE analisis_ia ADD COLUMN IF NOT EXISTS costo_estimado_usd DOUBLE PRECISION",
     ),
+    (
+        "usuarios: rol de acceso (admin o ejecutivo)",
+        "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS rol VARCHAR(20) NOT NULL DEFAULT 'ejecutivo'",
+    ),
 ]
 
 

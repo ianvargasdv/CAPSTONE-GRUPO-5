@@ -554,6 +554,97 @@ def estado_ia():
     )
 
 
+def _agrupar_consumo(db: Session, columna, etiqueta_por_defecto: str = "sin dato"):
+    """
+    Agrupa el consumo de los análisis por la columna indicada.
+
+    Una sola consulta agregada por agrupación, en lugar de traer todos los análisis
+    y sumarlos en Python. Solo cuenta los que tienen consumo registrado.
+    """
+    filas = (
+        db.query(
+            columna.label("etiqueta"),
+            func.count(models.AnalisisIA.id).label("cantidad"),
+            func.coalesce(func.sum(models.AnalisisIA.tokens_entrada), 0).label("entrada"),
+            func.coalesce(func.sum(models.AnalisisIA.tokens_salida), 0).label("salida"),
+            func.coalesce(func.sum(models.AnalisisIA.costo_estimado_usd), 0.0).label("costo"),
+        )
+        .filter(models.AnalisisIA.costo_estimado_usd.isnot(None))
+        .group_by(columna)
+        .order_by(columna)
+        .all()
+    )
+
+    return [
+        schemas.ConsumoAgrupado(
+            etiqueta=str(f.etiqueta) if f.etiqueta is not None else etiqueta_por_defecto,
+            cantidad=f.cantidad,
+            tokens_entrada=int(f.entrada),
+            tokens_salida=int(f.salida),
+            costo_usd=float(f.costo),
+        )
+        for f in filas
+    ]
+
+
+@router_privado.get("/ia/consumo", response_model=schemas.ConsumoIARespuesta)
+def consumo_ia(
+    db: Session = Depends(database.obtener_db),
+    _admin: models.Usuario = Depends(seguridad.solo_admin),
+):
+    """
+    Consumo acumulado del agente de IA. Reservado al rol admin.
+
+    Devuelve el total gastado, el desglose por tipo de análisis, por modelo y por
+    día, y qué porcentaje del presupuesto declarado se usó.
+
+    Los análisis sin consumo registrado se informan por separado en lugar de contarse
+    como gasto cero: son los que se generaron antes de que se empezara a registrar.
+    """
+    totales = db.query(
+        func.count(models.AnalisisIA.id).label("cantidad"),
+        func.coalesce(func.sum(models.AnalisisIA.tokens_entrada), 0).label("entrada"),
+        func.coalesce(func.sum(models.AnalisisIA.tokens_salida), 0).label("salida"),
+        func.coalesce(func.sum(models.AnalisisIA.costo_estimado_usd), 0.0).label("costo"),
+    ).filter(models.AnalisisIA.costo_estimado_usd.isnot(None)).one()
+
+    sin_consumo = (
+        db.query(func.count(models.AnalisisIA.id))
+        .filter(models.AnalisisIA.costo_estimado_usd.is_(None))
+        .scalar()
+    )
+
+    cantidad = int(totales.cantidad)
+    costo_total = float(totales.costo)
+
+    promedio = costo_total / cantidad if cantidad else None
+
+    porcentaje = None
+    if ia.PRESUPUESTO_USD:
+        porcentaje = costo_total / ia.PRESUPUESTO_USD * 100
+
+    return schemas.ConsumoIARespuesta(
+        total_analisis=cantidad,
+        analisis_sin_consumo=int(sin_consumo or 0),
+        tokens_entrada=int(totales.entrada),
+        tokens_salida=int(totales.salida),
+        costo_total_usd=costo_total,
+        costo_promedio_usd=promedio,
+        presupuesto_usd=ia.PRESUPUESTO_USD,
+        configuracion=schemas.ConfiguracionIA(
+            modelo=ia.MODELO or None,
+            max_tokens=ia.MAX_TOKENS,
+            precio_entrada_usd_millon=ia.PRECIO_ENTRADA_POR_MILLON,
+            precio_salida_usd_millon=ia.PRECIO_SALIDA_POR_MILLON,
+            envia_temperatura=ia.TEMPERATURA is not None,
+        ),
+        porcentaje_usado=porcentaje,
+        por_tipo=_agrupar_consumo(db, models.AnalisisIA.tipo),
+        por_modelo=_agrupar_consumo(db, models.AnalisisIA.modelo, "sin modelo"),
+        por_dia=_agrupar_consumo(db, func.date(models.AnalisisIA.fecha_creacion)),
+    )
+
+
 @router_privado.get("/leads/{lead_id}/analisis", response_model=List[schemas.AnalisisRespuesta])
 def listar_analisis(lead_id: int, db: Session = Depends(database.obtener_db)):
     """

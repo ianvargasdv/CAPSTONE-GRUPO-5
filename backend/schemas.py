@@ -191,6 +191,7 @@ class UsuarioRespuesta(BaseModel):
     id: int
     nombre: str
     email: str
+    rol: str
     activo: bool
     fecha_creacion: Optional[datetime] = None
 
@@ -248,3 +249,57 @@ class EstadoIARespuesta(BaseModel):
     """
     configurada: bool
     modelo: Optional[str] = None
+
+
+class ConsumoAgrupado(BaseModel):
+    """Consumo acumulado de un grupo: un tipo de análisis, un modelo o un día."""
+    etiqueta: str
+    cantidad: int
+    tokens_entrada: int
+    tokens_salida: int
+    costo_usd: float
+
+
+class ConfiguracionIA(BaseModel):
+    """
+    Configuración con la que está corriendo el servicio de IA.
+
+    Se expone en el panel del administrador para poder verificar qué valores tiene
+    cargados el proceso. Como la configuración se lee al arrancar, un cambio en el
+    .env no tiene efecto hasta reiniciar, y sin esto había que adivinar si el
+    servidor estaba usando los valores nuevos o los viejos.
+
+    No incluye la clave del proveedor ni ningún otro dato sensible.
+    """
+    modelo: Optional[str] = None
+    max_tokens: int
+    precio_entrada_usd_millon: float
+    precio_salida_usd_millon: float
+    envia_temperatura: bool
+
+
+class ConsumoIARespuesta(BaseModel):
+    """
+    Consumo del agente de IA, para que el administrador pueda seguir el gasto.
+
+    Los totales solo consideran los análisis que tienen consumo registrado. Los
+    generados antes de que se empezara a registrar se cuentan aparte en
+    analisis_sin_consumo, para no dar a entender que salieron gratis.
+    """
+    total_analisis: int
+    analisis_sin_consumo: int
+    tokens_entrada: int
+    tokens_salida: int
+    costo_total_usd: float
+    costo_promedio_usd: Optional[float] = None
+
+    # Presupuesto declarado en la configuración, para calcular cuánto queda
+    presupuesto_usd: Optional[float] = None
+    porcentaje_usado: Optional[float] = None
+
+    por_tipo: List[ConsumoAgrupado] = []
+    por_modelo: List[ConsumoAgrupado] = []
+    por_dia: List[ConsumoAgrupado] = []
+
+    # Configuración efectiva del proceso, para poder verificarla sin adivinar
+    configuracion: Optional[ConfiguracionIA] = None
