@@ -212,3 +212,32 @@ class TokenRespuesta(BaseModel):
     access_token: str
     token_type: str = "bearer"
     usuario: UsuarioRespuesta
+
+
+class AnalisisRespuesta(BaseModel):
+    """
+    Análisis generado por el modelo de lenguaje.
+
+    Incluye la entrada además de la salida para que se pueda revisar con qué
+    información se produjo el resumen.
+    """
+    id: int
+    lead_id: int
+    usuario_id: Optional[int] = None
+    tipo: str
+    entrada: Optional[str] = None
+    salida: str
+    modelo: Optional[str] = None
+    fecha_creacion: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class EstadoIARespuesta(BaseModel):
+    """
+    Indica si hay proveedor de IA configurado, para que la interfaz no ofrezca
+    generar resúmenes cuando no se puede.
+    """
+    configurada: bool
+    modelo: Optional[str] = None

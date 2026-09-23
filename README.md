@@ -1,39 +1,22 @@
-# CRM Inmobiliario
+# CRM Inmobiliario - Capstone Grupo 5
 
-Sistema de gestión para ejecutivos inmobiliarios, permite administrar prospectos
-(leads), el catálogo de propiedades, el historial de contacto con cada cliente,
-las tareas de seguimiento y las propiedades que le interesan a cada lead.
+Sistema de gestión para ejecutivos inmobiliarios: prospectos (leads), catálogo de
+propiedades, historial de contacto, tareas de seguimiento y propiedades de interés
+de cada lead.
 
-El objetivo del proyecto es incorporar más adelante un agente de IA que asista al
-ejecutivo priorizando leads, resumiendo el historial de un cliente y recomendando
-la siguiente acción. Esa parte todavía no está implementada.
+El proyecto contempla incorporar más adelante un agente de IA que priorice leads,
+resuma el historial de un cliente y recomiende la siguiente acción. Esa parte
+todavía no está implementada.
 
 ## Stack
 
-**Backend**
+- Backend: Python 3.14, FastAPI, SQLAlchemy, Uvicorn
+- Frontend: React 18 con Vite 5, Node 24
+- Base de datos: PostgreSQL en Supabase
+- Autenticación: bcrypt para las contraseñas y PyJWT para los tokens
 
-| Componente | Versión probada |
-|---|---|
-| Python | 3.14.6 |
-| FastAPI | 0.141.1 |
-| SQLAlchemy | 2.0.52 |
-| Pydantic | 2.13.5 |
-| Uvicorn | 0.52.4 |
-| bcrypt | 5.0.0 |
-| PyJWT | 2.14.0 |
-
-**Frontend**
-
-| Componente | Versión probada |
-|---|---|
-| Node | 24.20.0 |
-| React | 18.2 |
-| Vite | 5.2 |
-
-**Base de datos:** PostgreSQL alojado en Supabase.
-
-No se usan librerías de UI externas: los estilos son propios y los iconos son SVG
-escritos a mano en `frontend/src/components/Iconos.jsx`.
+Sin librerías de UI externas: los estilos están en un solo archivo CSS y los iconos
+son SVG definidos en `frontend/src/components/Iconos.jsx`.
 
 ## Estructura
 
@@ -41,25 +24,24 @@ escritos a mano en `frontend/src/components/Iconos.jsx`.
 backend/
   main.py            Endpoints de la API
   models.py          Modelos ORM (tablas)
-  schemas.py         Esquemas de entrada y salida (Pydantic)
-  database.py        Conexión a PostgreSQL y sesiones
-  seguridad.py       Hash de contraseñas, tokens JWT y autenticación
+  schemas.py         Esquemas de entrada y salida
+  database.py        Conexión a PostgreSQL
+  seguridad.py       Contraseñas, tokens y autenticación
+  prioridad.py       Reglas de priorización de leads
   crear_usuario.py   Script para dar de alta usuarios
-  requirements.txt
 
-frontend/
-  src/
-    App.jsx          Estado global, navegación y paneles
-    api.js           Capa de comunicación con la API
-    index.css        Sistema de diseño completo
-    components/      Tablas, formularios, sidebar, paneles e iconos
+frontend/src/
+  App.jsx            Estado general y navegación
+  api.js             Llamadas a la API
+  index.css          Estilos
+  components/        Tablas, formularios, paneles e iconos
 ```
 
-## Puesta en marcha
+## Cómo levantar el proyecto
 
-Se necesitan dos terminales: una para el backend y otra para el frontend.
+Hacen falta dos terminales, una para el backend y otra para el frontend.
 
-### 1. Backend
+### Backend
 
 ```powershell
 cd backend
@@ -68,24 +50,32 @@ python -m venv venv
 pip install -r requirements.txt
 ```
 
-Crear el archivo `backend/.env` copiando `backend/.env.example` y completando dos
-valores obligatorios:
+Crear `backend/.env` a partir de `backend/.env.example` y completar dos valores:
 
 ```
-DATABASE_URL=postgresql://...        # cadena de conexión de Supabase
-SECRET_KEY=...                       # clave con la que se firman los tokens
+DATABASE_URL=postgresql://...
+SECRET_KEY=...
 ```
 
-La `DATABASE_URL` se obtiene del botón **Connect** en el panel de Supabase.
-
-La `SECRET_KEY` se genera con:
+`DATABASE_URL` es la cadena de conexión del proyecto, que se obtiene desde el panel
+de Supabase. `SECRET_KEY` es la clave con la que se firman los tokens y se genera
+con:
 
 ```powershell
 python -c "import secrets; print(secrets.token_urlsafe(48))"
 ```
 
-Cada persona debe generar su propia clave. No se comparte y no se sube al
-repositorio: `.env` está en el `.gitignore`.
+Cada persona genera su propia clave. El archivo `.env` está en el `.gitignore` y no
+se sube al repositorio.
+
+Opcionalmente se puede configurar el proveedor de IA que genera los resúmenes. Si se
+deja vacío el sistema funciona igual, solo no ofrece generarlos:
+
+```
+IA_BASE_URL=http://localhost:11434/v1
+IA_API_KEY=local
+IA_MODELO=llama3
+```
 
 Levantar el servidor:
 
@@ -93,25 +83,21 @@ Levantar el servidor:
 uvicorn main:app --reload
 ```
 
-Al arrancar crea automáticamente las tablas que falten. La API queda en
-`http://localhost:8000` y la documentación interactiva en
-`http://localhost:8000/docs`.
+Queda en `http://localhost:8000`, con la documentación de la API en `/docs`. Al
+arrancar crea las tablas que falten.
 
-### 2. Crear el primer usuario
+### Crear un usuario
 
-No hay registro desde la interfaz: el sistema es de uso interno y los accesos se
-crean por terminal. Con el entorno virtual activado:
+No hay registro desde la interfaz porque el sistema es de uso interno. Con el
+entorno virtual activado:
 
 ```powershell
 python crear_usuario.py
 ```
 
-Pide nombre, correo y contraseña. La contraseña no se muestra al escribirla y se
-guarda hasheada con bcrypt, nunca en texto plano.
+Pide nombre, correo y contraseña. Sin al menos un usuario no se puede entrar.
 
-Sin al menos un usuario no se puede entrar al sistema.
-
-### 3. Frontend
+### Frontend
 
 ```powershell
 cd frontend
@@ -119,182 +105,95 @@ npm install
 npm run dev
 ```
 
-Queda en `http://localhost:3000`.
-
-Por defecto apunta a `http://localhost:8000`. Para cambiarlo, crear
-`frontend/.env` con:
-
-```
-VITE_API_URL=http://127.0.0.1:8000
-```
+Queda en `http://localhost:3000` y apunta al backend en `localhost:8000`. Para
+cambiar la dirección, crear `frontend/.env` con `VITE_API_URL=http://127.0.0.1:8000`.
 
 ## Modelo de datos
 
 ```
-usuarios
-  id, nombre, email (único), password_hash, activo, fecha_creacion
-
-leads
-  id, nombre, email, telefono, estado, prioridad, fecha_creacion
-
-propiedades
-  id, titulo, tipo, precio, direccion, estado, fecha_creacion
-
-interacciones
-  id, lead_id → leads (ON DELETE CASCADE)
-  tipo, notas, fecha_creacion
-
-tareas
-  id, titulo, descripcion, estado, prioridad, fecha_limite
-  lead_id → leads (ON DELETE SET NULL)
-  fecha_creacion
-
-intereses
-  id, lead_id → leads (ON DELETE CASCADE)
-  propiedad_id → propiedades (ON DELETE CASCADE)
-  nivel_interes, notas, fecha_creacion
-  UNIQUE (lead_id, propiedad_id)
+usuarios       id, nombre, email (único), password_hash, activo, fecha_creacion
+leads          id, nombre, email, telefono, estado, prioridad, fecha_creacion
+propiedades    id, titulo, tipo, precio, direccion, estado, fecha_creacion
+interacciones  id, lead_id, tipo, notas, fecha_creacion
+tareas         id, titulo, descripcion, estado, prioridad, fecha_limite, lead_id
+intereses      id, lead_id, propiedad_id, nivel_interes, notas, fecha_creacion
 ```
 
-Decisiones sobre las claves foráneas:
+Sobre las relaciones:
 
 - Al borrar un lead se borran sus interacciones y sus intereses, porque no tienen
   sentido sin él.
-- Al borrar un lead sus tareas **se conservan** y quedan sin vínculo, porque el
-  trabajo pendiente puede seguir siendo válido.
-- `intereses` no es una tabla puente simple: guarda información propia
-  (`nivel_interes`, `notas`), así que es una entidad de asociación.
-- La restricción `UNIQUE` evita asociar dos veces la misma propiedad a un lead.
+- Al borrar un lead sus tareas se conservan y quedan sin vínculo, porque el trabajo
+  pendiente puede seguir siendo válido.
+- `intereses` guarda datos propios (`nivel_interes`, `notas`), así que es una
+  entidad de asociación y no una simple tabla puente. Tiene una restricción única
+  sobre `(lead_id, propiedad_id)` para no asociar dos veces la misma propiedad.
 
-### Valores válidos
+Los campos de texto como `estado`, `tipo` o `prioridad` los limita el formulario,
+no la base ni la API.
 
-| Campo | Valores |
-|---|---|
-| `leads.estado` | Nuevo, Contactado, Calificado, Cerrado |
-| `leads.prioridad` | Alta, Media, Baja |
-| `propiedades.tipo` | Departamento, Casa, Terreno, Oficina |
-| `propiedades.estado` | Disponible, Reservada, Vendida |
-| `interacciones.tipo` | Llamada, Email, Visita, WhatsApp |
-| `tareas.estado` | Pendiente, En Progreso, Completada |
-| `tareas.prioridad` | Alta, Media, Baja |
-| `intereses.nivel_interes` | Alto, Medio, Bajo |
+## Priorización de leads
 
-## API
+`GET /api/leads` devuelve cada lead con un puntaje calculado y los motivos que lo
+componen, ordenados de mayor a menor. El cálculo está en `prioridad.py` y considera
+la antigüedad del último contacto, si nunca se contactó, las propiedades de interés,
+la etapa del embudo y la prioridad marcada a mano.
 
-Rutas públicas:
+El puntaje no se guarda en la base: se recalcula en cada consulta, porque uno
+almacenado quedaría desactualizado en cuanto se registra una interacción. Para no
+consultar la base una vez por lead, la actividad se obtiene con consultas agrupadas.
 
-| Método | Ruta | Descripción |
-|---|---|---|
-| GET | `/health` | Estado del servicio |
-| POST | `/api/auth/login` | Devuelve el token de sesión |
+## Resumen con IA
 
-Todo el resto exige la cabecera `Authorization: Bearer <token>` y responde `401`
-sin ella.
+Desde la ficha de un lead se puede pedir un resumen de su situación. El backend arma
+un texto con los datos registrados (historial de contacto, propiedades de interés y
+prioridad calculada), lo envía al modelo y guarda en `analisis_ia` tanto lo que se
+envió como lo que respondió.
 
-| Método | Ruta |
-|---|---|
-| GET | `/api/auth/yo` |
-| GET, POST | `/api/leads` |
-| PUT, DELETE | `/api/leads/{id}` |
-| GET, POST | `/api/propiedades` |
-| PUT, DELETE | `/api/propiedades/{id}` |
-| GET, POST | `/api/leads/{id}/interacciones` |
-| GET, POST | `/api/tareas` |
-| PUT, DELETE | `/api/tareas/{id}` |
-| GET, POST | `/api/leads/{id}/intereses` |
-| DELETE | `/api/intereses/{id}` |
+Se guarda la entrada además de la salida para poder verificar de dónde salió cada
+resumen. La ficha permite desplegar esa información, y el texto siempre aparece
+identificado como generado automáticamente con su fecha y el modelo que lo produjo.
 
-La protección no se declara endpoint por endpoint: todos cuelgan de un router que
-la declara una sola vez, de modo que cualquier endpoint nuevo que se agregue a ese
-router queda protegido por omisión.
+La integración usa el formato de chat completions compatible con OpenAI, así que
+sirve tanto un servicio alojado como un modelo local. Cambiar de proveedor es cambiar
+`IA_BASE_URL` e `IA_MODELO` en el `.env`.
 
-Los `PUT` son parciales: solo modifican los campos que se envían en el cuerpo.
-
-### Prioridad calculada
-
-Los endpoints que devuelven leads agregan campos que no están en la tabla: los
-calcula `prioridad.py` a partir de la actividad registrada.
-
-| Campo | Contenido |
-|---|---|
-| `puntaje` | Suma de los factores, de 0 a 90 |
-| `categoria` | Urgente, Alta, Normal, Baja o Sin acción |
-| `motivos` | Lista de las razones que componen el puntaje |
-| `dias_sin_contacto` | Días desde el último contacto, o desde el registro si nunca hubo |
-| `total_interacciones` | Contactos registrados |
-| `total_intereses` | Propiedades de interés asociadas |
-
-`GET /api/leads` los devuelve ordenados de mayor a menor puntaje.
-
-Los factores son: antigüedad del último contacto, si nunca se contactó, cantidad y
-nivel de las propiedades de interés, etapa del embudo y prioridad marcada a mano.
-Un lead en estado Cerrado queda siempre en 0.
-
-El puntaje **no se almacena**: se recalcula en cada consulta, guardarlo quedaría
-desactualizado en cuanto se registra una interacción. Para no consultar la base una
-vez por lead, la actividad se obtiene con dos consultas agrupadas: el costo es el
-mismo con 5 leads que con 500.
-
-Para probar la API desde `/docs`, hacer primero login, copiar el `access_token` y
-pegarlo en el botón **Authorize**.
-
-## Autenticación
-
-- Las contraseñas se guardan hasheadas con bcrypt, con salt distinto por usuario.
-- El token es un JWT firmado con `SECRET_KEY`, válido por 8 horas
-  (configurable con `TOKEN_EXPIRA_MINUTOS`).
-- El login devuelve el mismo error para correo inexistente, usuario inactivo y
-  contraseña incorrecta, y tarda lo mismo en los tres casos, para no revelar qué
-  correos están registrados.
-- El estado `activo` del usuario se revisa en cada petición: dar de baja a alguien
-  invalida sus tokens al instante.
-- El frontend guarda el token en `localStorage` y valida la sesión contra el
-  backend al cargar la página.
+La llamada al proveedor se hace desde el backend. Si se hiciera desde el navegador la
+clave viajaría al cliente y cualquiera podría leerla.
 
 ## Limitaciones conocidas
 
-Están listadas a propósito: son decisiones tomadas para este alcance, no
-descuidos.
-
-- **El token se guarda en `localStorage`**, que es accesible desde JavaScript y
-  por lo tanto expuesto a XSS. La alternativa robusta son cookies `httpOnly`, que
-  complican CORS y el desarrollo local.
-- **Sin límite de intentos de login.** Solo frena el costo de bcrypt (~220 ms por
-  intento). Un límite real necesita middleware con registro de intentos.
-- **`/docs` es accesible sin autenticación.** Útil en desarrollo; en producción
-  habría que deshabilitarlo.
-- **Sin roles.** Todos los usuarios tienen los mismos permisos y ven los mismos
-  leads. No hay asignación de leads por ejecutivo.
-- **Sin cambio de contraseña** desde la interfaz.
-- **Sin paginación.** Los listados traen todos los registros.
-- **Sin migraciones.** `create_all()` crea las tablas que faltan, pero **no agrega
-  columnas a tablas que ya existen**. Al modificar un modelo existente hay que
-  aplicar el cambio a mano en Supabase o incorporar una herramienta de
-  migraciones.
-- **CORS** está limitado a `localhost:3000` y `127.0.0.1:3000`. Al desplegar hay
-  que agregar el dominio de producción en `backend/main.py`.
+- El token se guarda en `localStorage`, que es accesible desde JavaScript y por lo
+  tanto vulnerable a XSS. Lo más robusto serían cookies `httpOnly`, que complican
+  CORS y el desarrollo local.
+- No hay límite de intentos de login. Solo frena el costo de bcrypt.
+- `/docs` es accesible sin autenticación. En producción habría que deshabilitarlo.
+- `create_all()` crea las tablas que faltan pero no agrega columnas a tablas que ya
+  existen. Al modificar un modelo existente hay que aplicar el cambio a mano en
+  Supabase.
+- CORS está limitado a `localhost:3000`. Al desplegar hay que agregar el dominio en
+  `backend/main.py`.
+- No hay roles, ni asignación de leads por ejecutivo, ni cambio de contraseña desde
+  la interfaz, ni paginación en los listados.
 
 ## Problemas (evitables pero probables)
 
-**`tenant or user not found` al arrancar el backend.** El proyecto de Supabase
-está pausado. Los proyectos del plan gratuito se pausan tras varios días sin
-actividad; hay que reactivarlo desde el panel y esperar uno o dos minutos.
+**`tenant or user not found` al arrancar el backend.** El proyecto de Supabase está
+pausado por inactividad. Hay que reactivarlo desde el panel y esperar un par de
+minutos.
 
 **`La variable SECRET_KEY no está definida`.** Falta completar `SECRET_KEY` en
-`backend/.env`. Ver la sección de puesta en marcha.
+`backend/.env`.
 
-**No se puede iniciar sesión y no hay usuarios.** Correr `python crear_usuario.py`.
+**No se puede entrar y no hay usuarios.** Correr `python crear_usuario.py`.
 
-**La aplicación responde con unos dos segundos de retardo.** Uvicorn escucha solo
-en IPv4 y en Windows `localhost` se resuelve primero a IPv6, lo que agrega una
-espera antes de reintentar. Se corrige creando `frontend/.env` con
-`VITE_API_URL=http://127.0.0.1:8000`.
+**La aplicación tarda unos dos segundos en responder.** Uvicorn escucha solo en IPv4
+y en Windows `localhost` se resuelve primero a IPv6. Se corrige creando
+`frontend/.env` con `VITE_API_URL=http://127.0.0.1:8000`.
 
 ## Alcance del proyecto actual (MVP) 
 
-Implementado: gestión de leads, propiedades, interacciones, tareas y propiedades
-de interés, con autenticación, priorización automática de leads y vista de inicio
-con la operación del día.
+Implementado: leads, propiedades, interacciones, tareas, propiedades de interés,
+autenticación, priorización de leads, resumen con IA y vista de inicio.
 
-Pendiente: agente de IA (resumen del historial y recomendación de próxima acción),
-documentos y auditoría.
+Pendiente: recomendación de próxima acción, documentos y auditoría.

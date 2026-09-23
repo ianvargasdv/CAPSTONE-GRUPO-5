@@ -1634,3 +1634,95 @@ textarea {
   color: var(--texto-suave);
   line-height: 1.5;
 }
+
+/* ══════════════════════════════════════
+   RESUMEN GENERADO POR IA
+══════════════════════════════════════ */
+
+.bloque-resumen {
+  padding: 0.875rem 1rem;
+  background-color: var(--superficie-alt);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+.bloque-resumen.generando {
+  border-style: dashed;
+}
+
+.resumen-texto {
+  font-size: 0.8125rem;
+  color: var(--texto);
+  line-height: 1.6;
+}
+
+.resumen-esperando {
+  font-size: 0.8125rem;
+  color: var(--texto-suave);
+}
+
+.resumen-pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+  padding-top: 0.625rem;
+  border-top: 1px solid var(--borde);
+}
+
+/* Marca de origen: el texto no debe poder confundirse con una nota humana */
+.resumen-origen {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--alerta);
+}
+
+.resumen-meta {
+  font-size: 0.6875rem;
+  color: var(--texto-suave);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Detalle desplegable con lo que recibió el modelo */
+.resumen-detalle {
+  margin-top: 0.625rem;
+}
+
+.resumen-detalle summary {
+  font-size: 0.6875rem;
+  color: var(--texto-medio);
+  cursor: pointer;
+  padding: 0.25rem 0;
+  user-select: none;
+}
+
+.resumen-detalle summary:hover {
+  color: var(--texto);
+}
+
+.resumen-entrada {
+  margin-top: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  background-color: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 5px;
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  font-size: 0.6875rem;
+  line-height: 1.55;
+  color: var(--texto-medio);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.resumen-anteriores {
+  margin-top: 0.5rem;
+  font-size: 0.6875rem;
+  color: var(--texto-suave);
+}

@@ -110,3 +110,28 @@ class Interes(Base):
     nivel_interes = Column(String(50), default="Medio")   # Alto, Medio, Bajo
     notas = Column(Text, nullable=True)
     fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class AnalisisIA(Base):
+    """
+    Modelo ORM que guarda cada análisis generado por el modelo de lenguaje.
+
+    Se almacena tanto la entrada como la salida a propósito. Guardar solo la
+    respuesta dejaría un texto sin forma de verificar de dónde salió; con la entrada
+    registrada se puede revisar exactamente qué información se le entregó al modelo
+    y comprobar que no agregó nada por su cuenta.
+
+    Además sirve de caché: si no hubo actividad nueva, se puede mostrar el último
+    análisis en lugar de volver a pedirlo y pagarlo.
+    """
+    __tablename__ = "analisis_ia"
+
+    id = Column(Integer, primary_key=True, index=True)
+    lead_id = Column(Integer, ForeignKey("leads.id", ondelete="CASCADE"), nullable=False)
+    # Queda registrado quién lo pidió. Si el usuario se borra, el análisis se conserva.
+    usuario_id = Column(Integer, ForeignKey("usuarios.id", ondelete="SET NULL"), nullable=True)
+    tipo = Column(String(50), nullable=False, default="resumen")
+    entrada = Column(Text, nullable=True)
+    salida = Column(Text, nullable=False)
+    modelo = Column(String(100), nullable=True)
+    fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())

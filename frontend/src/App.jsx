@@ -17,6 +17,9 @@ import {
   obtenerIntereses,
   crearInteres,
   eliminarInteres,
+  obtenerEstadoIA,
+  obtenerAnalisis,
+  generarAnalisis,
   iniciarSesion,
   obtenerPerfil,
   obtenerToken,
@@ -39,6 +42,7 @@ import FormularioTarea from './components/FormularioTarea';
 import FormularioInteraccion from './components/FormularioInteraccion';
 import PropiedadesInteres from './components/PropiedadesInteres';
 import HistorialInteracciones from './components/HistorialInteracciones';
+import ResumenIA from './components/ResumenIA';
 
 /** Configuración de cada vista: título de la barra superior y su acción principal. */
 const VISTAS = {
@@ -131,6 +135,12 @@ function App() {
   const [intereses, setIntereses] = useState([]);
   const [cargandoIntereses, setCargandoIntereses] = useState(false);
   const [errorIntereses, setErrorIntereses] = useState(null);
+  const [analisis, setAnalisis] = useState([]);
+  const [cargandoAnalisis, setCargandoAnalisis] = useState(false);
+  const [errorAnalisis, setErrorAnalisis] = useState(null);
+
+  // Si el backend no tiene proveedor de IA configurado, la ficha no ofrece generar
+  const [iaConfigurada, setIaConfigurada] = useState(false);
 
   // ── Confirmación de borrado: { entidad, registro } o null ──
   const [confirmacion, setConfirmacion] = useState(null);
@@ -180,6 +190,10 @@ function App() {
     cargarLeads();
     cargarPropiedades();
     cargarTareas();
+    // El estado de la IA no cambia por lead, así que se consulta una sola vez
+    obtenerEstadoIA()
+      .then((estado) => setIaConfigurada(estado.configurada))
+      .catch(() => setIaConfigurada(false));
   }, [usuario]);
 
   // ══════════ Sesión ══════════
@@ -255,10 +269,13 @@ function App() {
     setFichaLead(lead);
     setInteracciones([]);
     setIntereses([]);
+    setAnalisis([]);
     setCargandoInteracciones(true);
     setCargandoIntereses(true);
+    setCargandoAnalisis(true);
     setErrorInteracciones(null);
     setErrorIntereses(null);
+    setErrorAnalisis(null);
 
     try {
       setInteracciones(await obtenerInteracciones(lead.id));
@@ -275,12 +292,30 @@ function App() {
     } finally {
       setCargandoIntereses(false);
     }
+
+    try {
+      setAnalisis(await obtenerAnalisis(lead.id));
+    } catch {
+      setErrorAnalisis('No se pudieron cargar los resúmenes del lead.');
+    } finally {
+      setCargandoAnalisis(false);
+    }
   };
 
   const cerrarFicha = () => {
     setFichaLead(null);
     setInteracciones([]);
     setIntereses([]);
+    setAnalisis([]);
+  };
+
+  /**
+   * Pide un resumen nuevo al backend y lo pone al principio de la lista.
+   * Los errores se propagan para que los muestre el componente del resumen.
+   */
+  const generarResumen = async () => {
+    const nuevo = await generarAnalisis(fichaLead.id);
+    setAnalisis((prev) => [nuevo, ...prev]);
   };
 
   /** Desde la ficha se cierra el panel y se abre el de edición, para no apilar paneles. */
@@ -704,6 +739,16 @@ function App() {
                 </p>
               </div>
             )}
+
+            <div className="ficha-seccion">
+              <ResumenIA
+                analisis={analisis}
+                cargando={cargandoAnalisis}
+                error={errorAnalisis}
+                iaConfigurada={iaConfigurada}
+                alGenerar={generarResumen}
+              />
+            </div>
 
             <div className="ficha-seccion">
               <PropiedadesInteres
