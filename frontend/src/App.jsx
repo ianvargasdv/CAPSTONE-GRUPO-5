@@ -55,6 +55,15 @@ const TITULOS_PANEL = {
   tarea: { crear: 'Nueva tarea', editar: 'Editar tarea' },
 };
 
+/** Tono de la etiqueta según el nivel de atención que requiere el lead. */
+const TONO_CATEGORIA = {
+  Urgente: 'peligro',
+  Alta: 'alerta',
+  Normal: 'neutra',
+  Baja: 'neutra',
+  'Sin acción': 'neutra',
+};
+
 /** Texto del modal de confirmación para cada tipo de registro. */
 const TEXTOS_ELIMINAR = {
   lead: (r) => ({
@@ -282,17 +291,45 @@ function App() {
 
   // ══════════ Leads ══════════
 
+  /**
+   * Reordena la lista igual que el backend: mayor prioridad primero.
+   * Hace falta porque al crear o modificar un lead cambia su puntaje, y si solo
+   * se reemplazara en su posición actual el listado dejaría de estar ordenado.
+   */
+  const ordenarPorPrioridad = (lista) =>
+    [...lista].sort((a, b) => (b.puntaje ?? 0) - (a.puntaje ?? 0));
+
+  /**
+   * Vuelve a pedir los leads sin mostrar el estado de carga.
+   *
+   * Se usa después de registrar actividad (una interacción o una propiedad de
+   * interés), porque la prioridad se calcula en el backend a partir de esa
+   * actividad: sin esto el listado seguiría mostrando el puntaje anterior.
+   */
+  const refrescarLeads = async () => {
+    try {
+      const datos = await obtenerLeads();
+      setLeads(datos);
+      // Si la ficha está abierta, se reemplaza por la versión recalculada
+      setFichaLead((actual) =>
+        actual ? datos.find((l) => l.id === actual.id) ?? actual : actual
+      );
+    } catch {
+      // Si falla se conservan los datos en pantalla: no vale interrumpir al usuario
+    }
+  };
+
   const guardarLead = async (datos) => {
     const editando = panelForm?.registro;
 
     if (editando) {
       const actualizado = await actualizarLead(editando.id, datos);
-      setLeads((prev) => prev.map((l) => (l.id === actualizado.id ? actualizado : l)));
+      setLeads((prev) => ordenarPorPrioridad(prev.map((l) => (l.id === actualizado.id ? actualizado : l))));
       if (fichaLead?.id === actualizado.id) setFichaLead(actualizado);
       mostrarToast('Lead actualizado');
     } else {
       const creado = await crearLead(datos);
-      setLeads((prev) => [...prev, creado]);
+      setLeads((prev) => ordenarPorPrioridad([...prev, creado]));
       mostrarToast('Lead registrado');
     }
 
@@ -303,7 +340,7 @@ function App() {
   const cambiarEstadoLead = async (lead, nuevoEstado) => {
     try {
       const actualizado = await actualizarLead(lead.id, { estado: nuevoEstado });
-      setLeads((prev) => prev.map((l) => (l.id === actualizado.id ? actualizado : l)));
+      setLeads((prev) => ordenarPorPrioridad(prev.map((l) => (l.id === actualizado.id ? actualizado : l))));
       if (fichaLead?.id === actualizado.id) setFichaLead(actualizado);
       mostrarToast(`${actualizado.nombre} ahora está en "${nuevoEstado}"`);
     } catch {
@@ -359,16 +396,21 @@ function App() {
 
   // ══════════ Interacciones y propiedades de interés ══════════
 
+  // Registrar actividad cambia la prioridad del lead, por eso las tres funciones
+  // piden los leads de nuevo al terminar.
+
   const guardarInteraccion = async (datos) => {
     const nueva = await crearInteraccion(fichaLead.id, datos);
     setInteracciones((prev) => [nueva, ...prev]);
     mostrarToast('Interacción registrada');
+    refrescarLeads();
   };
 
   const guardarInteres = async (datos) => {
     const nuevo = await crearInteres(fichaLead.id, datos);
     setIntereses((prev) => [nuevo, ...prev]);
     mostrarToast('Propiedad asociada');
+    refrescarLeads();
   };
 
   const quitarInteres = async (id) => {
@@ -376,6 +418,7 @@ function App() {
       await eliminarInteres(id);
       setIntereses((prev) => prev.filter((i) => i.id !== id));
       mostrarToast('Propiedad desasociada');
+      refrescarLeads();
     } catch {
       mostrarToast('No se pudo quitar la propiedad');
     }
@@ -629,6 +672,38 @@ function App() {
                 </button>
               </div>
             </div>
+
+            {/* Explica de dónde sale el puntaje, para que la priorización no sea
+                una caja negra y se pueda discutir el criterio */}
+            {fichaLead.categoria && (
+              <div className="ficha-seccion">
+                <div className="ficha-seccion-encabezado">
+                  <span className="ficha-seccion-titulo">Prioridad de atención</span>
+                  <span className={`etiqueta ${TONO_CATEGORIA[fichaLead.categoria] || 'neutra'}`}>
+                    {fichaLead.categoria}
+                  </span>
+                </div>
+
+                <div className="bloque-prioridad">
+                  <div className="prioridad-puntaje">
+                    <span className="puntaje-numero">{fichaLead.puntaje}</span>
+                    <span className="puntaje-label">puntos</span>
+                  </div>
+
+                  <ul className="lista-motivos">
+                    {(fichaLead.motivos || []).map((motivo, indice) => (
+                      <li key={indice}>{motivo}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <p className="nota-prioridad">
+                  El puntaje se calcula con reglas sobre la actividad registrada:
+                  antigüedad del último contacto, propiedades de interés, etapa del
+                  embudo y prioridad asignada.
+                </p>
+              </div>
+            )}
 
             <div className="ficha-seccion">
               <PropiedadesInteres

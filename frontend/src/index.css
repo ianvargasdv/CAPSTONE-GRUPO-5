@@ -1545,3 +1545,92 @@ textarea {
   color: var(--texto-suave);
   font-size: 0.8125rem;
 }
+
+/* ══════════════════════════════════════
+   PRIORIDAD CALCULADA
+══════════════════════════════════════ */
+
+/* Datos que destacan en la tabla sin necesidad de una etiqueta completa */
+.dato-alerta {
+  color: var(--alerta);
+  font-weight: 500;
+}
+
+.dato-critico {
+  color: var(--peligro);
+  font-weight: 600;
+}
+
+/* Bloque de la ficha que explica el puntaje */
+.bloque-prioridad {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
+  background-color: var(--superficie-alt);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+.prioridad-puntaje {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  padding-right: 1rem;
+  border-right: 1px solid var(--borde);
+  flex-shrink: 0;
+}
+
+.puntaje-numero {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--texto);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.puntaje-label {
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--texto-suave);
+}
+
+/* Motivos que componen el puntaje */
+.lista-motivos {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3125rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.lista-motivos li {
+  position: relative;
+  padding-left: 0.875rem;
+  font-size: 0.8125rem;
+  color: var(--texto-medio);
+  line-height: 1.4;
+}
+
+.lista-motivos li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.4375rem;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: var(--borde-fuerte);
+}
+
+.nota-prioridad {
+  margin-top: 0.625rem;
+  font-size: 0.6875rem;
+  color: var(--texto-suave);
+  line-height: 1.5;
+}

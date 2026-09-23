@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import List, Optional
 from datetime import datetime
 
 
@@ -29,9 +29,23 @@ class LeadActualizar(BaseModel):
 
 
 class LeadRespuesta(LeadBase):
-    """Esquema utilizado para responder información del lead con su ID y fecha de creación."""
+    """
+    Esquema de respuesta de un lead.
+
+    Los últimos campos no existen en la tabla: los calcula el módulo de prioridad
+    a partir de la actividad del lead y se agregan a la respuesta. Son opcionales
+    para que el esquema siga siendo válido si alguna vez se responde sin ellos.
+    """
     id: int
     fecha_creacion: Optional[datetime] = None
+
+    # Calculados, no almacenados
+    puntaje: Optional[int] = None
+    categoria: Optional[str] = None
+    motivos: Optional[List[str]] = None
+    dias_sin_contacto: Optional[int] = None
+    total_interacciones: Optional[int] = None
+    total_intereses: Optional[int] = None
 
     class Config:
         from_attributes = True

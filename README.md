@@ -210,6 +210,31 @@ router queda protegido por omisión.
 
 Los `PUT` son parciales: solo modifican los campos que se envían en el cuerpo.
 
+### Prioridad calculada
+
+Los endpoints que devuelven leads agregan campos que no están en la tabla: los
+calcula `prioridad.py` a partir de la actividad registrada.
+
+| Campo | Contenido |
+|---|---|
+| `puntaje` | Suma de los factores, de 0 a 90 |
+| `categoria` | Urgente, Alta, Normal, Baja o Sin acción |
+| `motivos` | Lista de las razones que componen el puntaje |
+| `dias_sin_contacto` | Días desde el último contacto, o desde el registro si nunca hubo |
+| `total_interacciones` | Contactos registrados |
+| `total_intereses` | Propiedades de interés asociadas |
+
+`GET /api/leads` los devuelve ordenados de mayor a menor puntaje.
+
+Los factores son: antigüedad del último contacto, si nunca se contactó, cantidad y
+nivel de las propiedades de interés, etapa del embudo y prioridad marcada a mano.
+Un lead en estado Cerrado queda siempre en 0.
+
+El puntaje **no se almacena**: se recalcula en cada consulta. Guardarlo quedaría
+desactualizado en cuanto se registra una interacción. Para no consultar la base una
+vez por lead, la actividad se obtiene con dos consultas agrupadas: el costo es el
+mismo con 5 leads que con 500.
+
 Para probar la API desde `/docs`, hacer primero login, copiar el `access_token` y
 pegarlo en el botón **Authorize**.
 
@@ -268,7 +293,8 @@ espera antes de reintentar. Se corrige creando `frontend/.env` con
 ## Estado del proyecto
 
 Implementado: gestión de leads, propiedades, interacciones, tareas y propiedades
-de interés, con autenticación y vista de inicio con la operación del día.
+de interés, con autenticación, priorización automática de leads y vista de inicio
+con la operación del día.
 
-Pendiente: priorización automática de leads, agente de IA (resumen del historial y
-recomendación de próxima acción), documentos y auditoría.
+Pendiente: agente de IA (resumen del historial y recomendación de próxima acción),
+documentos y auditoría.

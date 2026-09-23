@@ -5,11 +5,12 @@ import Icono from './Iconos';
  * Listado de leads. Es la vista principal de la sección: la creación y edición
  * ocurren en un panel lateral, no en un formulario sobre la tabla.
  *
- * Incluye cambio rápido de estado desde la fila, porque mover un lead por el
- * embudo es la acción más frecuente del ejecutivo y no debería requerir abrir un formulario.
+ * Los leads llegan ordenados por prioridad calculada desde el backend, así que la
+ * primera fila es la que hay que atender primero. La columna Atención resume ese
+ * cálculo y el detalle de por qué está en la ficha del lead.
  *
  * Props:
- * - leads: lista de leads
+ * - leads: lista de leads, con los campos de prioridad ya calculados
  * - tareas: lista de tareas, para contar las abiertas de cada lead
  * - cargando / error: estado de la carga
  * - alVerFicha: abre la ficha completa del lead
@@ -19,6 +20,19 @@ import Icono from './Iconos';
  */
 
 const ESTADOS = ['Nuevo', 'Contactado', 'Calificado', 'Cerrado'];
+
+const CATEGORIAS = ['Urgente', 'Alta', 'Normal', 'Baja', 'Sin acción'];
+
+// Solo las categorías que exigen acción llevan color
+const TONO_CATEGORIA = {
+  Urgente: 'peligro',
+  Alta: 'alerta',
+  Normal: 'neutra',
+  Baja: 'neutra',
+  'Sin acción': 'neutra',
+};
+
+const DIAS_SIN_CONTACTO_CRITICO = 14;
 
 function TablaLeads({
   leads,
@@ -32,6 +46,7 @@ function TablaLeads({
 }) {
   const [busqueda, setBusqueda] = useState('');
   const [filtroEstado, setFiltroEstado] = useState('Todos');
+  const [filtroCategoria, setFiltroCategoria] = useState('Todas');
 
   if (cargando) {
     return <div className="state-message">Cargando leads...</div>;
@@ -68,10 +83,10 @@ function TablaLeads({
       lead.email.toLowerCase().includes(termino) ||
       (lead.telefono && lead.telefono.includes(termino));
     const coincideEstado = filtroEstado === 'Todos' || lead.estado === filtroEstado;
-    return coincideTexto && coincideEstado;
+    const coincideCategoria = filtroCategoria === 'Todas' || lead.categoria === filtroCategoria;
+    return coincideTexto && coincideEstado && coincideCategoria;
   });
 
-  // Cuenta las tareas sin completar asociadas a un lead
   const tareasAbiertas = (leadId) =>
     tareas.filter((t) => t.lead_id === leadId && t.estado !== 'Completada').length;
 
@@ -92,8 +107,23 @@ function TablaLeads({
 
         <select
           className="filter-select"
+          value={filtroCategoria}
+          onChange={(e) => setFiltroCategoria(e.target.value)}
+          aria-label="Filtrar por nivel de atención"
+        >
+          <option value="Todas">Toda la atención</option>
+          {CATEGORIAS.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+
+        <select
+          className="filter-select"
           value={filtroEstado}
           onChange={(e) => setFiltroEstado(e.target.value)}
+          aria-label="Filtrar por estado"
         >
           <option value="Todos">Todos los estados</option>
           {ESTADOS.map((estado) => (
@@ -111,7 +141,7 @@ function TablaLeads({
       {leadsFiltrados.length === 0 ? (
         <div className="state-message empty">
           <span className="vacio-titulo">Sin resultados</span>
-          <span className="vacio-detalle">Ajusta la búsqueda o el filtro de estado.</span>
+          <span className="vacio-detalle">Ajusta la búsqueda o los filtros aplicados.</span>
         </div>
       ) : (
         <div className="table-wrapper">
@@ -119,17 +149,19 @@ function TablaLeads({
             <thead>
               <tr>
                 <th>Lead</th>
-                <th>Teléfono</th>
+                <th>Atención</th>
+                <th>Sin contacto</th>
                 <th>Estado</th>
                 <th>Prioridad</th>
                 <th>Tareas</th>
-                <th>Registrado</th>
                 <th />
               </tr>
             </thead>
             <tbody>
               {leadsFiltrados.map((lead) => {
                 const abiertas = tareasAbiertas(lead.id);
+                const nuncaContactado = lead.total_interacciones === 0;
+                const critico = lead.dias_sin_contacto > DIAS_SIN_CONTACTO_CRITICO;
 
                 return (
                   <tr key={lead.id}>
@@ -143,7 +175,26 @@ function TablaLeads({
                     </td>
 
                     <td>
-                      {lead.telefono || <span className="celda-vacia">—</span>}
+                      {lead.categoria ? (
+                        <span
+                          className={`etiqueta ${TONO_CATEGORIA[lead.categoria] || 'neutra'}`}
+                          title={`Puntaje ${lead.puntaje}. Abre la ficha para ver el detalle.`}
+                        >
+                          {lead.categoria}
+                        </span>
+                      ) : (
+                        <span className="celda-vacia">—</span>
+                      )}
+                    </td>
+
+                    <td>
+                      {nuncaContactado ? (
+                        <span className="dato-alerta">Nunca</span>
+                      ) : (
+                        <span className={critico ? 'dato-critico' : undefined}>
+                          {lead.dias_sin_contacto} d
+                        </span>
+                      )}
                     </td>
 
                     <td>
@@ -181,12 +232,6 @@ function TablaLeads({
                       )}
                     </td>
 
-                    <td className="col-fecha">
-                      {lead.fecha_creacion
-                        ? new Date(lead.fecha_creacion).toLocaleDateString('es-CL')
-                        : '—'}
-                    </td>
-
                     <td className="col-acciones">
                       <div className="acciones-celda">
                         <button
@@ -196,11 +241,7 @@ function TablaLeads({
                         >
                           <Icono nombre="chevron" />
                         </button>
-                        <button
-                          className="btn-icono"
-                          onClick={() => alEditar(lead)}
-                          title="Editar"
-                        >
+                        <button className="btn-icono" onClick={() => alEditar(lead)} title="Editar">
                           <Icono nombre="editar" />
                         </button>
                         <button
