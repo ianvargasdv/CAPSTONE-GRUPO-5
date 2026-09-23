@@ -1,6 +1,6 @@
-# CRM Inmobiliario — Capstone Grupo 5
+# CRM Inmobiliario
 
-Sistema de gestión para ejecutivos inmobiliarios. Permite administrar prospectos
+Sistema de gestión para ejecutivos inmobiliarios, permite administrar prospectos
 (leads), el catálogo de propiedades, el historial de contacto con cada cliente,
 las tareas de seguimiento y las propiedades que le interesan a cada lead.
 
@@ -230,7 +230,7 @@ Los factores son: antigüedad del último contacto, si nunca se contactó, canti
 nivel de las propiedades de interés, etapa del embudo y prioridad marcada a mano.
 Un lead en estado Cerrado queda siempre en 0.
 
-El puntaje **no se almacena**: se recalcula en cada consulta. Guardarlo quedaría
+El puntaje **no se almacena**: se recalcula en cada consulta, guardarlo quedaría
 desactualizado en cuanto se registra una interacción. Para no consultar la base una
 vez por lead, la actividad se obtiene con dos consultas agrupadas: el costo es el
 mismo con 5 leads que con 500.
@@ -274,7 +274,7 @@ descuidos.
 - **CORS** está limitado a `localhost:3000` y `127.0.0.1:3000`. Al desplegar hay
   que agregar el dominio de producción en `backend/main.py`.
 
-## Problemas frecuentes
+## Problemas (evitables pero probables)
 
 **`tenant or user not found` al arrancar el backend.** El proyecto de Supabase
 está pausado. Los proyectos del plan gratuito se pausan tras varios días sin
@@ -290,7 +290,7 @@ en IPv4 y en Windows `localhost` se resuelve primero a IPv6, lo que agrega una
 espera antes de reintentar. Se corrige creando `frontend/.env` con
 `VITE_API_URL=http://127.0.0.1:8000`.
 
-## Estado del proyecto
+## Alcance del proyecto actual (MVP) 
 
 Implementado: gestión de leads, propiedades, interacciones, tareas y propiedades
 de interés, con autenticación, priorización automática de leads y vista de inicio
