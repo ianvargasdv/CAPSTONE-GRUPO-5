@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Date
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Date, UniqueConstraint
 from sqlalchemy.sql import func
 from database import Base
 
@@ -63,4 +63,23 @@ class Tarea(Base):
     prioridad = Column(String(50), default="Media")        # Alta, Media, Baja
     fecha_limite = Column(Date, nullable=True)
     lead_id = Column(Integer, ForeignKey("leads.id", ondelete="SET NULL"), nullable=True)
+    fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class Interes(Base):
+    """
+    Modelo ORM que representa el interés de un lead en una propiedad del catálogo.
+    Tabla intermedia que relaciona leads con propiedades.
+    La restricción de unicidad evita registrar dos veces la misma propiedad para un mismo lead.
+    """
+    __tablename__ = "intereses"
+    __table_args__ = (
+        UniqueConstraint("lead_id", "propiedad_id", name="uq_lead_propiedad"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    lead_id = Column(Integer, ForeignKey("leads.id", ondelete="CASCADE"), nullable=False)
+    propiedad_id = Column(Integer, ForeignKey("propiedades.id", ondelete="CASCADE"), nullable=False)
+    nivel_interes = Column(String(50), default="Medio")   # Alto, Medio, Bajo
+    notas = Column(Text, nullable=True)
     fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())

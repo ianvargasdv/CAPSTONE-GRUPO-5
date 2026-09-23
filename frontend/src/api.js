@@ -211,3 +211,46 @@ export async function eliminarTarea(id) {
     throw new Error('No se pudo eliminar la tarea');
   }
 }
+
+/**
+ * Obtiene las propiedades de interés registradas para un lead.
+ */
+export async function obtenerIntereses(leadId) {
+  const respuesta = await fetch(`${API_URL}/leads/${leadId}/intereses`);
+  if (!respuesta.ok) {
+    throw new Error('No se pudieron cargar las propiedades de interés');
+  }
+  return await respuesta.json();
+}
+
+/**
+ * Registra el interés de un lead en una propiedad.
+ * Recibe el ID del lead y un objeto con propiedad_id, nivel_interes y notas.
+ */
+export async function crearInteres(leadId, datosInteres) {
+  const respuesta = await fetch(`${API_URL}/leads/${leadId}/intereses`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(datosInteres),
+  });
+
+  if (!respuesta.ok) {
+    // El backend devuelve un mensaje específico si la propiedad ya estaba registrada
+    const detalle = await respuesta.json().catch(() => null);
+    throw new Error(detalle?.detail || 'No se pudo registrar el interés');
+  }
+  return await respuesta.json();
+}
+
+/**
+ * Quita un interés registrado por su ID.
+ */
+export async function eliminarInteres(id) {
+  const respuesta = await fetch(`${API_URL}/intereses/${id}`, {
+    method: 'DELETE',
+  });
+
+  if (!respuesta.ok) {
+    throw new Error('No se pudo quitar el interés');
+  }
+}

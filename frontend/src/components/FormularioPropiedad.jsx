@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 
 /**
- * Formulario para registrar o editar una propiedad.
+ * Formulario para crear o editar una propiedad. Se muestra dentro de un panel lateral.
  *
  * Props:
- * - alGuardar: función que recibe los datos del formulario (crear o editar)
- * - propiedadEditar: objeto propiedad con datos precargados cuando se está editando (opcional)
- * - alCancelar: función para cancelar el modo edición (opcional)
+ * - alGuardar: función que recibe los datos del formulario
+ * - propiedadEditar: propiedad con datos precargados en modo edición (opcional)
+ * - alCancelar: cierra el panel sin guardar
  */
 function FormularioPropiedad({ alGuardar, propiedadEditar, alCancelar }) {
   const [titulo, setTitulo] = useState('');
@@ -19,7 +19,6 @@ function FormularioPropiedad({ alGuardar, propiedadEditar, alCancelar }) {
 
   const modoEdicion = Boolean(propiedadEditar);
 
-  // Cuando se recibe una propiedad para editar, precarga sus datos en el formulario
   useEffect(() => {
     if (propiedadEditar) {
       setTitulo(propiedadEditar.titulo || '');
@@ -27,8 +26,14 @@ function FormularioPropiedad({ alGuardar, propiedadEditar, alCancelar }) {
       setPrecio(propiedadEditar.precio?.toString() || '');
       setDireccion(propiedadEditar.direccion || '');
       setEstado(propiedadEditar.estado || 'Disponible');
-      setError(null);
+    } else {
+      setTitulo('');
+      setTipo('Departamento');
+      setPrecio('');
+      setDireccion('');
+      setEstado('Disponible');
     }
+    setError(null);
   }, [propiedadEditar]);
 
   const manejarEnvio = async (e) => {
@@ -48,17 +53,8 @@ function FormularioPropiedad({ alGuardar, propiedadEditar, alCancelar }) {
         direccion: direccion.trim(),
         estado,
       });
-
-      // Solo limpiar si es modo creación
-      if (!modoEdicion) {
-        setTitulo('');
-        setTipo('Departamento');
-        setPrecio('');
-        setDireccion('');
-        setEstado('Disponible');
-      }
     } catch (err) {
-      setError(err.message || 'Error al registrar la propiedad');
+      setError(err.message || 'No se pudo guardar la propiedad');
     } finally {
       setCargando(false);
     }
@@ -66,28 +62,24 @@ function FormularioPropiedad({ alGuardar, propiedadEditar, alCancelar }) {
 
   return (
     <form className="form-lead" onSubmit={manejarEnvio}>
-      <h3 className="section-subtitle">
-        {modoEdicion ? `Editando Propiedad #${propiedadEditar.id}` : 'Registrar Nueva Propiedad'}
-      </h3>
-
       {error && <div className="alert-error">{error}</div>}
 
       <div className="form-grid">
-        <div className="form-group">
-          <label htmlFor="titulo">Título de la Propiedad *</label>
+        <div className="form-group form-group-full">
+          <label htmlFor="titulo">Título</label>
           <input
             id="titulo"
             type="text"
-            placeholder="Ej: Depto 2D/2B Metro Providencia"
+            placeholder="Depto 2D/2B Metro Providencia"
             value={titulo}
             onChange={(e) => setTitulo(e.target.value)}
             disabled={cargando}
-            required
+            autoFocus
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="tipo">Tipo de Inmueble</label>
+          <label htmlFor="tipo">Tipo</label>
           <select
             id="tipo"
             value={tipo}
@@ -102,28 +94,27 @@ function FormularioPropiedad({ alGuardar, propiedadEditar, alCancelar }) {
         </div>
 
         <div className="form-group">
-          <label htmlFor="precio">Precio (UF / CLP) *</label>
+          <label htmlFor="precio">Precio</label>
           <input
             id="precio"
             type="number"
-            placeholder="Ej: 3500"
+            placeholder="3500"
             value={precio}
             onChange={(e) => setPrecio(e.target.value)}
             disabled={cargando}
-            required
           />
+          <span className="form-ayuda">Valor en UF o pesos, según el criterio del aviso</span>
         </div>
 
-        <div className="form-group">
-          <label htmlFor="direccion">Dirección *</label>
+        <div className="form-group form-group-full">
+          <label htmlFor="direccion">Dirección</label>
           <input
             id="direccion"
             type="text"
-            placeholder="Ej: Av. Providencia 1234"
+            placeholder="Av. Providencia 1234, Providencia"
             value={direccion}
             onChange={(e) => setDireccion(e.target.value)}
             disabled={cargando}
-            required
           />
         </div>
 
@@ -143,22 +134,13 @@ function FormularioPropiedad({ alGuardar, propiedadEditar, alCancelar }) {
       </div>
 
       <div className="form-actions">
-        {modoEdicion && alCancelar && (
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={alCancelar}
-            disabled={cargando}
-          >
+        {alCancelar && (
+          <button type="button" className="btn-secondary" onClick={alCancelar} disabled={cargando}>
             Cancelar
           </button>
         )}
         <button type="submit" className="btn-primary" disabled={cargando}>
-          {cargando
-            ? 'Guardando...'
-            : modoEdicion
-            ? 'Guardar Cambios'
-            : 'Guardar Propiedad'}
+          {cargando ? 'Guardando...' : modoEdicion ? 'Guardar cambios' : 'Crear propiedad'}
         </button>
       </div>
     </form>
