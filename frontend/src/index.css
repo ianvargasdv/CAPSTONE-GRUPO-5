@@ -1819,3 +1819,80 @@ textarea {
     display: none;
   }
 }
+
+/* ══════════════════════════════════════
+   REGISTRO DE ACTIVIDAD (AUDITORÍA)
+══════════════════════════════════════ */
+
+.texto-suave {
+  color: var(--texto-suave);
+}
+
+/* Rango de fechas: los dos campos se leen como un solo control */
+.rango-fechas {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.rango-fechas input {
+  color: var(--texto-medio);
+  cursor: text;
+}
+
+.rango-separador {
+  font-size: 0.75rem;
+  color: var(--texto-suave);
+}
+
+/* La descripción es la columna que se lee, así que se lleva el espacio sobrante */
+.tabla-auditoria .celda-descripcion {
+  min-width: 260px;
+}
+
+/* El detalle es texto técnico ("estado: Nuevo -> Contactado"): va en monoespaciada
+   para que el nombre del campo y los valores se distingan de un vistazo */
+.celda-detalle code {
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  color: var(--texto-medio);
+  word-break: break-word;
+}
+
+.tabla-auditoria .celda-detalle {
+  max-width: 280px;
+}
+
+.paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 0.75rem 1.125rem;
+  border-top: 1px solid var(--borde);
+}
+
+.paginacion-texto {
+  font-size: 0.75rem;
+  color: var(--texto-suave);
+  font-variant-numeric: tabular-nums;
+}
+
+.paginacion .btn-secondary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 860px) {
+  /* Con poco ancho los filtros se apilan en vez de comprimirse hasta ser inusables */
+  .rango-fechas {
+    width: 100%;
+  }
+  .rango-fechas input {
+    flex: 1;
+  }
+  .paginacion {
+    justify-content: space-between;
+  }
+}

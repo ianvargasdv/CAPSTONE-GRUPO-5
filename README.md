@@ -4,9 +4,9 @@ Sistema de gestión para ejecutivos inmobiliarios: prospectos (leads), catálogo
 propiedades, historial de contacto, tareas de seguimiento y propiedades de interés
 de cada lead.
 
-El proyecto contempla incorporar más adelante un agente de IA que priorice leads,
-resuma el historial de un cliente y recomiende la siguiente acción. Esa parte
-todavía no está implementada.
+Incluye un agente de IA que resume el historial de un lead y recomienda la siguiente
+acción, priorización automática de la cartera y un registro de auditoría de todo lo
+que se modifica.
 
 ## Stack
 
@@ -29,9 +29,11 @@ backend/
   seguridad.py       Contraseñas, tokens, roles y autorización
   prioridad.py       Reglas de priorización de leads
   ia.py              Integración con el modelo de lenguaje
+  auditoria.py       Registro de quién hizo qué y comparación de cambios
   crear_usuario.py   Script para dar de alta usuarios
   cambiar_rol.py     Script para cambiar el rol de un usuario
   migrar.py          Aplica cambios de estructura sobre tablas existentes
+  prueba_auditoria.py  Verifica que ningún endpoint de escritura quede sin auditar
 
 frontend/src/
   App.jsx            Estado general y navegación
@@ -101,9 +103,9 @@ python crear_usuario.py
 Pide nombre, correo, rol y contraseña. Sin al menos un usuario no se puede entrar.
 
 Hay dos roles. El **ejecutivo** trabaja la cartera: leads, propiedades, tareas y el
-asistente. El **admin** además ve el panel de consumo del agente de IA. No existe un
-rol para clientes porque los clientes no acceden al CRM: se comunican con la
-inmobiliaria y sus datos los registra el ejecutivo.
+asistente. El **admin** además ve el consumo del agente de IA y el registro de
+actividad. No existe un rol para clientes porque los clientes no acceden al CRM: se
+comunican con la inmobiliaria y sus datos los registra el ejecutivo.
 
 Para cambiar el rol de un usuario que ya existe:
 
@@ -125,20 +127,27 @@ cambiar la dirección, crear `frontend/.env` con `VITE_API_URL=http://127.0.0.1:
 ## Modelo de datos
 
 ```
-usuarios       id, nombre, email (único), password_hash, activo, fecha_creacion
+usuarios       id, nombre, email (único), password_hash, rol, activo, fecha_creacion
 leads          id, nombre, email, telefono, estado, prioridad, fecha_creacion
 propiedades    id, titulo, tipo, precio, direccion, estado, fecha_creacion
 interacciones  id, lead_id, tipo, notas, fecha_creacion
 tareas         id, titulo, descripcion, estado, prioridad, fecha_limite, lead_id
 intereses      id, lead_id, propiedad_id, nivel_interes, notas, fecha_creacion
+analisis_ia    id, lead_id, usuario_id, tipo, entrada, salida, modelo,
+               tokens_entrada, tokens_salida, costo_estimado_usd, fecha_creacion
+auditoria      id, usuario_id, usuario_email, accion, entidad, entidad_id,
+               descripcion, detalle, fecha_creacion
 ```
 
 Sobre las relaciones:
 
-- Al borrar un lead se borran sus interacciones y sus intereses, porque no tienen
-  sentido sin él.
+- Al borrar un lead se borran sus interacciones, sus intereses y sus análisis, porque
+  no tienen sentido sin él.
 - Al borrar un lead sus tareas se conservan y quedan sin vínculo, porque el trabajo
   pendiente puede seguir siendo válido.
+- Al borrar un usuario, sus análisis y sus registros de auditoría se conservan con la
+  clave foránea en nulo. En auditoría el correo está además guardado como texto, para
+  que el registro siga diciendo quién actuó aunque la cuenta ya no exista.
 - `intereses` guarda datos propios (`nivel_interes`, `notas`), así que es una
   entidad de asociación y no una simple tabla puente. Tiene una restricción única
   sobre `(lead_id, propiedad_id)` para no asociar dos veces la misma propiedad.
@@ -203,6 +212,49 @@ sirve tanto un servicio alojado como un modelo local. Cambiar de proveedor es ca
 La llamada al proveedor se hace desde el backend. Si se hiciera desde el navegador la
 clave viajaría al cliente y cualquiera podría leerla.
 
+## Registro de actividad
+
+Cada vez que alguien crea, modifica o elimina un registro, o genera un análisis con
+IA, queda una entrada en la tabla `auditoria` con quién lo hizo, cuándo, sobre qué y
+qué cambió. En una inmobiliaria donde varios ejecutivos trabajan la misma cartera es
+la única forma de responder por qué un lead cambió de estado o quién sacó una
+propiedad del catálogo.
+
+En las modificaciones se compara el registro antes y después, y se guarda solo lo que
+cambió de verdad: `estado: Nuevo -> Contactado; prioridad: Media -> Alta`. Se compara
+el resultado y no lo que venía en la petición, porque enviar un campo con el mismo
+valor que ya tenía no es un cambio.
+
+El registro se escribe en la misma transacción que la operación que describe. O se
+guardan las dos cosas o no se guarda ninguna: no puede quedar una acción sin rastro
+ni un rastro de algo que falló.
+
+El listado está en la sección **Actividad** y lo ve solo el rol admin. Tiene filtros
+por usuario, tipo de registro, tipo de acción y rango de fechas, búsqueda por texto y
+paginación. Un ejecutivo no puede consultarlo: el backend responde 403.
+
+La auditoría se registra llamando explícitamente a `auditoria.registrar()` en cada
+endpoint, en lugar de detectarla sola con un listener de SQLAlchemy. El automático
+producía registros falsos, porque había endpoints que modificaban objetos en memoria
+solo para poder serializarlos y el listener lo interpretaba como un cambio real. Un
+registro con entradas falsas no sirve, porque su único valor es que se pueda confiar
+en él. La contrapartida es que se puede olvidar en un endpoint nuevo, y eso lo cubre
+`prueba_auditoria.py`:
+
+```powershell
+cd backend
+python prueba_auditoria.py
+```
+
+Recorre los endpoints de escritura y comprueba que todos dejen rastro, además de los
+filtros, la paginación y el acceso por rol. Corre sobre una base SQLite temporal que
+crea y borra sola, así que no toca los datos reales, y reemplaza el proveedor de IA
+por uno falso para no gastar crédito. Al agregar un endpoint de escritura hay que
+sumarlo a esa prueba.
+
+No hay forma de borrar ni editar entradas del registro desde la API. Es a propósito:
+un historial que se puede alterar no sirve como historial.
+
 ## Limitaciones conocidas
 
 - El token se guarda en `localStorage`, que es accesible desde JavaScript y por lo
@@ -217,7 +269,14 @@ clave viajaría al cliente y cualquiera podría leerla.
 - CORS está limitado a `localhost:3000`. Al desplegar hay que agregar el dominio en
   `backend/main.py`.
 - No hay asignación de leads por ejecutivo: todos ven la misma cartera.
-- No hay cambio de contraseña desde la interfaz ni paginación en los listados.
+- No hay cambio de contraseña desde la interfaz.
+- Solo el registro de actividad está paginado. Los demás listados traen todo, porque
+  su tamaño lo acota la operación del negocio; el de actividad crece con cada acción.
+- Los filtros de fecha del registro de actividad toman días completos en UTC, que es
+  la zona en que se guardan las fechas. Con horario chileno el corte puede caer unas
+  horas antes de la medianoche local.
+- El registro de actividad no tiene purga: crece indefinidamente. Con el volumen de un
+  MVP no es un problema, pero en producción habría que archivar lo antiguo.
 - Los roles se asignan por terminal, no desde la aplicación. Es deliberado: un
   endpoint para cambiar roles sería una vía para que alguien se diera permisos.
 
@@ -240,6 +299,7 @@ y en Windows `localhost` se resuelve primero a IPv6. Se corrige creando
 
 Implementado: leads, propiedades, interacciones, tareas, propiedades de interés,
 autenticación con roles, priorización de leads, asistente con IA (resumen y
-recomendación), seguimiento del consumo del agente y vista de inicio.
+recomendación), seguimiento del consumo del agente, registro de actividad y vista de
+inicio.
 
-Pendiente: documentos y auditoría.
+Pendiente: documentos.

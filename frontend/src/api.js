@@ -269,3 +269,44 @@ export function generarAnalisis(leadId, tipo = 'resumen') {
 export function obtenerConsumoIA() {
   return pedir('/ia/consumo', { mensajeError: 'No se pudo cargar el consumo del agente' });
 }
+
+/* ══════════════════ Auditoría ══════════════════ */
+
+/**
+ * Arma la cadena de consulta descartando los filtros vacíos.
+ *
+ * Hace falta porque un filtro en blanco enviado como parámetro no es lo mismo que
+ * no enviarlo: el backend valida los valores de entidad y acción, y un texto vacío
+ * lo haría responder 400.
+ */
+function comoConsulta(filtros) {
+  const parametros = new URLSearchParams();
+
+  Object.entries(filtros).forEach(([clave, valor]) => {
+    if (valor !== '' && valor !== null && valor !== undefined) {
+      parametros.set(clave, valor);
+    }
+  });
+
+  return parametros.toString();
+}
+
+/**
+ * Registro de auditoría paginado. Solo responde a usuarios con rol admin:
+ * a un ejecutivo el backend le devuelve 403.
+ *
+ * Filtros aceptados: pagina, por_pagina, usuario_email, entidad, accion,
+ * desde y hasta (YYYY-MM-DD) y busqueda.
+ */
+export function obtenerAuditoria(filtros = {}) {
+  return pedir(`/auditoria?${comoConsulta(filtros)}`, {
+    mensajeError: 'No se pudo cargar el registro de actividad',
+  });
+}
+
+/** Valores que ofrecen los selectores de filtro: entidades, acciones y usuarios. */
+export function obtenerFiltrosAuditoria() {
+  return pedir('/auditoria/filtros', {
+    mensajeError: 'No se pudieron cargar los filtros del registro',
+  });
+}

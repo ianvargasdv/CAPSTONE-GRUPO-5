@@ -155,3 +155,32 @@ class AnalisisIA(Base):
     costo_estimado_usd = Column(Float, nullable=True)
 
     fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class Auditoria(Base):
+    """
+    Modelo ORM del registro de auditoría: qué hizo cada usuario y cuándo.
+
+    El correo del usuario se guarda además de la clave foránea, duplicado a
+    propósito. Si un usuario se da de baja y se borra, la clave foránea queda en nulo
+    pero el registro tiene que seguir diciendo quién hizo cada cosa. Un registro de
+    auditoría que pierde al responsable no sirve para nada.
+
+    La fecha está indexada porque el listado se ordena y se filtra por ella.
+    """
+    __tablename__ = "auditoria"
+
+    id = Column(Integer, primary_key=True, index=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id", ondelete="SET NULL"), nullable=True)
+    usuario_email = Column(String(150), nullable=True)
+
+    accion = Column(String(20), nullable=False)    # crear, actualizar, eliminar, generar
+    entidad = Column(String(30), nullable=False)   # lead, propiedad, tarea, interes...
+    entidad_id = Column(Integer, nullable=True)
+
+    # Texto corto y legible de lo que pasó, para leer el listado sin interpretar
+    descripcion = Column(String(250), nullable=True)
+    # Detalle de los campos que cambiaron, en el caso de las actualizaciones
+    detalle = Column(Text, nullable=True)
+
+    fecha_creacion = Column(DateTime(timezone=True), server_default=func.now(), index=True)

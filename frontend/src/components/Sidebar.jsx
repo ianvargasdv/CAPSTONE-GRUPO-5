@@ -43,7 +43,10 @@ const SECCIONES = [
   {
     titulo: 'Administración',
     soloAdmin: true,
-    items: [{ id: 'consumo', etiqueta: 'Consumo de IA', icono: 'tendencia' }],
+    items: [
+      { id: 'consumo', etiqueta: 'Consumo de IA', icono: 'tendencia' },
+      { id: 'auditoria', etiqueta: 'Actividad', icono: 'historial' },
+    ],
   },
 ];
 

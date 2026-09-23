@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import List, Optional
-from datetime import datetime
+from datetime import date, datetime
 
 
 class LeadBase(BaseModel):
@@ -141,13 +141,20 @@ class TareaRespuesta(BaseModel):
     """
     Esquema de respuesta para una tarea.
     Incluye todos los campos más el id y la fecha de creación.
+
+    fecha_limite se declara como date y no como str: Pydantic la serializa igual,
+    como "YYYY-MM-DD", así que el frontend recibe exactamente lo mismo. Antes los
+    endpoints convertían la fecha a texto sobre el objeto ORM para que el esquema la
+    aceptara, y eso dejaba el atributo marcado como modificado en la sesión: si algo
+    hacía commit después, SQLAlchemy intentaba guardar el texto en una columna de
+    fecha. Declarar bien el tipo acá evita el problema en su origen.
     """
     id: int
     titulo: str
     descripcion: Optional[str] = None
     estado: str
     prioridad: str
-    fecha_limite: Optional[str] = None
+    fecha_limite: Optional[date] = None
     lead_id: Optional[int] = None
     fecha_creacion: Optional[datetime] = None
 
@@ -303,3 +310,47 @@ class ConsumoIARespuesta(BaseModel):
 
     # Configuración efectiva del proceso, para poder verificarla sin adivinar
     configuracion: Optional[ConfiguracionIA] = None
+
+
+class AuditoriaRespuesta(BaseModel):
+    """Una entrada del registro de auditoría."""
+    id: int
+    usuario_id: Optional[int] = None
+    usuario_email: Optional[str] = None
+    accion: str
+    entidad: str
+    entidad_id: Optional[int] = None
+    descripcion: Optional[str] = None
+    detalle: Optional[str] = None
+    fecha_creacion: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class AuditoriaPagina(BaseModel):
+    """
+    Una página del registro de auditoría.
+
+    El listado se pagina porque crece con cada acción del sistema: es la única tabla
+    del proyecto que no tiene un tamaño acotado por la operación del negocio.
+    """
+    total: int
+    pagina: int
+    por_pagina: int
+    total_paginas: int
+    registros: List[AuditoriaRespuesta] = []
+
+
+class AuditoriaFiltros(BaseModel):
+    """
+    Valores disponibles para filtrar el registro de auditoría.
+
+    Las entidades y las acciones las define el backend, así que se envían desde acá
+    en vez de repetirlas en el frontend: si mañana se audita una entidad nueva, la
+    interfaz la ofrece sin tocarla. La lista de usuarios es la de quienes realmente
+    aparecen en el registro, no la de todas las cuentas.
+    """
+    entidades: List[str] = []
+    acciones: List[str] = []
+    usuarios: List[str] = []
