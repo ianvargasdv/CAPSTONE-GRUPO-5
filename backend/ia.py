@@ -47,6 +47,13 @@ MAX_TOKENS = int(os.getenv("IA_MAX_TOKENS", "300"))
 _TEMPERATURA_CRUDA = os.getenv("IA_TEMPERATURA", "0.2").strip()
 TEMPERATURA = float(_TEMPERATURA_CRUDA) if _TEMPERATURA_CRUDA else None
 
+# Precios del modelo en dólares por millón de tokens, para estimar el gasto.
+# Son configurables porque cambian con el tiempo y dependen del modelo elegido.
+# El valor que manda siempre es el del panel de facturación del proveedor: lo que
+# calcula el sistema es una estimación para tener referencia mientras se usa.
+PRECIO_ENTRADA_POR_MILLON = float(os.getenv("IA_PRECIO_ENTRADA_USD_MILLON", "0") or 0)
+PRECIO_SALIDA_POR_MILLON = float(os.getenv("IA_PRECIO_SALIDA_USD_MILLON", "0") or 0)
+
 # Límite de caracteres de la respuesta que se guarda, por si el modelo se extiende
 MAX_CARACTERES_RESPUESTA = 4000
 
@@ -97,6 +104,26 @@ TIPOS_VALIDOS = tuple(INSTRUCCIONES_POR_TIPO)
 def esta_configurada() -> bool:
     """Indica si hay proveedor de IA configurado."""
     return bool(BASE_URL and MODELO)
+
+
+def calcular_costo(tokens_entrada: int, tokens_salida: int):
+    """
+    Estima en dólares lo que costó una llamada, según los precios configurados.
+
+    Devuelve None si no hay precios cargados: es mejor no mostrar costo que mostrar
+    un cero que parezca gratis.
+    """
+    if not PRECIO_ENTRADA_POR_MILLON and not PRECIO_SALIDA_POR_MILLON:
+        return None
+
+    # Si el proveedor no informó consumo no se puede estimar nada. Devolver cero
+    # haría parecer que la llamada fue gratis.
+    if tokens_entrada is None and tokens_salida is None:
+        return None
+
+    entrada = (tokens_entrada or 0) / 1_000_000 * PRECIO_ENTRADA_POR_MILLON
+    salida = (tokens_salida or 0) / 1_000_000 * PRECIO_SALIDA_POR_MILLON
+    return entrada + salida
 
 
 def _sin_clave(texto: str) -> str:
@@ -244,13 +271,16 @@ def construir_ficha(lead, interacciones, intereses, propiedades_por_id, tareas=(
     return "\n".join(lineas)
 
 
-def generar_analisis(ficha: str, tipo: str = "resumen") -> tuple[str, str]:
+def generar_analisis(ficha: str, tipo: str = "resumen") -> dict:
     """
-    Envía la ficha al modelo y devuelve (texto generado, nombre del modelo).
+    Envía la ficha al modelo y devuelve el texto generado junto con su consumo.
 
     El tipo determina qué instrucciones recibe el modelo: "resumen" describe la
     situación del prospecto y "recomendacion" propone la siguiente acción. La ficha
     que se envía es la misma en ambos casos.
+
+    Devuelve un diccionario con el texto, el modelo que respondió, los tokens de
+    entrada y salida informados por el proveedor, y el costo estimado.
 
     Lanza IANoConfigurada si falta la configuración e IAFallo si el proveedor no
     responde o responde algo inesperado.
@@ -334,4 +364,16 @@ def generar_analisis(ficha: str, tipo: str = "resumen") -> tuple[str, str]:
     # El modelo informado por el proveedor puede diferir del solicitado
     modelo_usado = datos.get("model") or MODELO
 
-    return texto[:MAX_CARACTERES_RESPUESTA], modelo_usado
+    # El consumo viene en "usage". Se lee con cuidado porque no todos los
+    # proveedores compatibles lo devuelven, sobre todo los modelos locales.
+    consumo = datos.get("usage") or {}
+    tokens_entrada = consumo.get("prompt_tokens")
+    tokens_salida = consumo.get("completion_tokens")
+
+    return {
+        "texto": texto[:MAX_CARACTERES_RESPUESTA],
+        "modelo": modelo_usado,
+        "tokens_entrada": tokens_entrada,
+        "tokens_salida": tokens_salida,
+        "costo_estimado_usd": calcular_costo(tokens_entrada, tokens_salida),
+    }

@@ -228,6 +228,13 @@ class AnalisisRespuesta(BaseModel):
     entrada: Optional[str] = None
     salida: str
     modelo: Optional[str] = None
+
+    # Consumo del proveedor. Quedan en nulo en los análisis anteriores a que se
+    # empezara a registrar, y si el proveedor no informa el consumo.
+    tokens_entrada: Optional[int] = None
+    tokens_salida: Optional[int] = None
+    costo_estimado_usd: Optional[float] = None
+
     fecha_creacion: Optional[datetime] = None
 
     class Config:

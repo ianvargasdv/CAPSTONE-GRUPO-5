@@ -48,6 +48,16 @@ function fechaLarga(iso) {
   });
 }
 
+/** Formatea el costo con suficientes decimales: son cifras muy chicas. */
+function costoUSD(valor) {
+  return valor.toLocaleString('es-CL', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 4,
+    maximumFractionDigits: 6,
+  });
+}
+
 function AsistenteIA({ analisis = [], cargando, error, iaConfigurada, alGenerar }) {
   // Guarda qué tipo se está generando, para deshabilitar solo ese botón
   const [generandoTipo, setGenerandoTipo] = useState(null);
@@ -174,6 +184,22 @@ function AsistenteIA({ analisis = [], cargando, error, iaConfigurada, alGenerar 
                       {ultimo.modelo && ` · ${ultimo.modelo}`}
                     </span>
                   </div>
+
+                  {/* Consumo de la llamada. Queda en nulo en los análisis generados
+                      antes de que se empezara a registrar. */}
+                  {(ultimo.tokens_entrada !== null || ultimo.tokens_salida !== null) && (
+                    <div className="resumen-consumo">
+                      <span>
+                        {ultimo.tokens_entrada ?? 0} tokens enviados ·{' '}
+                        {ultimo.tokens_salida ?? 0} recibidos
+                      </span>
+                      {ultimo.costo_estimado_usd !== null && (
+                        <span className="consumo-costo">
+                          {costoUSD(ultimo.costo_estimado_usd)} estimados
+                        </span>
+                      )}
+                    </div>
+                  )}
 
                   {ultimo.entrada && (
                     <details className="resumen-detalle">

@@ -3,6 +3,7 @@ from sqlalchemy import (
     Column,
     Date,
     DateTime,
+    Float,
     ForeignKey,
     Integer,
     String,
@@ -134,4 +135,15 @@ class AnalisisIA(Base):
     entrada = Column(Text, nullable=True)
     salida = Column(Text, nullable=False)
     modelo = Column(String(100), nullable=True)
+
+    # Consumo informado por el proveedor. Quedan en nulo para los análisis generados
+    # antes de que se empezara a registrar el consumo.
+    tokens_entrada = Column(Integer, nullable=True)
+    tokens_salida = Column(Integer, nullable=True)
+
+    # Costo calculado al momento de generar el análisis, con los precios vigentes
+    # entonces. Se guarda ya calculado para que cambiar de modelo o de precio más
+    # adelante no altere el histórico de lo que realmente se gastó.
+    costo_estimado_usd = Column(Float, nullable=True)
+
     fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())

@@ -645,7 +645,7 @@ def crear_analisis(
     ficha = ia.construir_ficha(lead, interacciones, intereses, propiedades_por_id, tareas)
 
     try:
-        texto, modelo_usado = ia.generar_analisis(ficha, tipo)
+        resultado = ia.generar_analisis(ficha, tipo)
     except ia.IANoConfigurada as error:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(error))
     except ia.IAFallo as error:
@@ -656,8 +656,11 @@ def crear_analisis(
         usuario_id=usuario.id,
         tipo=tipo,
         entrada=ficha,
-        salida=texto,
-        modelo=modelo_usado,
+        salida=resultado["texto"],
+        modelo=resultado["modelo"],
+        tokens_entrada=resultado["tokens_entrada"],
+        tokens_salida=resultado["tokens_salida"],
+        costo_estimado_usd=resultado["costo_estimado_usd"],
     )
     db.add(analisis)
     db.commit()

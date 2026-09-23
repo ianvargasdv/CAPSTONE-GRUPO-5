@@ -159,6 +159,19 @@ parten de la misma ficha y se diferencian solo en las instrucciones.
 Cada generación ocurre al presionar el botón. No hay procesos automáticos ni
 llamadas al abrir la ficha, porque cada llamada al proveedor tiene costo.
 
+### Consumo y costo
+
+De cada llamada se guardan los tokens que informa el proveedor y el costo estimado
+calculado con los precios de `IA_PRECIO_ENTRADA_USD_MILLON` e
+`IA_PRECIO_SALIDA_USD_MILLON`. El costo se calcula al momento de generar el análisis
+y se almacena, para que cambiar de modelo o de precio después no altere el histórico.
+
+Es una estimación para tener referencia mientras se usa el sistema. El valor que
+manda es el del panel de facturación del proveedor.
+
+Si el proveedor no informa el consumo, los tokens y el costo quedan en nulo. No se
+guarda cero, porque un cero se leería como que la llamada fue gratis.
+
 Se guarda la entrada además de la salida para poder verificar de dónde salió cada
 resumen. La ficha permite desplegar esa información, y el texto siempre aparece
 identificado como generado automáticamente con su fecha y el modelo que lo produjo.
@@ -178,8 +191,9 @@ clave viajaría al cliente y cualquiera podría leerla.
 - No hay límite de intentos de login. Solo frena el costo de bcrypt.
 - `/docs` es accesible sin autenticación. En producción habría que deshabilitarlo.
 - `create_all()` crea las tablas que faltan pero no agrega columnas a tablas que ya
-  existen. Al modificar un modelo existente hay que aplicar el cambio a mano en
-  Supabase.
+  existen. Para eso está `migrar.py`, que aplica los cambios de estructura con
+  `IF NOT EXISTS` y se puede correr las veces que sea necesario. Hay que ejecutarlo
+  después de traer cambios que agreguen columnas a una tabla existente.
 - CORS está limitado a `localhost:3000`. Al desplegar hay que agregar el dominio en
   `backend/main.py`.
 - No hay roles, ni asignación de leads por ejecutivo, ni cambio de contraseña desde
