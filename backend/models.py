@@ -1,6 +1,33 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Date, UniqueConstraint
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.sql import func
 from database import Base
+
+
+class Usuario(Base):
+    """
+    Modelo ORM de los usuarios que acceden al sistema (ejecutivos inmobiliarios).
+
+    La contraseña nunca se guarda en texto plano: solo se almacena su hash bcrypt.
+    El campo activo permite dar de baja un acceso sin borrar el registro.
+    """
+    __tablename__ = "usuarios"
+
+    id = Column(Integer, primary_key=True, index=True)
+    nombre = Column(String(100), nullable=False)
+    email = Column(String(150), unique=True, nullable=False, index=True)
+    password_hash = Column(String(255), nullable=False)
+    activo = Column(Boolean, nullable=False, default=True)
+    fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())
 
 
 class Lead(Base):

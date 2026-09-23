@@ -1,256 +1,234 @@
-const API_URL = 'http://localhost:8000/api';
-
 /**
- * Obtiene el listado completo de leads desde el backend.
+ * Capa de comunicación con la API.
+ *
+ * Todas las peticiones pasan por pedir(), que se encarga de adjuntar el token de
+ * sesión y de reaccionar igual ante un 401. Centralizarlo evita que a alguna
+ * llamada se le olvide la autenticación.
  */
-export async function obtenerLeads() {
-  const respuesta = await fetch(`${API_URL}/leads`);
-  if (!respuesta.ok) {
-    throw new Error('No se pudo cargar la lista de leads');
-  }
-  return await respuesta.json();
+
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
+const BASE = `${API_URL}/api`;
+const CLAVE_TOKEN = 'crm_token';
+
+// Callback que App registra para saber cuándo la sesión dejó de ser válida
+let alExpirarSesion = null;
+
+/** Permite a la aplicación reaccionar cuando el backend rechaza el token. */
+export function registrarCierreDeSesion(callback) {
+  alExpirarSesion = callback;
+}
+
+export function obtenerToken() {
+  return localStorage.getItem(CLAVE_TOKEN);
+}
+
+export function guardarToken(token) {
+  localStorage.setItem(CLAVE_TOKEN, token);
+}
+
+export function borrarToken() {
+  localStorage.removeItem(CLAVE_TOKEN);
 }
 
 /**
- * Envíos los datos de un nuevo lead para registrarlo en el backend.
+ * Ejecuta una petición contra la API.
+ *
+ * @param ruta        camino relativo a /api, por ejemplo "/leads"
+ * @param metodo      verbo HTTP
+ * @param cuerpo      objeto que se envía como JSON (opcional)
+ * @param mensajeError texto a mostrar si el backend no da un detalle propio
+ * @param requiereToken false solo para el login, que se llama sin sesión
  */
-export async function crearLead(datosLead) {
-  const respuesta = await fetch(`${API_URL}/leads`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(datosLead),
+async function pedir(ruta, { metodo = 'GET', cuerpo, mensajeError = 'Error de comunicación con el servidor', requiereToken = true } = {}) {
+  const cabeceras = {};
+  if (cuerpo !== undefined) {
+    cabeceras['Content-Type'] = 'application/json';
+  }
+
+  const token = obtenerToken();
+  if (requiereToken && token) {
+    cabeceras.Authorization = `Bearer ${token}`;
+  }
+
+  let respuesta;
+  try {
+    respuesta = await fetch(`${BASE}${ruta}`, {
+      method: metodo,
+      headers: cabeceras,
+      body: cuerpo !== undefined ? JSON.stringify(cuerpo) : undefined,
+    });
+  } catch {
+    // fetch solo lanza si no hubo respuesta: servidor caído, sin red o CORS.
+    // Sin esto el usuario vería el "Failed to fetch" del navegador.
+    throw new Error('No se pudo conectar con el servidor. Verifica que el backend esté corriendo.');
+  }
+
+  // Token ausente, inválido o expirado: se cierra la sesión en el frontend
+  if (respuesta.status === 401 && requiereToken) {
+    borrarToken();
+    if (alExpirarSesion) alExpirarSesion();
+    throw new Error('Tu sesión expiró. Vuelve a iniciar sesión.');
+  }
+
+  if (!respuesta.ok) {
+    const datos = await respuesta.json().catch(() => null);
+    // FastAPI devuelve detail como texto en los errores propios, pero como
+    // arreglo en los de validación, por eso solo se usa si es texto
+    const detalle = typeof datos?.detail === 'string' ? datos.detail : null;
+    throw new Error(detalle ?? mensajeError);
+  }
+
+  // Las respuestas 204 (borrados) no traen cuerpo
+  if (respuesta.status === 204) return null;
+
+  return respuesta.json();
+}
+
+/* ══════════════════ Sesión ══════════════════ */
+
+/**
+ * Valida credenciales contra el backend y guarda el token devuelto.
+ * Retorna los datos del usuario autenticado.
+ */
+export async function iniciarSesion(email, password) {
+  const datos = await pedir('/auth/login', {
+    metodo: 'POST',
+    cuerpo: { email, password },
+    mensajeError: 'No se pudo iniciar sesión',
+    requiereToken: false,
   });
 
-  if (!respuesta.ok) {
-    throw new Error('No se pudo guardar el lead');
-  }
-  return await respuesta.json();
+  guardarToken(datos.access_token);
+  return datos.usuario;
 }
 
-/**
- * Obtiene el catálogo completo de propiedades desde el backend.
- */
-export async function obtenerPropiedades() {
-  const respuesta = await fetch(`${API_URL}/propiedades`);
-  if (!respuesta.ok) {
-    throw new Error('No se pudo cargar el catálogo de propiedades');
-  }
-  return await respuesta.json();
+/** Devuelve el usuario dueño del token guardado. Falla si ya no es válido. */
+export function obtenerPerfil() {
+  return pedir('/auth/yo', { mensajeError: 'No se pudo validar la sesión' });
 }
 
-/**
- * Envía los datos de una nueva propiedad para registrarla en el backend.
- */
-export async function crearPropiedad(datosPropiedad) {
-  const respuesta = await fetch(`${API_URL}/propiedades`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(datosPropiedad),
+/* ══════════════════ Leads ══════════════════ */
+
+export function obtenerLeads() {
+  return pedir('/leads', { mensajeError: 'No se pudo cargar la lista de leads' });
+}
+
+export function crearLead(datos) {
+  return pedir('/leads', {
+    metodo: 'POST',
+    cuerpo: datos,
+    mensajeError: 'No se pudo guardar el lead',
   });
-
-  if (!respuesta.ok) {
-    throw new Error('No se pudo guardar la propiedad');
-  }
-  return await respuesta.json();
 }
 
-/**
- * Actualiza los campos de un lead existente.
- * Recibe el ID del lead y un objeto con los campos a modificar.
- */
-export async function actualizarLead(id, datosLead) {
-  const respuesta = await fetch(`${API_URL}/leads/${id}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(datosLead),
+export function actualizarLead(id, datos) {
+  return pedir(`/leads/${id}`, {
+    metodo: 'PUT',
+    cuerpo: datos,
+    mensajeError: 'No se pudo actualizar el lead',
   });
-
-  if (!respuesta.ok) {
-    throw new Error('No se pudo actualizar el lead');
-  }
-  return await respuesta.json();
 }
 
-/**
- * Elimina un lead por su ID.
- */
-export async function eliminarLead(id) {
-  const respuesta = await fetch(`${API_URL}/leads/${id}`, {
-    method: 'DELETE',
+export function eliminarLead(id) {
+  return pedir(`/leads/${id}`, {
+    metodo: 'DELETE',
+    mensajeError: 'No se pudo eliminar el lead',
   });
-
-  if (!respuesta.ok) {
-    throw new Error('No se pudo eliminar el lead');
-  }
 }
 
-/**
- * Actualiza los campos de una propiedad existente.
- * Recibe el ID de la propiedad y un objeto con los campos a modificar.
- */
-export async function actualizarPropiedad(id, datosPropiedad) {
-  const respuesta = await fetch(`${API_URL}/propiedades/${id}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(datosPropiedad),
+/* ══════════════════ Propiedades ══════════════════ */
+
+export function obtenerPropiedades() {
+  return pedir('/propiedades', { mensajeError: 'No se pudo cargar el catálogo de propiedades' });
+}
+
+export function crearPropiedad(datos) {
+  return pedir('/propiedades', {
+    metodo: 'POST',
+    cuerpo: datos,
+    mensajeError: 'No se pudo guardar la propiedad',
   });
-
-  if (!respuesta.ok) {
-    throw new Error('No se pudo actualizar la propiedad');
-  }
-  return await respuesta.json();
 }
 
-/**
- * Elimina una propiedad por su ID.
- */
-export async function eliminarPropiedad(id) {
-  const respuesta = await fetch(`${API_URL}/propiedades/${id}`, {
-    method: 'DELETE',
+export function actualizarPropiedad(id, datos) {
+  return pedir(`/propiedades/${id}`, {
+    metodo: 'PUT',
+    cuerpo: datos,
+    mensajeError: 'No se pudo actualizar la propiedad',
   });
-
-  if (!respuesta.ok) {
-    throw new Error('No se pudo eliminar la propiedad');
-  }
 }
 
-
-/**
- * Obtiene el historial de interacciones de un lead específico.
- * Recibe el ID del lead y devuelve la lista ordenada de más reciente a más antigua.
- */
-export async function obtenerInteracciones(leadId) {
-  const respuesta = await fetch(`${API_URL}/leads/${leadId}/interacciones`);
-  if (!respuesta.ok) {
-    throw new Error('No se pudo cargar el historial de interacciones');
-  }
-  return await respuesta.json();
-}
-
-/**
- * Registra una nueva interacción para un lead.
- * Recibe el ID del lead y un objeto con tipo y notas.
- */
-export async function crearInteraccion(leadId, datosInteraccion) {
-  const respuesta = await fetch(`${API_URL}/leads/${leadId}/interacciones`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(datosInteraccion),
+export function eliminarPropiedad(id) {
+  return pedir(`/propiedades/${id}`, {
+    metodo: 'DELETE',
+    mensajeError: 'No se pudo eliminar la propiedad',
   });
-
-  if (!respuesta.ok) {
-    throw new Error('No se pudo registrar la interacción');
-  }
-  return await respuesta.json();
 }
 
-/**
- * Obtiene todas las tareas ordenadas de más reciente a más antigua.
- */
-export async function obtenerTareas() {
-  const respuesta = await fetch(`${API_URL}/tareas`);
-  if (!respuesta.ok) {
-    throw new Error('No se pudo cargar la lista de tareas');
-  }
-  return await respuesta.json();
-}
+/* ══════════════════ Interacciones ══════════════════ */
 
-/**
- * Registra una nueva tarea en el backend.
- * Recibe un objeto con titulo, descripcion, estado, prioridad, fecha_limite y lead_id opcionales.
- */
-export async function crearTarea(datosTarea) {
-  const respuesta = await fetch(`${API_URL}/tareas`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(datosTarea),
+export function obtenerInteracciones(leadId) {
+  return pedir(`/leads/${leadId}/interacciones`, {
+    mensajeError: 'No se pudo cargar el historial de interacciones',
   });
-
-  if (!respuesta.ok) {
-    throw new Error('No se pudo guardar la tarea');
-  }
-  return await respuesta.json();
 }
 
-/**
- * Actualiza los campos de una tarea existente.
- * Recibe el ID de la tarea y un objeto con los campos a modificar.
- */
-export async function actualizarTarea(id, datosTarea) {
-  const respuesta = await fetch(`${API_URL}/tareas/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(datosTarea),
+export function crearInteraccion(leadId, datos) {
+  return pedir(`/leads/${leadId}/interacciones`, {
+    metodo: 'POST',
+    cuerpo: datos,
+    mensajeError: 'No se pudo registrar la interacción',
   });
-
-  if (!respuesta.ok) {
-    throw new Error('No se pudo actualizar la tarea');
-  }
-  return await respuesta.json();
 }
 
-/**
- * Elimina una tarea por su ID.
- */
-export async function eliminarTarea(id) {
-  const respuesta = await fetch(`${API_URL}/tareas/${id}`, {
-    method: 'DELETE',
+/* ══════════════════ Tareas ══════════════════ */
+
+export function obtenerTareas() {
+  return pedir('/tareas', { mensajeError: 'No se pudo cargar la lista de tareas' });
+}
+
+export function crearTarea(datos) {
+  return pedir('/tareas', {
+    metodo: 'POST',
+    cuerpo: datos,
+    mensajeError: 'No se pudo guardar la tarea',
   });
-
-  if (!respuesta.ok) {
-    throw new Error('No se pudo eliminar la tarea');
-  }
 }
 
-/**
- * Obtiene las propiedades de interés registradas para un lead.
- */
-export async function obtenerIntereses(leadId) {
-  const respuesta = await fetch(`${API_URL}/leads/${leadId}/intereses`);
-  if (!respuesta.ok) {
-    throw new Error('No se pudieron cargar las propiedades de interés');
-  }
-  return await respuesta.json();
-}
-
-/**
- * Registra el interés de un lead en una propiedad.
- * Recibe el ID del lead y un objeto con propiedad_id, nivel_interes y notas.
- */
-export async function crearInteres(leadId, datosInteres) {
-  const respuesta = await fetch(`${API_URL}/leads/${leadId}/intereses`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(datosInteres),
+export function actualizarTarea(id, datos) {
+  return pedir(`/tareas/${id}`, {
+    metodo: 'PUT',
+    cuerpo: datos,
+    mensajeError: 'No se pudo actualizar la tarea',
   });
-
-  if (!respuesta.ok) {
-    // El backend devuelve un mensaje específico si la propiedad ya estaba registrada
-    const detalle = await respuesta.json().catch(() => null);
-    throw new Error(detalle?.detail || 'No se pudo registrar el interés');
-  }
-  return await respuesta.json();
 }
 
-/**
- * Quita un interés registrado por su ID.
- */
-export async function eliminarInteres(id) {
-  const respuesta = await fetch(`${API_URL}/intereses/${id}`, {
-    method: 'DELETE',
+export function eliminarTarea(id) {
+  return pedir(`/tareas/${id}`, {
+    metodo: 'DELETE',
+    mensajeError: 'No se pudo eliminar la tarea',
   });
+}
 
-  if (!respuesta.ok) {
-    throw new Error('No se pudo quitar el interés');
-  }
+/* ══════════════════ Propiedades de interés ══════════════════ */
+
+export function obtenerIntereses(leadId) {
+  return pedir(`/leads/${leadId}/intereses`, {
+    mensajeError: 'No se pudieron cargar las propiedades de interés',
+  });
+}
+
+export function crearInteres(leadId, datos) {
+  return pedir(`/leads/${leadId}/intereses`, {
+    metodo: 'POST',
+    cuerpo: datos,
+    mensajeError: 'No se pudo registrar el interés',
+  });
+}
+
+export function eliminarInteres(id) {
+  return pedir(`/intereses/${id}`, {
+    metodo: 'DELETE',
+    mensajeError: 'No se pudo quitar el interés',
+  });
 }

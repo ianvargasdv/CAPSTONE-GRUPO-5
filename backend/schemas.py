@@ -165,3 +165,36 @@ class InteresRespuesta(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class UsuarioRespuesta(BaseModel):
+    """
+    Datos públicos de un usuario.
+
+    No incluye password_hash a propósito: este esquema define lo que la API puede
+    devolver, y el hash de la contraseña nunca debe salir del backend.
+    """
+    id: int
+    nombre: str
+    email: str
+    activo: bool
+    fecha_creacion: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class LoginPeticion(BaseModel):
+    """Credenciales enviadas al iniciar sesión."""
+    email: str
+    password: str
+
+
+class TokenRespuesta(BaseModel):
+    """
+    Respuesta del login. Devuelve el token junto con los datos del usuario
+    para que el frontend no tenga que hacer una segunda llamada.
+    """
+    access_token: str
+    token_type: str = "bearer"
+    usuario: UsuarioRespuesta

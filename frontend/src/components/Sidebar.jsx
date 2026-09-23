@@ -11,7 +11,19 @@ import Icono from './Iconos';
  * - vistaActiva: identificador de la vista actual
  * - alCambiarVista: función que recibe el identificador de la vista a mostrar
  * - contadores: { leads, propiedades, tareasPendientes }
+ * - usuario: usuario con la sesión activa
+ * - alCerrarSesion: cierra la sesión
  */
+
+/** Toma las iniciales del nombre para el avatar del pie. */
+function iniciales(nombre = '') {
+  return nombre
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((parte) => parte[0] || '')
+    .join('');
+}
 
 const SECCIONES = [
   {
@@ -28,7 +40,7 @@ const SECCIONES = [
   },
 ];
 
-function Sidebar({ vistaActiva, alCambiarVista, contadores }) {
+function Sidebar({ vistaActiva, alCambiarVista, contadores, usuario, alCerrarSesion }) {
   return (
     <aside className="sidebar">
       <div className="sidebar-marca">
@@ -70,6 +82,19 @@ function Sidebar({ vistaActiva, alCambiarVista, contadores }) {
       </nav>
 
       <div className="sidebar-pie">
+        {usuario && (
+          <div className="sidebar-usuario">
+            <div className="usuario-inicial">{iniciales(usuario.nombre)}</div>
+            <div className="usuario-datos">
+              <span className="usuario-nombre">{usuario.nombre}</span>
+              <span className="usuario-email">{usuario.email}</span>
+            </div>
+            <button className="btn-icono" onClick={alCerrarSesion} title="Cerrar sesión">
+              <Icono nombre="salir" />
+            </button>
+          </div>
+        )}
+
         <div className="estado-conexion">
           <span className="punto-estado" />
           <Icono nombre="baseDatos" tamano={12} />
