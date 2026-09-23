@@ -45,6 +45,7 @@ import PropiedadesInteres from './components/PropiedadesInteres';
 import HistorialInteracciones from './components/HistorialInteracciones';
 import AsistenteIA from './components/AsistenteIA';
 import ConsumoIA from './components/ConsumoIA';
+import Auditoria from './components/Auditoria';
 
 /** Configuración de cada vista: título de la barra superior y su acción principal. */
 const VISTAS = {
@@ -53,6 +54,7 @@ const VISTAS = {
   propiedades: { titulo: 'Propiedades', accion: 'Nueva propiedad', entidad: 'propiedad' },
   tareas: { titulo: 'Tareas', accion: 'Nueva tarea', entidad: 'tarea' },
   consumo: { titulo: 'Consumo de IA', subtitulo: 'Gasto del agente' },
+  auditoria: { titulo: 'Actividad', subtitulo: 'Quién hizo qué y cuándo' },
 };
 
 /** Título del panel lateral según la entidad y si se está creando o editando. */
@@ -636,6 +638,11 @@ function App() {
               alRecargar={cargarConsumo}
             />
           )}
+
+          {/* También reservada a admin. La vista pide sus propios datos porque la
+              consulta depende de sus filtros y de la página, estado que no se
+              comparte con ninguna otra sección. */}
+          {vista === 'auditoria' && usuario.rol === 'admin' && <Auditoria />}
 
           {vista === 'tareas' && (
             <div className="panel">

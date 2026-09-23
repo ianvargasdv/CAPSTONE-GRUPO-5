@@ -1,11 +1,12 @@
-from datetime import date, datetime, timezone
-from typing import List, Literal
+from datetime import date, datetime, time, timedelta, timezone
+from typing import List, Literal, Optional
 
-from fastapi import APIRouter, Depends, FastAPI, HTTPException, status
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import case, func
 from sqlalchemy.orm import Session
 
+import auditoria
 import database
 import ia
 import models
@@ -195,8 +196,18 @@ def listar_leads(db: Session = Depends(database.obtener_db)):
 
 
 @router_privado.post("/leads", response_model=schemas.LeadRespuesta, status_code=status.HTTP_201_CREATED)
-def crear_lead(lead: schemas.LeadCrear, db: Session = Depends(database.obtener_db)):
-    """Registra un nuevo lead en la base de datos."""
+def crear_lead(
+    lead: schemas.LeadCrear,
+    db: Session = Depends(database.obtener_db),
+    usuario: models.Usuario = Depends(seguridad.usuario_actual),
+):
+    """
+    Registra un nuevo lead en la base de datos.
+
+    El flush antes del registro de auditoría es necesario porque el id lo asigna la
+    base de datos y hace falta para dejar constancia de qué lead se creó. El commit
+    posterior guarda el lead y su registro en la misma transacción.
+    """
     nuevo_lead = models.Lead(
         nombre=lead.nombre,
         email=lead.email,
@@ -205,6 +216,17 @@ def crear_lead(lead: schemas.LeadCrear, db: Session = Depends(database.obtener_d
         prioridad=lead.prioridad,
     )
     db.add(nuevo_lead)
+    db.flush()
+
+    auditoria.registrar(
+        db,
+        usuario,
+        auditoria.CREAR,
+        auditoria.LEAD,
+        nuevo_lead.id,
+        f"Creó el lead {nuevo_lead.nombre}",
+    )
+
     db.commit()
     db.refresh(nuevo_lead)
 
@@ -214,18 +236,38 @@ def crear_lead(lead: schemas.LeadCrear, db: Session = Depends(database.obtener_d
 
 
 @router_privado.put("/leads/{lead_id}", response_model=schemas.LeadRespuesta)
-def actualizar_lead(lead_id: int, datos: schemas.LeadActualizar, db: Session = Depends(database.obtener_db)):
+def actualizar_lead(
+    lead_id: int,
+    datos: schemas.LeadActualizar,
+    db: Session = Depends(database.obtener_db),
+    usuario: models.Usuario = Depends(seguridad.usuario_actual),
+):
     """
     Actualiza los campos de un lead existente.
     Solo modifica los campos que se envíen en el cuerpo de la solicitud.
     Devuelve 404 si el lead no existe.
+
+    Se toma una instantánea antes y después de aplicar los cambios para registrar
+    qué campos se modificaron de verdad, no los que venían en la petición.
     """
     lead = db.query(models.Lead).filter(models.Lead.id == lead_id).first()
     if not lead:
         raise HTTPException(status_code=404, detail="Lead no encontrado")
 
+    antes = auditoria.instantanea(lead, auditoria.LEAD)
+
     for campo, valor in datos.model_dump(exclude_unset=True).items():
         setattr(lead, campo, valor)
+
+    auditoria.registrar(
+        db,
+        usuario,
+        auditoria.ACTUALIZAR,
+        auditoria.LEAD,
+        lead.id,
+        f"Actualizó el lead {lead.nombre}",
+        auditoria.resumir_cambios(antes, auditoria.instantanea(lead, auditoria.LEAD)),
+    )
 
     db.commit()
     db.refresh(lead)
@@ -237,16 +279,36 @@ def actualizar_lead(lead_id: int, datos: schemas.LeadActualizar, db: Session = D
 
 
 @router_privado.delete("/leads/{lead_id}", status_code=status.HTTP_204_NO_CONTENT)
-def eliminar_lead(lead_id: int, db: Session = Depends(database.obtener_db)):
+def eliminar_lead(
+    lead_id: int,
+    db: Session = Depends(database.obtener_db),
+    usuario: models.Usuario = Depends(seguridad.usuario_actual),
+):
     """
     Elimina un lead por su ID.
     Devuelve 404 si el lead no existe.
+
+    El nombre se guarda en una variable antes de borrar: después de db.delete el
+    objeto queda inutilizable y el registro tiene que decir qué se borró, porque la
+    fila ya no existe para consultarla.
     """
     lead = db.query(models.Lead).filter(models.Lead.id == lead_id).first()
     if not lead:
         raise HTTPException(status_code=404, detail="Lead no encontrado")
 
+    nombre = lead.nombre
+
     db.delete(lead)
+
+    auditoria.registrar(
+        db,
+        usuario,
+        auditoria.ELIMINAR,
+        auditoria.LEAD,
+        lead_id,
+        f"Eliminó el lead {nombre}",
+    )
+
     db.commit()
 
 
@@ -263,7 +325,11 @@ def listar_propiedades(db: Session = Depends(database.obtener_db)):
 
 
 @router_privado.post("/propiedades", response_model=schemas.PropiedadRespuesta, status_code=status.HTTP_201_CREATED)
-def crear_propiedad(propiedad: schemas.PropiedadCrear, db: Session = Depends(database.obtener_db)):
+def crear_propiedad(
+    propiedad: schemas.PropiedadCrear,
+    db: Session = Depends(database.obtener_db),
+    usuario: models.Usuario = Depends(seguridad.usuario_actual),
+):
     """Registra una nueva propiedad en la base de datos."""
     nueva_propiedad = models.Propiedad(
         titulo=propiedad.titulo,
@@ -273,13 +339,29 @@ def crear_propiedad(propiedad: schemas.PropiedadCrear, db: Session = Depends(dat
         estado=propiedad.estado,
     )
     db.add(nueva_propiedad)
+    db.flush()
+
+    auditoria.registrar(
+        db,
+        usuario,
+        auditoria.CREAR,
+        auditoria.PROPIEDAD,
+        nueva_propiedad.id,
+        f"Creó la propiedad {nueva_propiedad.titulo}",
+    )
+
     db.commit()
     db.refresh(nueva_propiedad)
     return nueva_propiedad
 
 
 @router_privado.put("/propiedades/{propiedad_id}", response_model=schemas.PropiedadRespuesta)
-def actualizar_propiedad(propiedad_id: int, datos: schemas.PropiedadActualizar, db: Session = Depends(database.obtener_db)):
+def actualizar_propiedad(
+    propiedad_id: int,
+    datos: schemas.PropiedadActualizar,
+    db: Session = Depends(database.obtener_db),
+    usuario: models.Usuario = Depends(seguridad.usuario_actual),
+):
     """
     Actualiza los campos de una propiedad existente.
     Solo modifica los campos que se envíen en el cuerpo de la solicitud.
@@ -289,8 +371,20 @@ def actualizar_propiedad(propiedad_id: int, datos: schemas.PropiedadActualizar, 
     if not propiedad:
         raise HTTPException(status_code=404, detail="Propiedad no encontrada")
 
+    antes = auditoria.instantanea(propiedad, auditoria.PROPIEDAD)
+
     for campo, valor in datos.model_dump(exclude_unset=True).items():
         setattr(propiedad, campo, valor)
+
+    auditoria.registrar(
+        db,
+        usuario,
+        auditoria.ACTUALIZAR,
+        auditoria.PROPIEDAD,
+        propiedad.id,
+        f"Actualizó la propiedad {propiedad.titulo}",
+        auditoria.resumir_cambios(antes, auditoria.instantanea(propiedad, auditoria.PROPIEDAD)),
+    )
 
     db.commit()
     db.refresh(propiedad)
@@ -298,7 +392,11 @@ def actualizar_propiedad(propiedad_id: int, datos: schemas.PropiedadActualizar, 
 
 
 @router_privado.delete("/propiedades/{propiedad_id}", status_code=status.HTTP_204_NO_CONTENT)
-def eliminar_propiedad(propiedad_id: int, db: Session = Depends(database.obtener_db)):
+def eliminar_propiedad(
+    propiedad_id: int,
+    db: Session = Depends(database.obtener_db),
+    usuario: models.Usuario = Depends(seguridad.usuario_actual),
+):
     """
     Elimina una propiedad por su ID.
     Devuelve 404 si la propiedad no existe.
@@ -307,7 +405,19 @@ def eliminar_propiedad(propiedad_id: int, db: Session = Depends(database.obtener
     if not propiedad:
         raise HTTPException(status_code=404, detail="Propiedad no encontrada")
 
+    titulo = propiedad.titulo
+
     db.delete(propiedad)
+
+    auditoria.registrar(
+        db,
+        usuario,
+        auditoria.ELIMINAR,
+        auditoria.PROPIEDAD,
+        propiedad_id,
+        f"Eliminó la propiedad {titulo}",
+    )
+
     db.commit()
 
 
@@ -337,10 +447,18 @@ def listar_interacciones(lead_id: int, db: Session = Depends(database.obtener_db
 
 
 @router_privado.post("/leads/{lead_id}/interacciones", response_model=schemas.InteraccionRespuesta, status_code=status.HTTP_201_CREATED)
-def crear_interaccion(lead_id: int, datos: schemas.InteraccionCrear, db: Session = Depends(database.obtener_db)):
+def crear_interaccion(
+    lead_id: int,
+    datos: schemas.InteraccionCrear,
+    db: Session = Depends(database.obtener_db),
+    usuario: models.Usuario = Depends(seguridad.usuario_actual),
+):
     """
     Registra una nueva interacción para un lead.
     Devuelve 404 si el lead no existe.
+
+    El registro de auditoría menciona al lead y no solo el id de la interacción,
+    porque una interacción sin su lead no se entiende al leer el historial.
     """
     lead = db.query(models.Lead).filter(models.Lead.id == lead_id).first()
     if not lead:
@@ -352,6 +470,17 @@ def crear_interaccion(lead_id: int, datos: schemas.InteraccionCrear, db: Session
         notas=datos.notas,
     )
     db.add(nueva_interaccion)
+    db.flush()
+
+    auditoria.registrar(
+        db,
+        usuario,
+        auditoria.CREAR,
+        auditoria.INTERACCION,
+        nueva_interaccion.id,
+        f"Registró una interacción de tipo {datos.tipo} con el lead {lead.nombre}",
+    )
+
     db.commit()
     db.refresh(nueva_interaccion)
     return nueva_interaccion
@@ -367,16 +496,15 @@ def listar_tareas(db: Session = Depends(database.obtener_db)):
     """
     Obtiene todas las tareas ordenadas por fecha de creación descendente.
     """
-    tareas = db.query(models.Tarea).order_by(models.Tarea.fecha_creacion.desc()).all()
-    # Convertir fecha_limite de date a string para que Pydantic lo serialice correctamente
-    for tarea in tareas:
-        if tarea.fecha_limite:
-            tarea.fecha_limite = tarea.fecha_limite.isoformat()
-    return tareas
+    return db.query(models.Tarea).order_by(models.Tarea.fecha_creacion.desc()).all()
 
 
 @router_privado.post("/tareas", response_model=schemas.TareaRespuesta, status_code=status.HTTP_201_CREATED)
-def crear_tarea(datos: schemas.TareaCrear, db: Session = Depends(database.obtener_db)):
+def crear_tarea(
+    datos: schemas.TareaCrear,
+    db: Session = Depends(database.obtener_db),
+    usuario: models.Usuario = Depends(seguridad.usuario_actual),
+):
     """
     Registra una nueva tarea en la base de datos.
     Si se indica lead_id, verifica que el lead exista antes de asociarlo.
@@ -403,16 +531,29 @@ def crear_tarea(datos: schemas.TareaCrear, db: Session = Depends(database.obtene
         lead_id=datos.lead_id,
     )
     db.add(nueva_tarea)
+    db.flush()
+
+    auditoria.registrar(
+        db,
+        usuario,
+        auditoria.CREAR,
+        auditoria.TAREA,
+        nueva_tarea.id,
+        f"Creó la tarea {nueva_tarea.titulo}",
+    )
+
     db.commit()
     db.refresh(nueva_tarea)
-
-    if nueva_tarea.fecha_limite:
-        nueva_tarea.fecha_limite = nueva_tarea.fecha_limite.isoformat()
     return nueva_tarea
 
 
 @router_privado.put("/tareas/{tarea_id}", response_model=schemas.TareaRespuesta)
-def actualizar_tarea(tarea_id: int, datos: schemas.TareaActualizar, db: Session = Depends(database.obtener_db)):
+def actualizar_tarea(
+    tarea_id: int,
+    datos: schemas.TareaActualizar,
+    db: Session = Depends(database.obtener_db),
+    usuario: models.Usuario = Depends(seguridad.usuario_actual),
+):
     """
     Actualiza los campos de una tarea existente.
     Solo modifica los campos enviados en el body.
@@ -421,6 +562,8 @@ def actualizar_tarea(tarea_id: int, datos: schemas.TareaActualizar, db: Session 
     tarea = db.query(models.Tarea).filter(models.Tarea.id == tarea_id).first()
     if not tarea:
         raise HTTPException(status_code=404, detail="Tarea no encontrada")
+
+    antes = auditoria.instantanea(tarea, auditoria.TAREA)
 
     campos = datos.model_dump(exclude_unset=True)
 
@@ -438,16 +581,27 @@ def actualizar_tarea(tarea_id: int, datos: schemas.TareaActualizar, db: Session 
     for campo, valor in campos.items():
         setattr(tarea, campo, valor)
 
+    auditoria.registrar(
+        db,
+        usuario,
+        auditoria.ACTUALIZAR,
+        auditoria.TAREA,
+        tarea.id,
+        f"Actualizó la tarea {tarea.titulo}",
+        auditoria.resumir_cambios(antes, auditoria.instantanea(tarea, auditoria.TAREA)),
+    )
+
     db.commit()
     db.refresh(tarea)
-
-    if tarea.fecha_limite:
-        tarea.fecha_limite = tarea.fecha_limite.isoformat()
     return tarea
 
 
 @router_privado.delete("/tareas/{tarea_id}", status_code=status.HTTP_204_NO_CONTENT)
-def eliminar_tarea(tarea_id: int, db: Session = Depends(database.obtener_db)):
+def eliminar_tarea(
+    tarea_id: int,
+    db: Session = Depends(database.obtener_db),
+    usuario: models.Usuario = Depends(seguridad.usuario_actual),
+):
     """
     Elimina una tarea por su ID.
     Devuelve 404 si la tarea no existe.
@@ -456,7 +610,19 @@ def eliminar_tarea(tarea_id: int, db: Session = Depends(database.obtener_db)):
     if not tarea:
         raise HTTPException(status_code=404, detail="Tarea no encontrada")
 
+    titulo = tarea.titulo
+
     db.delete(tarea)
+
+    auditoria.registrar(
+        db,
+        usuario,
+        auditoria.ELIMINAR,
+        auditoria.TAREA,
+        tarea_id,
+        f"Eliminó la tarea {titulo}",
+    )
+
     db.commit()
 
 
@@ -485,7 +651,12 @@ def listar_intereses(lead_id: int, db: Session = Depends(database.obtener_db)):
 
 
 @router_privado.post("/leads/{lead_id}/intereses", response_model=schemas.InteresRespuesta, status_code=status.HTTP_201_CREATED)
-def crear_interes(lead_id: int, datos: schemas.InteresCrear, db: Session = Depends(database.obtener_db)):
+def crear_interes(
+    lead_id: int,
+    datos: schemas.InteresCrear,
+    db: Session = Depends(database.obtener_db),
+    usuario: models.Usuario = Depends(seguridad.usuario_actual),
+):
     """
     Registra el interés de un lead en una propiedad del catálogo.
     Valida que el lead y la propiedad existan, y que el interés no esté ya registrado.
@@ -517,22 +688,57 @@ def crear_interes(lead_id: int, datos: schemas.InteresCrear, db: Session = Depen
         notas=datos.notas,
     )
     db.add(nuevo_interes)
+    db.flush()
+
+    auditoria.registrar(
+        db,
+        usuario,
+        auditoria.CREAR,
+        auditoria.INTERES,
+        nuevo_interes.id,
+        f"Vinculó la propiedad {propiedad.titulo} al lead {lead.nombre} con interés {datos.nivel_interes}",
+    )
+
     db.commit()
     db.refresh(nuevo_interes)
     return nuevo_interes
 
 
 @router_privado.delete("/intereses/{interes_id}", status_code=status.HTTP_204_NO_CONTENT)
-def eliminar_interes(interes_id: int, db: Session = Depends(database.obtener_db)):
+def eliminar_interes(
+    interes_id: int,
+    db: Session = Depends(database.obtener_db),
+    usuario: models.Usuario = Depends(seguridad.usuario_actual),
+):
     """
     Quita un interés registrado por su ID.
     Devuelve 404 si el interés no existe.
+
+    Se consultan el lead y la propiedad para que el registro diga qué vínculo se
+    deshizo. Con solo los ids el historial quedaría ilegible, y son dos consultas
+    sobre una operación que no es frecuente.
     """
     interes = db.query(models.Interes).filter(models.Interes.id == interes_id).first()
     if not interes:
         raise HTTPException(status_code=404, detail="Interés no encontrado")
 
+    lead = db.query(models.Lead).filter(models.Lead.id == interes.lead_id).first()
+    propiedad = db.query(models.Propiedad).filter(models.Propiedad.id == interes.propiedad_id).first()
+
+    nombre_lead = lead.nombre if lead else f"lead {interes.lead_id}"
+    titulo_propiedad = propiedad.titulo if propiedad else f"propiedad {interes.propiedad_id}"
+
     db.delete(interes)
+
+    auditoria.registrar(
+        db,
+        usuario,
+        auditoria.ELIMINAR,
+        auditoria.INTERES,
+        interes_id,
+        f"Quitó la propiedad {titulo_propiedad} de los intereses del lead {nombre_lead}",
+    )
+
     db.commit()
 
 
@@ -729,10 +935,9 @@ def crear_analisis(
         .filter(models.Tarea.lead_id == lead_id, models.Tarea.estado != "Completada")
         .all()
     )
-    for tarea in tareas:
-        if tarea.fecha_limite:
-            tarea.fecha_limite = tarea.fecha_limite.isoformat()
 
+    # La ficha interpola la fecha en un texto, así que el objeto date se escribe
+    # igual que antes ("vence el 2026-09-20") sin tener que convertirlo a mano
     ficha = ia.construir_ficha(lead, interacciones, intereses, propiedades_por_id, tareas)
 
     try:
@@ -754,9 +959,165 @@ def crear_analisis(
         costo_estimado_usd=resultado["costo_estimado_usd"],
     )
     db.add(analisis)
+    db.flush()
+
+    # El costo va en el registro porque la generación es la única acción del sistema
+    # que cuesta dinero: interesa saber quién la pidió y cuánto salió.
+    costo = resultado["costo_estimado_usd"]
+    detalle_costo = f"{costo:.6f} USD" if costo is not None else "costo no informado"
+
+    auditoria.registrar(
+        db,
+        usuario,
+        auditoria.GENERAR,
+        auditoria.ANALISIS,
+        analisis.id,
+        f"Generó un análisis de tipo {tipo} para el lead {lead.nombre}",
+        f"modelo: {resultado['modelo']}; costo estimado: {detalle_costo}",
+    )
+
     db.commit()
     db.refresh(analisis)
     return analisis
+
+
+def _fecha_o_400(valor: str, nombre: str) -> date:
+    """
+    Convierte un texto YYYY-MM-DD a fecha, o devuelve 400 si no tiene ese formato.
+
+    Un filtro con formato inválido es un error de quien llama, no un motivo para
+    ignorar el filtro y devolver más datos de los pedidos.
+    """
+    try:
+        return date.fromisoformat(valor)
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail=f"El parámetro '{nombre}' debe tener el formato YYYY-MM-DD",
+        )
+
+
+# ══════════════════════════════════════════════════════════════
+# Auditoría
+#
+# Reservada al rol admin. Un ejecutivo no debe poder revisar lo que hacen sus
+# compañeros, y menos aún consultar el registro de sus propias acciones para
+# saber qué queda grabado.
+# ══════════════════════════════════════════════════════════════
+
+
+@router_privado.get("/auditoria/filtros", response_model=schemas.AuditoriaFiltros)
+def filtros_auditoria(
+    db: Session = Depends(database.obtener_db),
+    _admin: models.Usuario = Depends(seguridad.solo_admin),
+):
+    """
+    Valores que la interfaz ofrece en los selectores de filtro.
+
+    Se declara antes que /auditoria/{nada} para evitar ambigüedades de ruta y se
+    consulta una sola vez al abrir la vista.
+    """
+    correos = (
+        db.query(models.Auditoria.usuario_email)
+        .filter(models.Auditoria.usuario_email.isnot(None))
+        .distinct()
+        .order_by(models.Auditoria.usuario_email)
+        .all()
+    )
+
+    return schemas.AuditoriaFiltros(
+        entidades=list(auditoria.ENTIDADES),
+        acciones=list(auditoria.ACCIONES),
+        usuarios=[fila[0] for fila in correos],
+    )
+
+
+@router_privado.get("/auditoria", response_model=schemas.AuditoriaPagina)
+def listar_auditoria(
+    pagina: int = Query(1, ge=1, description="Número de página, empezando en 1"),
+    por_pagina: int = Query(25, ge=1, le=100, description="Registros por página"),
+    usuario_email: Optional[str] = None,
+    entidad: Optional[str] = None,
+    accion: Optional[str] = None,
+    desde: Optional[str] = None,
+    hasta: Optional[str] = None,
+    busqueda: Optional[str] = None,
+    db: Session = Depends(database.obtener_db),
+    _admin: models.Usuario = Depends(seguridad.solo_admin),
+):
+    """
+    Devuelve el registro de auditoría paginado y filtrado. Reservado al rol admin.
+
+    Se pagina porque es la única tabla del proyecto sin un tamaño acotado por la
+    operación del negocio: crece con cada acción y a los meses tiene miles de filas.
+    El tope de 100 por página lo impone el propio endpoint, para que un parámetro
+    demasiado grande no se convierta en una consulta que traiga la tabla completa.
+
+    Las fechas se interpretan como días completos en UTC, que es la zona en que se
+    guardan. Con horario chileno el corte puede caer unas horas antes de la
+    medianoche local; es aceptable para filtrar por día y evita convertir zonas.
+    """
+    consulta = db.query(models.Auditoria)
+
+    if usuario_email:
+        consulta = consulta.filter(models.Auditoria.usuario_email == usuario_email)
+
+    if entidad:
+        # Se valida contra la lista del módulo de auditoría en lugar de usar Literal
+        # para no tener que repetir los valores en la firma del endpoint
+        if entidad not in auditoria.ENTIDADES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Entidad desconocida. Valores válidos: {', '.join(auditoria.ENTIDADES)}",
+            )
+        consulta = consulta.filter(models.Auditoria.entidad == entidad)
+
+    if accion:
+        if accion not in auditoria.ACCIONES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Acción desconocida. Valores válidos: {', '.join(auditoria.ACCIONES)}",
+            )
+        consulta = consulta.filter(models.Auditoria.accion == accion)
+
+    if desde:
+        inicio = _fecha_o_400(desde, "desde")
+        consulta = consulta.filter(
+            models.Auditoria.fecha_creacion >= datetime.combine(inicio, time.min, tzinfo=timezone.utc)
+        )
+
+    if hasta:
+        # Se suma un día y se compara con menor estricto para incluir el día completo:
+        # con <= la medianoche dejaría fuera todo lo ocurrido durante esa jornada
+        fin = _fecha_o_400(hasta, "hasta") + timedelta(days=1)
+        consulta = consulta.filter(
+            models.Auditoria.fecha_creacion < datetime.combine(fin, time.min, tzinfo=timezone.utc)
+        )
+
+    if busqueda:
+        texto = f"%{busqueda.strip()}%"
+        consulta = consulta.filter(models.Auditoria.descripcion.ilike(texto))
+
+    # El total se calcula sobre la consulta ya filtrada y antes de paginar, para que
+    # la interfaz sepa cuántas páginas hay realmente
+    total = consulta.count()
+
+    registros = (
+        consulta.order_by(models.Auditoria.fecha_creacion.desc(), models.Auditoria.id.desc())
+        .offset((pagina - 1) * por_pagina)
+        .limit(por_pagina)
+        .all()
+    )
+
+    total_paginas = (total + por_pagina - 1) // por_pagina
+
+    return schemas.AuditoriaPagina(
+        total=total,
+        pagina=pagina,
+        por_pagina=por_pagina,
+        total_paginas=total_paginas,
+        registros=registros,
+    )
 
 
 # Los routers se registran al final, cuando ya tienen todos sus endpoints
