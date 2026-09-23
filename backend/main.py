@@ -1,26 +1,70 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from datetime import date
+from typing import List
+
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from typing import List
 
 import database
 import models
 import schemas
+import seguridad
 
 # Crear las tablas definidas en los modelos si aún no existen
 models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI(title="Capstone API")
 
-# Configuración de CORS para permitir solicitudes desde el frontend en desarrollo
+# Orígenes autorizados a consumir la API. Antes estaba en "*", que con
+# autenticación deja de tener sentido: solo el frontend debe poder llamar.
+# Al desplegar hay que agregar aquí el dominio de producción.
+ORIGENES_PERMITIDOS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+# allow_credentials queda en False porque el token viaja en la cabecera
+# Authorization, no en cookies, así que no hacen falta credenciales de origen.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=ORIGENES_PERMITIDOS,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+
+# ══════════════════════════════════════════════════════════════
+# Routers
+#
+# router_auth: login público y consulta del perfil.
+# router_privado: declara la dependencia de autenticación una sola vez, por lo
+#   que todos sus endpoints exigen token. Cualquier endpoint que se agregue a
+#   este router queda protegido por defecto, sin poder olvidarse.
+# ══════════════════════════════════════════════════════════════
+
+router_auth = APIRouter(prefix="/api/auth", tags=["Autenticación"])
+
+router_privado = APIRouter(
+    prefix="/api",
+    dependencies=[Depends(seguridad.usuario_actual)],
+)
+
+
+def _credenciales_invalidas() -> HTTPException:
+    """
+    Mismo error para email inexistente, usuario inactivo y contraseña incorrecta.
+    Diferenciarlos permitiría averiguar qué correos están registrados.
+    """
+    return HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Correo o contraseña incorrectos",
+    )
+
+
+# ══════════════════════════════════════════════════════════════
+# Estado del servicio (público)
+# ══════════════════════════════════════════════════════════════
 
 
 @app.get("/health")
@@ -28,14 +72,57 @@ def health_check():
     return {"status": "ok", "message": "Backend funcionando correctamente"}
 
 
-@app.get("/api/leads", response_model=List[schemas.LeadRespuesta])
+# ══════════════════════════════════════════════════════════════
+# Autenticación
+# ══════════════════════════════════════════════════════════════
+
+
+@router_auth.post("/login", response_model=schemas.TokenRespuesta)
+def login(datos: schemas.LoginPeticion, db: Session = Depends(database.obtener_db)):
+    """
+    Valida las credenciales y devuelve un token de sesión junto con los datos
+    del usuario. Los correos se comparan en minúsculas.
+    """
+    email = datos.email.strip().lower()
+    usuario = db.query(models.Usuario).filter(models.Usuario.email == email).first()
+
+    if usuario is None or not usuario.activo:
+        # Se verifica contra un hash señuelo para que la respuesta tarde lo
+        # mismo que con un usuario real y no se pueda deducir si existe
+        seguridad.gastar_tiempo_de_verificacion(datos.password)
+        raise _credenciales_invalidas()
+
+    if not seguridad.verificar_password(datos.password, usuario.password_hash):
+        raise _credenciales_invalidas()
+
+    return schemas.TokenRespuesta(
+        access_token=seguridad.crear_token(usuario.id),
+        usuario=usuario,
+    )
+
+
+@router_auth.get("/yo", response_model=schemas.UsuarioRespuesta)
+def perfil(usuario: models.Usuario = Depends(seguridad.usuario_actual)):
+    """
+    Devuelve el usuario dueño del token. El frontend lo usa al cargar la página
+    para saber si la sesión guardada sigue siendo válida.
+    """
+    return usuario
+
+
+# ══════════════════════════════════════════════════════════════
+# Leads
+# ══════════════════════════════════════════════════════════════
+
+
+@router_privado.get("/leads", response_model=List[schemas.LeadRespuesta])
 def listar_leads(db: Session = Depends(database.obtener_db)):
     """Obtiene la lista de todos los leads registrados."""
     leads = db.query(models.Lead).all()
     return leads
 
 
-@app.post("/api/leads", response_model=schemas.LeadRespuesta, status_code=status.HTTP_201_CREATED)
+@router_privado.post("/leads", response_model=schemas.LeadRespuesta, status_code=status.HTTP_201_CREATED)
 def crear_lead(lead: schemas.LeadCrear, db: Session = Depends(database.obtener_db)):
     """Registra un nuevo lead en la base de datos."""
     nuevo_lead = models.Lead(
@@ -51,7 +138,7 @@ def crear_lead(lead: schemas.LeadCrear, db: Session = Depends(database.obtener_d
     return nuevo_lead
 
 
-@app.put("/api/leads/{lead_id}", response_model=schemas.LeadRespuesta)
+@router_privado.put("/leads/{lead_id}", response_model=schemas.LeadRespuesta)
 def actualizar_lead(lead_id: int, datos: schemas.LeadActualizar, db: Session = Depends(database.obtener_db)):
     """
     Actualiza los campos de un lead existente.
@@ -70,7 +157,7 @@ def actualizar_lead(lead_id: int, datos: schemas.LeadActualizar, db: Session = D
     return lead
 
 
-@app.delete("/api/leads/{lead_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router_privado.delete("/leads/{lead_id}", status_code=status.HTTP_204_NO_CONTENT)
 def eliminar_lead(lead_id: int, db: Session = Depends(database.obtener_db)):
     """
     Elimina un lead por su ID.
@@ -84,14 +171,19 @@ def eliminar_lead(lead_id: int, db: Session = Depends(database.obtener_db)):
     db.commit()
 
 
-@app.get("/api/propiedades", response_model=List[schemas.PropiedadRespuesta])
+# ══════════════════════════════════════════════════════════════
+# Propiedades
+# ══════════════════════════════════════════════════════════════
+
+
+@router_privado.get("/propiedades", response_model=List[schemas.PropiedadRespuesta])
 def listar_propiedades(db: Session = Depends(database.obtener_db)):
     """Obtiene el catálogo de todas las propiedades registradas."""
     propiedades = db.query(models.Propiedad).all()
     return propiedades
 
 
-@app.post("/api/propiedades", response_model=schemas.PropiedadRespuesta, status_code=status.HTTP_201_CREATED)
+@router_privado.post("/propiedades", response_model=schemas.PropiedadRespuesta, status_code=status.HTTP_201_CREATED)
 def crear_propiedad(propiedad: schemas.PropiedadCrear, db: Session = Depends(database.obtener_db)):
     """Registra una nueva propiedad en la base de datos."""
     nueva_propiedad = models.Propiedad(
@@ -107,7 +199,7 @@ def crear_propiedad(propiedad: schemas.PropiedadCrear, db: Session = Depends(dat
     return nueva_propiedad
 
 
-@app.put("/api/propiedades/{propiedad_id}", response_model=schemas.PropiedadRespuesta)
+@router_privado.put("/propiedades/{propiedad_id}", response_model=schemas.PropiedadRespuesta)
 def actualizar_propiedad(propiedad_id: int, datos: schemas.PropiedadActualizar, db: Session = Depends(database.obtener_db)):
     """
     Actualiza los campos de una propiedad existente.
@@ -126,7 +218,7 @@ def actualizar_propiedad(propiedad_id: int, datos: schemas.PropiedadActualizar, 
     return propiedad
 
 
-@app.delete("/api/propiedades/{propiedad_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router_privado.delete("/propiedades/{propiedad_id}", status_code=status.HTTP_204_NO_CONTENT)
 def eliminar_propiedad(propiedad_id: int, db: Session = Depends(database.obtener_db)):
     """
     Elimina una propiedad por su ID.
@@ -140,7 +232,12 @@ def eliminar_propiedad(propiedad_id: int, db: Session = Depends(database.obtener
     db.commit()
 
 
-@app.get("/api/leads/{lead_id}/interacciones", response_model=List[schemas.InteraccionRespuesta])
+# ══════════════════════════════════════════════════════════════
+# Interacciones
+# ══════════════════════════════════════════════════════════════
+
+
+@router_privado.get("/leads/{lead_id}/interacciones", response_model=List[schemas.InteraccionRespuesta])
 def listar_interacciones(lead_id: int, db: Session = Depends(database.obtener_db)):
     """
     Obtiene el historial de interacciones de un lead específico.
@@ -160,7 +257,7 @@ def listar_interacciones(lead_id: int, db: Session = Depends(database.obtener_db
     return interacciones
 
 
-@app.post("/api/leads/{lead_id}/interacciones", response_model=schemas.InteraccionRespuesta, status_code=status.HTTP_201_CREATED)
+@router_privado.post("/leads/{lead_id}/interacciones", response_model=schemas.InteraccionRespuesta, status_code=status.HTTP_201_CREATED)
 def crear_interaccion(lead_id: int, datos: schemas.InteraccionCrear, db: Session = Depends(database.obtener_db)):
     """
     Registra una nueva interacción para un lead.
@@ -181,9 +278,12 @@ def crear_interaccion(lead_id: int, datos: schemas.InteraccionCrear, db: Session
     return nueva_interaccion
 
 
+# ══════════════════════════════════════════════════════════════
+# Tareas
+# ══════════════════════════════════════════════════════════════
 
 
-@app.get("/api/tareas", response_model=List[schemas.TareaRespuesta])
+@router_privado.get("/tareas", response_model=List[schemas.TareaRespuesta])
 def listar_tareas(db: Session = Depends(database.obtener_db)):
     """
     Obtiene todas las tareas ordenadas por fecha de creación descendente.
@@ -196,14 +296,12 @@ def listar_tareas(db: Session = Depends(database.obtener_db)):
     return tareas
 
 
-@app.post("/api/tareas", response_model=schemas.TareaRespuesta, status_code=status.HTTP_201_CREATED)
+@router_privado.post("/tareas", response_model=schemas.TareaRespuesta, status_code=status.HTTP_201_CREATED)
 def crear_tarea(datos: schemas.TareaCrear, db: Session = Depends(database.obtener_db)):
     """
     Registra una nueva tarea en la base de datos.
     Si se indica lead_id, verifica que el lead exista antes de asociarlo.
     """
-    from datetime import date as date_type
-
     if datos.lead_id:
         lead = db.query(models.Lead).filter(models.Lead.id == datos.lead_id).first()
         if not lead:
@@ -213,7 +311,7 @@ def crear_tarea(datos: schemas.TareaCrear, db: Session = Depends(database.obtene
     fecha_limite_obj = None
     if datos.fecha_limite:
         try:
-            fecha_limite_obj = date_type.fromisoformat(datos.fecha_limite)
+            fecha_limite_obj = date.fromisoformat(datos.fecha_limite)
         except ValueError:
             raise HTTPException(status_code=400, detail="Formato de fecha inválido. Use YYYY-MM-DD")
 
@@ -234,15 +332,13 @@ def crear_tarea(datos: schemas.TareaCrear, db: Session = Depends(database.obtene
     return nueva_tarea
 
 
-@app.put("/api/tareas/{tarea_id}", response_model=schemas.TareaRespuesta)
+@router_privado.put("/tareas/{tarea_id}", response_model=schemas.TareaRespuesta)
 def actualizar_tarea(tarea_id: int, datos: schemas.TareaActualizar, db: Session = Depends(database.obtener_db)):
     """
     Actualiza los campos de una tarea existente.
     Solo modifica los campos enviados en el body.
     Devuelve 404 si la tarea no existe.
     """
-    from datetime import date as date_type
-
     tarea = db.query(models.Tarea).filter(models.Tarea.id == tarea_id).first()
     if not tarea:
         raise HTTPException(status_code=404, detail="Tarea no encontrada")
@@ -254,7 +350,7 @@ def actualizar_tarea(tarea_id: int, datos: schemas.TareaActualizar, db: Session 
         valor_fecha = campos.pop("fecha_limite")
         if valor_fecha:
             try:
-                tarea.fecha_limite = date_type.fromisoformat(valor_fecha)
+                tarea.fecha_limite = date.fromisoformat(valor_fecha)
             except ValueError:
                 raise HTTPException(status_code=400, detail="Formato de fecha inválido. Use YYYY-MM-DD")
         else:
@@ -271,7 +367,7 @@ def actualizar_tarea(tarea_id: int, datos: schemas.TareaActualizar, db: Session 
     return tarea
 
 
-@app.delete("/api/tareas/{tarea_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router_privado.delete("/tareas/{tarea_id}", status_code=status.HTTP_204_NO_CONTENT)
 def eliminar_tarea(tarea_id: int, db: Session = Depends(database.obtener_db)):
     """
     Elimina una tarea por su ID.
@@ -285,7 +381,12 @@ def eliminar_tarea(tarea_id: int, db: Session = Depends(database.obtener_db)):
     db.commit()
 
 
-@app.get("/api/leads/{lead_id}/intereses", response_model=List[schemas.InteresRespuesta])
+# ══════════════════════════════════════════════════════════════
+# Propiedades de interés
+# ══════════════════════════════════════════════════════════════
+
+
+@router_privado.get("/leads/{lead_id}/intereses", response_model=List[schemas.InteresRespuesta])
 def listar_intereses(lead_id: int, db: Session = Depends(database.obtener_db)):
     """
     Obtiene las propiedades en las que un lead mostró interés.
@@ -304,7 +405,7 @@ def listar_intereses(lead_id: int, db: Session = Depends(database.obtener_db)):
     return intereses
 
 
-@app.post("/api/leads/{lead_id}/intereses", response_model=schemas.InteresRespuesta, status_code=status.HTTP_201_CREATED)
+@router_privado.post("/leads/{lead_id}/intereses", response_model=schemas.InteresRespuesta, status_code=status.HTTP_201_CREATED)
 def crear_interes(lead_id: int, datos: schemas.InteresCrear, db: Session = Depends(database.obtener_db)):
     """
     Registra el interés de un lead en una propiedad del catálogo.
@@ -342,7 +443,7 @@ def crear_interes(lead_id: int, datos: schemas.InteresCrear, db: Session = Depen
     return nuevo_interes
 
 
-@app.delete("/api/intereses/{interes_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router_privado.delete("/intereses/{interes_id}", status_code=status.HTTP_204_NO_CONTENT)
 def eliminar_interes(interes_id: int, db: Session = Depends(database.obtener_db)):
     """
     Quita un interés registrado por su ID.
@@ -354,3 +455,8 @@ def eliminar_interes(interes_id: int, db: Session = Depends(database.obtener_db)
 
     db.delete(interes)
     db.commit()
+
+
+# Los routers se registran al final, cuando ya tienen todos sus endpoints
+app.include_router(router_auth)
+app.include_router(router_privado)

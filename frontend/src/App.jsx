@@ -17,9 +17,15 @@ import {
   obtenerIntereses,
   crearInteres,
   eliminarInteres,
+  iniciarSesion,
+  obtenerPerfil,
+  obtenerToken,
+  borrarToken,
+  registrarCierreDeSesion,
 } from './api';
 
 import Icono from './components/Iconos';
+import Login from './components/Login';
 import Sidebar from './components/Sidebar';
 import Drawer from './components/Drawer';
 import Confirmacion from './components/Confirmacion';
@@ -69,6 +75,15 @@ function App() {
   const [vista, setVista] = useState('inicio');
   const [toast, setToast] = useState(null);
   const temporizadorToast = useRef(null);
+
+  // ── Sesión ──
+  // usuario en null significa que no hay sesión y se muestra el login.
+  // verificandoSesion evita que aparezca el login por un instante mientras se
+  // comprueba si el token guardado sigue siendo válido.
+  const [usuario, setUsuario] = useState(null);
+  const [verificandoSesion, setVerificandoSesion] = useState(true);
+  // Explica en la pantalla de acceso por qué se cerró la sesión sola
+  const [avisoSesion, setAvisoSesion] = useState(null);
 
   /**
    * Muestra un aviso breve. Cancela el temporizador anterior para que dos avisos
@@ -150,10 +165,73 @@ function App() {
     }
   };
 
+  // Los datos se piden solo cuando hay sesión: sin token la API responde 401
   useEffect(() => {
+    if (!usuario) return;
     cargarLeads();
     cargarPropiedades();
     cargarTareas();
+  }, [usuario]);
+
+  // ══════════ Sesión ══════════
+
+  /** Descarta los datos en memoria para que no queden a la vista del próximo usuario. */
+  const limpiarDatos = () => {
+    setLeads([]);
+    setPropiedades([]);
+    setTareas([]);
+    setCargandoLeads(true);
+    setCargandoPropiedades(true);
+    setCargandoTareas(true);
+    setPanelForm(null);
+    setConfirmacion(null);
+    setFichaLead(null);
+    setInteracciones([]);
+    setIntereses([]);
+    setVista('inicio');
+  };
+
+  /** Salida voluntaria: no corresponde mostrar ningún aviso. */
+  const cerrarSesion = () => {
+    borrarToken();
+    setUsuario(null);
+    setAvisoSesion(null);
+    limpiarDatos();
+  };
+
+  const manejarLogin = async (email, password) => {
+    // Si falla, el error se propaga y lo muestra la pantalla de login
+    const autenticado = await iniciarSesion(email, password);
+    setAvisoSesion(null);
+    setUsuario(autenticado);
+  };
+
+  useEffect(() => {
+    // La capa de API avisa por aquí cuando el backend rechaza el token
+    registrarCierreDeSesion(() => {
+      setUsuario(null);
+      setAvisoSesion('Tu sesión expiró. Vuelve a ingresar para continuar.');
+      limpiarDatos();
+    });
+
+    // Al cargar la página se valida el token guardado contra el backend
+    const validarSesionGuardada = async () => {
+      if (!obtenerToken()) {
+        setVerificandoSesion(false);
+        return;
+      }
+
+      try {
+        setUsuario(await obtenerPerfil());
+      } catch {
+        // Token vencido o inválido: se queda sin sesión y aparece el login
+        borrarToken();
+      } finally {
+        setVerificandoSesion(false);
+      }
+    };
+
+    validarSesionGuardada();
   }, []);
 
   // ══════════ Panel lateral ══════════
@@ -350,6 +428,16 @@ function App() {
     ? TEXTOS_ELIMINAR[confirmacion.entidad](confirmacion.registro)
     : null;
 
+  // Mientras se comprueba el token guardado no se muestra ni el login ni el CRM,
+  // para evitar que la pantalla de acceso aparezca y desaparezca
+  if (verificandoSesion) {
+    return <div className="verificando-sesion">Verificando sesión...</div>;
+  }
+
+  if (!usuario) {
+    return <Login alIniciarSesion={manejarLogin} aviso={avisoSesion} />;
+  }
+
   return (
     <div className="app">
       <Sidebar
@@ -360,6 +448,8 @@ function App() {
           propiedades: propiedades.length,
           tareasPendientes: tareasAbiertas,
         }}
+        usuario={usuario}
+        alCerrarSesion={cerrarSesion}
       />
 
       <div className="area-trabajo">
