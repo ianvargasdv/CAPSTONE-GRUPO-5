@@ -1,12 +1,14 @@
-from datetime import date
+from datetime import date, datetime, timezone
 from typing import List
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import case, func
 from sqlalchemy.orm import Session
 
 import database
 import models
+import prioridad
 import schemas
 import seguridad
 
@@ -115,10 +117,79 @@ def perfil(usuario: models.Usuario = Depends(seguridad.usuario_actual)):
 # ══════════════════════════════════════════════════════════════
 
 
+def _actividad_de_leads(db: Session, lead_ids=None):
+    """
+    Resume la actividad de los leads: fecha del último contacto, cantidad de
+    interacciones, cantidad de propiedades de interés y si alguna es de interés alto.
+
+    Son dos consultas agrupadas, no una por lead. La base está alojada de forma
+    remota y cada consulta cuesta decenas de milisegundos, así que recorrer lead
+    por lead haría que el listado tarde segundos. Con este enfoque el costo es el
+    mismo con 5 leads que con 500.
+
+    Si se pasa lead_ids, limita el cálculo a esos leads.
+    """
+    consulta_interacciones = db.query(
+        models.Interaccion.lead_id,
+        func.max(models.Interaccion.fecha_creacion).label("ultima"),
+        func.count(models.Interaccion.id).label("total"),
+    ).group_by(models.Interaccion.lead_id)
+
+    consulta_intereses = db.query(
+        models.Interes.lead_id,
+        func.count(models.Interes.id).label("total"),
+        func.sum(case((models.Interes.nivel_interes == "Alto", 1), else_=0)).label("altos"),
+    ).group_by(models.Interes.lead_id)
+
+    if lead_ids is not None:
+        consulta_interacciones = consulta_interacciones.filter(models.Interaccion.lead_id.in_(lead_ids))
+        consulta_intereses = consulta_intereses.filter(models.Interes.lead_id.in_(lead_ids))
+
+    por_interacciones = {f.lead_id: (f.ultima, f.total) for f in consulta_interacciones.all()}
+    por_intereses = {f.lead_id: (f.total, f.altos or 0) for f in consulta_intereses.all()}
+
+    return por_interacciones, por_intereses
+
+
+def _agregar_prioridad(lead, por_interacciones, por_intereses, ahora):
+    """
+    Calcula la prioridad de un lead y la adjunta al objeto.
+
+    Los campos que se asignan no son columnas de la tabla, así que SQLAlchemy los
+    ignora: viajan en la respuesta pero no se intentan guardar.
+    """
+    ultima, total_interacciones = por_interacciones.get(lead.id, (None, 0))
+    total_intereses, intereses_altos = por_intereses.get(lead.id, (0, 0))
+
+    resultado = prioridad.calcular_prioridad(
+        lead,
+        ultima_interaccion=ultima,
+        total_interacciones=total_interacciones,
+        total_intereses=total_intereses,
+        tiene_interes_alto=intereses_altos > 0,
+        ahora=ahora,
+    )
+
+    for campo, valor in resultado.items():
+        setattr(lead, campo, valor)
+
+    return lead
+
+
 @router_privado.get("/leads", response_model=List[schemas.LeadRespuesta])
 def listar_leads(db: Session = Depends(database.obtener_db)):
-    """Obtiene la lista de todos los leads registrados."""
+    """
+    Obtiene todos los leads con su prioridad calculada, ordenados de mayor a menor
+    puntaje: ese es el orden en que conviene trabajarlos.
+    """
     leads = db.query(models.Lead).all()
+    por_interacciones, por_intereses = _actividad_de_leads(db)
+    ahora = datetime.now(timezone.utc)
+
+    for lead in leads:
+        _agregar_prioridad(lead, por_interacciones, por_intereses, ahora)
+
+    leads.sort(key=lambda lead: lead.puntaje, reverse=True)
     return leads
 
 
@@ -135,6 +206,9 @@ def crear_lead(lead: schemas.LeadCrear, db: Session = Depends(database.obtener_d
     db.add(nuevo_lead)
     db.commit()
     db.refresh(nuevo_lead)
+
+    # Un lead recién creado no tiene actividad, así que no hace falta consultarla
+    _agregar_prioridad(nuevo_lead, {}, {}, datetime.now(timezone.utc))
     return nuevo_lead
 
 
@@ -154,6 +228,10 @@ def actualizar_lead(lead_id: int, datos: schemas.LeadActualizar, db: Session = D
 
     db.commit()
     db.refresh(lead)
+
+    # Cambiar el estado o la prioridad altera el puntaje, así que se recalcula
+    por_interacciones, por_intereses = _actividad_de_leads(db, [lead.id])
+    _agregar_prioridad(lead, por_interacciones, por_intereses, datetime.now(timezone.utc))
     return lead
 
 

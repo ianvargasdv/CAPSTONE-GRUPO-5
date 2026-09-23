@@ -3,10 +3,12 @@ import Icono from './Iconos';
 
 /**
  * Vista de inicio. Está pensada para responder "qué tengo que hacer hoy"
- * antes de mostrar totales: primero los vencimientos y los leads sin contactar,
- * después la distribución general de la cartera.
+ * antes de mostrar totales: primero los vencimientos y los leads que requieren
+ * atención, después la distribución general de la cartera.
  *
  * No hace llamadas al backend: trabaja con los datos ya cargados en la aplicación.
+ * La prioridad de los leads viene calculada desde el backend, así que aquí solo
+ * se ordena y se muestra.
  *
  * Props:
  * - leads / propiedades / tareas: listas completas
@@ -18,11 +20,20 @@ import Icono from './Iconos';
 
 const MS_DIA = 86400000;
 
-/** Convierte una diferencia de días en texto legible para el ejecutivo. */
-function textoDias(dias) {
-  if (dias === 0) return 'hoy';
-  if (dias === 1) return 'ayer';
-  return `hace ${dias} días`;
+const TONO_CATEGORIA = {
+  Urgente: 'peligro',
+  Alta: 'alerta',
+  Normal: 'neutra',
+  Baja: 'neutra',
+  'Sin acción': 'neutra',
+};
+
+/** Describe la antigüedad del último contacto en lenguaje corriente. */
+function textoContacto(lead) {
+  if (lead.total_interacciones === 0) return 'Nunca contactado';
+  if (lead.dias_sin_contacto === 0) return 'Contactado hoy';
+  if (lead.dias_sin_contacto === 1) return 'Contactado ayer';
+  return `${lead.dias_sin_contacto} días sin contacto`;
 }
 
 function fechaCorta(iso) {
@@ -42,6 +53,8 @@ function Dashboard({ leads, propiedades, tareas, cargando, alVerFicha, alEditarT
 
   // ── Leads ──
   const leadsActivos = leads.filter((l) => l.estado !== 'Cerrado');
+  const urgentes = leads.filter((l) => l.categoria === 'Urgente').length;
+
   const leadsPorEstado = {
     Nuevo: leads.filter((l) => l.estado === 'Nuevo').length,
     Contactado: leads.filter((l) => l.estado === 'Contactado').length,
@@ -49,18 +62,8 @@ function Dashboard({ leads, propiedades, tareas, cargando, alVerFicha, alEditarT
     Cerrado: leads.filter((l) => l.estado === 'Cerrado').length,
   };
 
-  // Leads nuevos ordenados del más antiguo al más reciente: los que llevan
-  // más tiempo sin contactar son los que se están enfriando.
-  const sinContactar = leads
-    .filter((l) => l.estado === 'Nuevo')
-    .sort((a, b) => new Date(a.fecha_creacion) - new Date(b.fecha_creacion))
-    .slice(0, 5)
-    .map((lead) => ({
-      ...lead,
-      dias: lead.fecha_creacion
-        ? Math.floor((hoy - new Date(lead.fecha_creacion).setHours(0, 0, 0, 0)) / MS_DIA)
-        : 0,
-    }));
+  // El backend ya los entrega ordenados por puntaje, solo se descartan los cerrados
+  const prioritarios = leads.filter((l) => l.categoria && l.categoria !== 'Sin acción').slice(0, 5);
 
   // ── Propiedades ──
   const propPorEstado = {
@@ -82,7 +85,6 @@ function Dashboard({ leads, propiedades, tareas, cargando, alVerFicha, alEditarT
     .filter((t) => t.limite > hoy && t.limite <= new Date(hoy.getTime() + 7 * MS_DIA))
     .sort((a, b) => a.limite - b.limite);
 
-  // La agenda prioriza lo vencido, después lo de hoy y después la semana
   const agenda = [
     ...vencidas.sort((a, b) => a.limite - b.limite).map((t) => ({ t, tipo: 'vencida' })),
     ...paraHoy.map((t) => ({ t, tipo: 'hoy' })),
@@ -99,10 +101,10 @@ function Dashboard({ leads, propiedades, tareas, cargando, alVerFicha, alEditarT
             <span className="kpi-label">Leads activos</span>
           </div>
           <div className="kpi-numero">{leadsActivos.length}</div>
-          <div className="kpi-detalle">
-            {leadsPorEstado.Nuevo > 0
-              ? `${leadsPorEstado.Nuevo} sin contactar`
-              : 'Todos contactados'}
+          <div className={`kpi-detalle ${urgentes > 0 ? 'critico' : ''}`}>
+            {urgentes > 0
+              ? `${urgentes} requiere${urgentes !== 1 ? 'n' : ''} atención urgente`
+              : 'Ninguno urgente'}
           </div>
         </div>
 
@@ -182,9 +184,7 @@ function Dashboard({ leads, propiedades, tareas, cargando, alVerFicha, alEditarT
                       </span>
                     )}
                     {tipo === 'hoy' && <span className="etiqueta alerta">Hoy</span>}
-                    <span
-                      className={`prioridad prioridad-${(t.prioridad || 'media').toLowerCase()}`}
-                    >
+                    <span className={`prioridad prioridad-${(t.prioridad || 'media').toLowerCase()}`}>
                       <span className="prioridad-punto" />
                       {t.prioridad}
                     </span>
@@ -197,23 +197,23 @@ function Dashboard({ leads, propiedades, tareas, cargando, alVerFicha, alEditarT
 
         <div className="panel">
           <div className="panel-encabezado">
-            <span className="panel-titulo">Leads por contactar</span>
+            <span className="panel-titulo">Leads por atender</span>
             <button className="btn-secondary" onClick={() => alIrA('leads')}>
               Ver leads
             </button>
           </div>
 
-          {sinContactar.length === 0 ? (
+          {prioritarios.length === 0 ? (
             <div className="state-message empty">
               <Icono nombre="check" tamano={18} />
-              <span className="vacio-titulo">Sin leads pendientes</span>
+              <span className="vacio-titulo">Sin leads por atender</span>
               <span className="vacio-detalle">
-                Todos los prospectos registrados ya tuvieron un primer contacto.
+                No hay prospectos abiertos que requieran seguimiento.
               </span>
             </div>
           ) : (
             <ul className="lista-simple">
-              {sinContactar.map((lead) => (
+              {prioritarios.map((lead) => (
                 <li
                   key={lead.id}
                   className="lista-simple-item clicable"
@@ -221,20 +221,12 @@ function Dashboard({ leads, propiedades, tareas, cargando, alVerFicha, alEditarT
                 >
                   <div className="lista-simple-info">
                     <span className="lista-simple-nombre">{lead.nombre}</span>
-                    <span className="lista-simple-sub">
-                      {lead.telefono || lead.email}
-                    </span>
+                    <span className="lista-simple-sub">{textoContacto(lead)}</span>
                   </div>
 
                   <div className="lista-simple-meta">
-                    {lead.dias >= 3 && (
-                      <span className="etiqueta alerta">{textoDias(lead.dias)}</span>
-                    )}
-                    <span
-                      className={`prioridad prioridad-${(lead.prioridad || 'media').toLowerCase()}`}
-                    >
-                      <span className="prioridad-punto" />
-                      {lead.prioridad}
+                    <span className={`etiqueta ${TONO_CATEGORIA[lead.categoria] || 'neutra'}`}>
+                      {lead.categoria}
                     </span>
                   </div>
                 </li>
