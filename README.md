@@ -176,7 +176,7 @@ clave viajaría al cliente y cualquiera podría leerla.
 - No hay roles, ni asignación de leads por ejecutivo, ni cambio de contraseña desde
   la interfaz, ni paginación en los listados.
 
-## Problemas frecuentes
+## Problemas (evitables pero probables)
 
 **`tenant or user not found` al arrancar el backend.** El proyecto de Supabase está
 pausado por inactividad. Hay que reactivarlo desde el panel y esperar un par de
@@ -191,7 +191,7 @@ minutos.
 y en Windows `localhost` se resuelve primero a IPv6. Se corrige creando
 `frontend/.env` con `VITE_API_URL=http://127.0.0.1:8000`.
 
-## Estado del proyecto
+## Alcance del proyecto actual (MVP) 
 
 Implementado: leads, propiedades, interacciones, tareas, propiedades de interés,
 autenticación, priorización de leads, resumen con IA y vista de inicio.
