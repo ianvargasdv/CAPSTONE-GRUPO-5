@@ -222,8 +222,31 @@ def construir_ficha(lead, interacciones, intereses, propiedades_por_id, tareas=(
         f"Nombre: {lead.nombre}",
         f"Estado en el embudo: {lead.estado}",
         f"Prioridad asignada: {lead.prioridad}",
+        f"Ejecutivo responsable: {getattr(lead, 'ejecutivo_nombre', None) or 'sin asignar'}",
         f"Fecha de ingreso: {_fecha(lead.fecha_creacion)}",
     ]
+
+    lineas.extend([
+        "",
+        "PERFIL DE BÚSQUEDA DECLARADO",
+        f"Operación: {getattr(lead, 'tipo_operacion', None) or 'sin definir'}",
+        f"Tipo de propiedad: {getattr(lead, 'tipo_propiedad_buscada', None) or 'sin definir'}",
+        f"Comunas: {getattr(lead, 'comunas_interes', None) or 'sin definir'}",
+        (
+            "Presupuesto: "
+            f"{getattr(lead, 'presupuesto_min', None) if getattr(lead, 'presupuesto_min', None) is not None else 'sin mínimo'}"
+            " a "
+            f"{getattr(lead, 'presupuesto_max', None) if getattr(lead, 'presupuesto_max', None) is not None else 'sin máximo'} "
+            f"{getattr(lead, 'moneda', None) or 'moneda sin definir'}"
+        ),
+        f"Dormitorios mínimos: {getattr(lead, 'dormitorios_min', None) if getattr(lead, 'dormitorios_min', None) is not None else 'sin definir'}",
+        f"Baños mínimos: {getattr(lead, 'banos_min', None) if getattr(lead, 'banos_min', None) is not None else 'sin definir'}",
+        f"Plazo de decisión: {getattr(lead, 'plazo_decision', None) or 'sin definir'}",
+        f"Financiamiento: {getattr(lead, 'financiamiento', None) or 'sin definir'}",
+        f"Origen del lead: {getattr(lead, 'origen', None) or 'sin definir'}",
+        f"Próxima acción registrada: {getattr(lead, 'proxima_accion', None) or 'ninguna'}",
+        f"Fecha de próxima acción: {_fecha(getattr(lead, 'fecha_proxima_accion', None))}",
+    ])
 
     # La prioridad la calcula prioridad.py y se adjunta al lead antes de llamar aquí
     categoria = getattr(lead, "categoria", None)

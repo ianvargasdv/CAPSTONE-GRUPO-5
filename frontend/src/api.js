@@ -26,6 +26,19 @@ const NOMBRES_CAMPOS = {
   fecha_limite: 'Fecha límite',
   propiedad_id: 'Propiedad',
   nivel_interes: 'Nivel de interés',
+  tipo_operacion: 'Operación',
+  presupuesto_min: 'Presupuesto mínimo',
+  presupuesto_max: 'Presupuesto máximo',
+  moneda: 'Moneda',
+  comunas_interes: 'Comunas de interés',
+  tipo_propiedad_buscada: 'Tipo de propiedad',
+  dormitorios_min: 'Dormitorios mínimos',
+  banos_min: 'Baños mínimos',
+  plazo_decision: 'Plazo de decisión',
+  financiamiento: 'Financiamiento',
+  origen: 'Origen',
+  proxima_accion: 'Próxima acción',
+  fecha_proxima_accion: 'Fecha de próxima acción',
 };
 
 /** Convierte los errores estructurados de FastAPI/Pydantic a texto para personas. */
@@ -40,6 +53,7 @@ function explicarValidacion(error) {
     string_pattern_mismatch: 'tiene un formato inválido',
     literal_error: 'tiene un valor no permitido',
     greater_than: 'debe ser mayor que cero',
+    greater_than_equal: 'no puede ser negativo',
     less_than_equal: 'supera el máximo permitido',
     int_parsing: 'debe ser un número entero',
   };

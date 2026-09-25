@@ -42,7 +42,12 @@ ENTIDADES = (LEAD, PROPIEDAD, TAREA, INTERACCION, INTERES, ANALISIS)
 # Campos que se comparan al actualizar, por entidad. Se listan explícitamente para
 # no registrar columnas internas ni los campos calculados que se agregan al objeto.
 CAMPOS_COMPARABLES = {
-    LEAD: ("nombre", "email", "telefono", "estado", "prioridad"),
+    LEAD: (
+        "nombre", "email", "telefono", "estado", "prioridad", "tipo_operacion",
+        "presupuesto_min", "presupuesto_max", "moneda", "comunas_interes",
+        "tipo_propiedad_buscada", "dormitorios_min", "banos_min", "plazo_decision",
+        "financiamiento", "origen", "proxima_accion", "fecha_proxima_accion", "es_demo",
+    ),
     PROPIEDAD: ("titulo", "tipo", "precio", "direccion", "estado"),
     TAREA: ("titulo", "descripcion", "estado", "prioridad", "fecha_limite", "lead_id"),
 }

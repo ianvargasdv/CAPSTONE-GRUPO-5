@@ -73,6 +73,14 @@ const TONO_CATEGORIA = {
   'Sin acción': 'neutra',
 };
 
+const formatearPresupuesto = (lead) => {
+  const formato = new Intl.NumberFormat('es-CL');
+  if (lead.presupuesto_min == null && lead.presupuesto_max == null) return 'Sin definir';
+  const minimo = lead.presupuesto_min == null ? 'sin mínimo' : formato.format(lead.presupuesto_min);
+  const maximo = lead.presupuesto_max == null ? 'sin máximo' : formato.format(lead.presupuesto_max);
+  return `${minimo} – ${maximo} ${lead.moneda || ''}`.trim();
+};
+
 /** Texto del modal de confirmación para cada tipo de registro. */
 const TEXTOS_ELIMINAR = {
   lead: (r) => ({
@@ -760,6 +768,27 @@ function App() {
                   <Icono nombre="editar" tamano={13} />
                   Editar datos
                 </button>
+              </div>
+            </div>
+
+            <div className="ficha-seccion">
+              <div className="ficha-seccion-encabezado">
+                <span className="ficha-seccion-titulo">Perfil de búsqueda</span>
+                {fichaLead.es_demo && <span className="etiqueta info">Datos demo</span>}
+              </div>
+              <div className="ficha-resumen sin-borde ficha-perfil">
+                <div className="ficha-dato"><span className="ficha-dato-label">Operación</span><span className="ficha-dato-valor">{fichaLead.tipo_operacion || 'Sin definir'}</span></div>
+                <div className="ficha-dato"><span className="ficha-dato-label">Propiedad</span><span className="ficha-dato-valor">{fichaLead.tipo_propiedad_buscada || 'Sin definir'}</span></div>
+                <div className="ficha-dato form-group-full"><span className="ficha-dato-label">Comunas</span><span className="ficha-dato-valor">{fichaLead.comunas_interes || 'Sin definir'}</span></div>
+                <div className="ficha-dato form-group-full"><span className="ficha-dato-label">Presupuesto</span><span className="ficha-dato-valor">{formatearPresupuesto(fichaLead)}</span></div>
+                <div className="ficha-dato"><span className="ficha-dato-label">Dormitorios mín.</span><span className="ficha-dato-valor">{fichaLead.dormitorios_min ?? 'Sin definir'}</span></div>
+                <div className="ficha-dato"><span className="ficha-dato-label">Baños mín.</span><span className="ficha-dato-valor">{fichaLead.banos_min ?? 'Sin definir'}</span></div>
+                <div className="ficha-dato"><span className="ficha-dato-label">Plazo</span><span className="ficha-dato-valor">{fichaLead.plazo_decision || 'Sin definir'}</span></div>
+                <div className="ficha-dato"><span className="ficha-dato-label">Financiamiento</span><span className="ficha-dato-valor">{fichaLead.financiamiento || 'Sin definir'}</span></div>
+                <div className="ficha-dato"><span className="ficha-dato-label">Origen</span><span className="ficha-dato-valor">{fichaLead.origen || 'Sin definir'}</span></div>
+                <div className="ficha-dato"><span className="ficha-dato-label">Ejecutivo</span><span className="ficha-dato-valor">{fichaLead.ejecutivo_nombre || 'Sin asignar'}</span></div>
+                <div className="ficha-dato"><span className="ficha-dato-label">Próxima fecha</span><span className="ficha-dato-valor">{fichaLead.fecha_proxima_accion ? new Date(`${fichaLead.fecha_proxima_accion}T12:00:00`).toLocaleDateString('es-CL') : 'Sin definir'}</span></div>
+                <div className="ficha-dato form-group-full"><span className="ficha-dato-label">Próxima acción</span><span className="ficha-dato-valor texto-completo">{fichaLead.proxima_accion || 'Sin acción registrada'}</span></div>
               </div>
             </div>
 

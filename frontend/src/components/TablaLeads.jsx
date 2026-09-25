@@ -81,7 +81,8 @@ function TablaLeads({
       !termino ||
       lead.nombre.toLowerCase().includes(termino) ||
       lead.email.toLowerCase().includes(termino) ||
-      (lead.telefono && lead.telefono.includes(termino));
+      (lead.telefono && lead.telefono.includes(termino)) ||
+      (lead.comunas_interes && lead.comunas_interes.toLowerCase().includes(termino));
     const coincideEstado = filtroEstado === 'Todos' || lead.estado === filtroEstado;
     const coincideCategoria = filtroCategoria === 'Todas' || lead.categoria === filtroCategoria;
     return coincideTexto && coincideEstado && coincideCategoria;
@@ -171,6 +172,11 @@ function TablaLeads({
                           {lead.nombre}
                         </button>
                         <span className="celda-secundaria">{lead.email}</span>
+                        {lead.tipo_operacion && (
+                          <span className="celda-secundaria">
+                            {lead.tipo_operacion} · {lead.tipo_propiedad_buscada || 'Propiedad sin definir'}
+                          </span>
+                        )}
                       </div>
                     </td>
 

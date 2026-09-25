@@ -62,6 +62,14 @@ revisar(schemas.TareaCrear(titulo="Llamar", fecha_limite="2026-12-31").fecha_lim
         "una fecha real en formato ISO es aceptada")
 revisar(schemas.LeadActualizar(telefono=None).model_dump(exclude_unset=True) == {"telefono": None},
         "el teléfono se puede limpiar explícitamente")
+perfil_valido = schemas.LeadCrear(
+    nombre="Camila Soto", email="camila@correo.cl", tipo_operacion="Compra",
+    presupuesto_min=100_000_000, presupuesto_max=150_000_000, moneda="CLP",
+    dormitorios_min=2, banos_min=1, plazo_decision="0-3 meses",
+    financiamiento="Crédito preaprobado", origen="Referido",
+)
+revisar(perfil_valido.presupuesto_max == 150_000_000,
+        "acepta un perfil comercial completo y coherente")
 
 
 print("\n2. Entradas inválidas y límites")
@@ -92,6 +100,15 @@ rechaza(lambda: schemas.InteresCrear(propiedad_id=0),
         "rechaza identificadores de propiedad no positivos")
 rechaza(lambda: schemas.InteresCrear(propiedad_id=1, nivel_interes="Mucho"),
         "rechaza niveles de interés desconocidos")
+rechaza(lambda: schemas.LeadCrear(
+    nombre="Ana Soto", email="ana@correo.cl", presupuesto_min=200, presupuesto_max=100
+), "rechaza un rango de presupuesto invertido al crear")
+rechaza(lambda: schemas.LeadCrear(
+    nombre="Ana Soto", email="ana@correo.cl", dormitorios_min=21
+), "limita la cantidad de dormitorios a un valor razonable")
+rechaza(lambda: schemas.LeadCrear(
+    nombre="Ana Soto", email="ana@correo.cl", tipo_operacion="Permuta"
+), "rechaza operaciones comerciales no soportadas")
 
 
 print("\n3. Duplicados por correo")
@@ -131,6 +148,8 @@ segundo = main.crear_lead(
     db=db,
     usuario=usuario,
 )
+revisar(segundo.ejecutivo_id == usuario.id and segundo.ejecutivo_nombre == usuario.nombre,
+        "el lead nuevo queda asignado al ejecutivo que lo creó")
 
 try:
     main.actualizar_lead(
@@ -143,6 +162,40 @@ except HTTPException as error:
     revisar(error.status_code == 409, "editar hacia un correo duplicado devuelve conflicto 409")
 else:
     revisar(False, "editar hacia un correo duplicado devuelve conflicto 409")
+
+main.actualizar_lead(
+    lead_id=segundo.id,
+    datos=schemas.LeadActualizar(presupuesto_max=100),
+    db=db,
+    usuario=usuario,
+)
+try:
+    main.actualizar_lead(
+        lead_id=segundo.id,
+        datos=schemas.LeadActualizar(presupuesto_min=200),
+        db=db,
+        usuario=usuario,
+    )
+except HTTPException as error:
+    revisar(error.status_code == 422, "valida el rango completo en una actualización parcial")
+else:
+    revisar(False, "valida el rango completo en una actualización parcial")
+
+segundo = main.actualizar_lead(
+    lead_id=segundo.id,
+    datos=schemas.LeadActualizar(
+        presupuesto_min=80, presupuesto_max=100, moneda="CLP",
+        tipo_operacion="Compra", comunas_interes="Ñuñoa, Macul",
+        proxima_accion="Confirmar visita",
+    ),
+    db=db,
+    usuario=usuario,
+)
+ficha_ia = main.ia.construir_ficha(segundo, [], [], {}, [])
+revisar("PERFIL DE BÚSQUEDA DECLARADO" in ficha_ia and "Ñuñoa, Macul" in ficha_ia,
+        "la IA recibe el perfil de búsqueda registrado")
+revisar("Confirmar visita" in ficha_ia and usuario.nombre in ficha_ia,
+        "la IA recibe la próxima acción y el ejecutivo responsable")
 
 db.close()
 database.engine.dispose()

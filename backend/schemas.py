@@ -1,7 +1,7 @@
 import re
 from typing import Annotated, List, Literal, Optional
 
-from pydantic import BaseModel, Field, StringConstraints, field_validator
+from pydantic import BaseModel, Field, StringConstraints, field_validator, model_validator
 from datetime import date, datetime
 
 
@@ -15,12 +15,20 @@ EstadoPropiedad = Literal["Disponible", "Reservada", "Vendida"]
 TipoInteraccion = Literal["Llamada", "Email", "Visita", "WhatsApp"]
 EstadoTarea = Literal["Pendiente", "En Progreso", "Completada"]
 NivelInteres = Literal["Alto", "Medio", "Bajo"]
+TipoOperacion = Literal["Compra", "Arriendo"]
+Moneda = Literal["UF", "CLP"]
+PlazoDecision = Literal["Inmediato", "0-3 meses", "3-6 meses", "6-12 meses", "Sin definir"]
+Financiamiento = Literal["Crédito preaprobado", "En evaluación", "Recursos propios", "Sin definir"]
+OrigenLead = Literal[
+    "Referido", "Portal inmobiliario", "Redes sociales", "Sitio web", "Llamada", "Otro", "Demo capstone"
+]
 
 Nombre = Annotated[str, StringConstraints(strip_whitespace=True, min_length=2, max_length=100)]
 Correo = Annotated[str, StringConstraints(strip_whitespace=True, to_lower=True, min_length=5, max_length=150)]
 Telefono = Annotated[str, StringConstraints(strip_whitespace=True, min_length=7, max_length=20)]
 TextoCorto = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
 TextoLargo = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=5000)]
+Comunas = Annotated[str, StringConstraints(strip_whitespace=True, min_length=2, max_length=300)]
 
 PATRON_CORREO = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 PATRON_TELEFONO = re.compile(r"^[+()\d\s-]+$")
@@ -54,9 +62,32 @@ class LeadBase(BaseModel):
     telefono: Optional[Telefono] = None
     estado: EstadoLead = "Nuevo"
     prioridad: Prioridad = "Media"
+    tipo_operacion: Optional[TipoOperacion] = None
+    presupuesto_min: Optional[int] = Field(default=None, ge=0, le=999_999_999_999)
+    presupuesto_max: Optional[int] = Field(default=None, ge=0, le=999_999_999_999)
+    moneda: Optional[Moneda] = None
+    comunas_interes: Optional[Comunas] = None
+    tipo_propiedad_buscada: Optional[TipoPropiedad] = None
+    dormitorios_min: Optional[int] = Field(default=None, ge=0, le=20)
+    banos_min: Optional[int] = Field(default=None, ge=0, le=20)
+    plazo_decision: Optional[PlazoDecision] = None
+    financiamiento: Optional[Financiamiento] = None
+    origen: Optional[OrigenLead] = None
+    proxima_accion: Optional[TextoCorto] = None
+    fecha_proxima_accion: Optional[date] = None
 
     _correo_valido = field_validator("email")(_validar_correo)
     _telefono_valido = field_validator("telefono")(_validar_telefono)
+
+    @model_validator(mode="after")
+    def validar_rango_presupuesto(self):
+        if (
+            self.presupuesto_min is not None
+            and self.presupuesto_max is not None
+            and self.presupuesto_min > self.presupuesto_max
+        ):
+            raise ValueError("El presupuesto mínimo no puede superar el máximo")
+        return self
 
 
 class LeadCrear(LeadBase):
@@ -76,6 +107,19 @@ class LeadActualizar(BaseModel):
     telefono: Optional[Telefono] = None
     estado: EstadoLead = None
     prioridad: Prioridad = None
+    tipo_operacion: Optional[TipoOperacion] = None
+    presupuesto_min: Optional[int] = Field(default=None, ge=0, le=999_999_999_999)
+    presupuesto_max: Optional[int] = Field(default=None, ge=0, le=999_999_999_999)
+    moneda: Optional[Moneda] = None
+    comunas_interes: Optional[Comunas] = None
+    tipo_propiedad_buscada: Optional[TipoPropiedad] = None
+    dormitorios_min: Optional[int] = Field(default=None, ge=0, le=20)
+    banos_min: Optional[int] = Field(default=None, ge=0, le=20)
+    plazo_decision: Optional[PlazoDecision] = None
+    financiamiento: Optional[Financiamiento] = None
+    origen: Optional[OrigenLead] = None
+    proxima_accion: Optional[TextoCorto] = None
+    fecha_proxima_accion: Optional[date] = None
 
     _correo_valido = field_validator("email")(_validar_correo)
     _telefono_valido = field_validator("telefono")(_validar_telefono)
@@ -91,6 +135,9 @@ class LeadRespuesta(LeadBase):
     """
     id: int
     fecha_creacion: Optional[datetime] = None
+    ejecutivo_id: Optional[int] = None
+    ejecutivo_nombre: Optional[str] = None
+    es_demo: bool = False
 
     # Calculados, no almacenados
     puntaje: Optional[int] = None

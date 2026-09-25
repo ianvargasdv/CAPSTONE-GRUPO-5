@@ -51,6 +51,24 @@ class Lead(Base):
     telefono = Column(String(20), nullable=True)
     estado = Column(String(50), default="Nuevo")
     prioridad = Column(String(50), default="Media")
+    ejecutivo_id = Column(Integer, ForeignKey("usuarios.id", ondelete="SET NULL"), nullable=True)
+
+    # Perfil comercial. Todos son opcionales porque un lead puede entrar al CRM
+    # con datos mínimos y completarse durante la calificación.
+    tipo_operacion = Column(String(20), nullable=True)
+    presupuesto_min = Column(Integer, nullable=True)
+    presupuesto_max = Column(Integer, nullable=True)
+    moneda = Column(String(10), nullable=True)
+    comunas_interes = Column(String(300), nullable=True)
+    tipo_propiedad_buscada = Column(String(50), nullable=True)
+    dormitorios_min = Column(Integer, nullable=True)
+    banos_min = Column(Integer, nullable=True)
+    plazo_decision = Column(String(30), nullable=True)
+    financiamiento = Column(String(40), nullable=True)
+    origen = Column(String(40), nullable=True)
+    proxima_accion = Column(String(250), nullable=True)
+    fecha_proxima_accion = Column(Date, nullable=True)
+    es_demo = Column(Boolean, nullable=False, default=False)
     fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())
 
 

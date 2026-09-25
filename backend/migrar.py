@@ -41,6 +41,21 @@ CAMBIOS = [
         "usuarios: rol de acceso (admin o ejecutivo)",
         "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS rol VARCHAR(20) NOT NULL DEFAULT 'ejecutivo'",
     ),
+    ("leads: tipo de operación", "ALTER TABLE leads ADD COLUMN IF NOT EXISTS tipo_operacion VARCHAR(20)"),
+    ("leads: presupuesto mínimo", "ALTER TABLE leads ADD COLUMN IF NOT EXISTS presupuesto_min INTEGER"),
+    ("leads: presupuesto máximo", "ALTER TABLE leads ADD COLUMN IF NOT EXISTS presupuesto_max INTEGER"),
+    ("leads: moneda del presupuesto", "ALTER TABLE leads ADD COLUMN IF NOT EXISTS moneda VARCHAR(10)"),
+    ("leads: comunas de interés", "ALTER TABLE leads ADD COLUMN IF NOT EXISTS comunas_interes VARCHAR(300)"),
+    ("leads: tipo de propiedad buscada", "ALTER TABLE leads ADD COLUMN IF NOT EXISTS tipo_propiedad_buscada VARCHAR(50)"),
+    ("leads: dormitorios mínimos", "ALTER TABLE leads ADD COLUMN IF NOT EXISTS dormitorios_min INTEGER"),
+    ("leads: baños mínimos", "ALTER TABLE leads ADD COLUMN IF NOT EXISTS banos_min INTEGER"),
+    ("leads: plazo de decisión", "ALTER TABLE leads ADD COLUMN IF NOT EXISTS plazo_decision VARCHAR(30)"),
+    ("leads: financiamiento", "ALTER TABLE leads ADD COLUMN IF NOT EXISTS financiamiento VARCHAR(40)"),
+    ("leads: origen", "ALTER TABLE leads ADD COLUMN IF NOT EXISTS origen VARCHAR(40)"),
+    ("leads: próxima acción", "ALTER TABLE leads ADD COLUMN IF NOT EXISTS proxima_accion VARCHAR(250)"),
+    ("leads: fecha de próxima acción", "ALTER TABLE leads ADD COLUMN IF NOT EXISTS fecha_proxima_accion DATE"),
+    ("leads: marcador de datos demo", "ALTER TABLE leads ADD COLUMN IF NOT EXISTS es_demo BOOLEAN NOT NULL DEFAULT FALSE"),
+    ("leads: ejecutivo responsable", "ALTER TABLE leads ADD COLUMN IF NOT EXISTS ejecutivo_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL"),
 ]
 
 

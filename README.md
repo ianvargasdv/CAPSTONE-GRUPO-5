@@ -33,7 +33,9 @@ backend/
   crear_usuario.py   Script para dar de alta usuarios
   cambiar_rol.py     Script para cambiar el rol de un usuario
   migrar.py          Aplica cambios de estructura sobre tablas existentes
+  cargar_datos_demo.py  Carga un escenario ficticio e idempotente para la presentación
   prueba_auditoria.py  Verifica que ningún endpoint de escritura quede sin auditar
+  prueba_validaciones.py  Verifica reglas de entrada y casos límite
 
 frontend/src/
   App.jsx            Estado general y navegación
@@ -91,11 +93,13 @@ IA_MODELO=llama3
 Levantar el servidor:
 
 ```powershell
+python migrar.py
 uvicorn main:app --reload
 ```
 
 Queda en `http://localhost:8000`, con la documentación de la API en `/docs`. Al
-arrancar crea las tablas que falten.
+arrancar crea las tablas que falten. `migrar.py` agrega columnas nuevas a tablas
+existentes sin borrar datos y puede ejecutarse más de una vez.
 
 ### Crear un usuario
 
@@ -119,6 +123,21 @@ Para cambiar el rol de un usuario que ya existe:
 python cambiar_rol.py
 ```
 
+### Datos para una demostración
+
+Después de crear al menos un usuario y ejecutar la migración se puede cargar un
+escenario coherente con cinco leads, cinco propiedades, intereses, contactos y
+tareas:
+
+```powershell
+python cargar_datos_demo.py
+```
+
+El script es idempotente: repetirlo no duplica el escenario. Todos los registros
+son ficticios, usan correos del dominio reservado `example.test`, teléfonos
+imposibles y se distinguen con `(Demo)`, `[DEMO]` o `es_demo=true`. No deben
+presentarse como datos de clientes reales.
+
 ### Frontend
 
 ```powershell
@@ -137,7 +156,11 @@ Para cambiar la dirección, editar `frontend/.env` y usar, por ejemplo,
 
 ```
 usuarios       id, nombre, email (único), password_hash, rol, activo, fecha_creacion
-leads          id, nombre, email, telefono, estado, prioridad, fecha_creacion
+leads          id, nombre, email, telefono, estado, prioridad, ejecutivo_id,
+               tipo_operacion, presupuesto_min, presupuesto_max, moneda,
+               comunas_interes, tipo_propiedad_buscada, dormitorios_min,
+               banos_min, plazo_decision, financiamiento, origen,
+               proxima_accion, fecha_proxima_accion, es_demo, fecha_creacion
 propiedades    id, titulo, tipo, precio, direccion, estado, fecha_creacion
 interacciones  id, lead_id, tipo, notas, fecha_creacion
 tareas         id, titulo, descripcion, estado, prioridad, fecha_limite, lead_id
@@ -161,8 +184,21 @@ Sobre las relaciones:
   entidad de asociación y no una simple tabla puente. Tiene una restricción única
   sobre `(lead_id, propiedad_id)` para no asociar dos veces la misma propiedad.
 
-Los campos de texto como `estado`, `tipo` o `prioridad` los limita el formulario,
-no la base ni la API.
+La API valida estados, tipos, prioridades, correos, teléfonos, largos y rangos
+numéricos aunque la petición no venga desde el formulario. También impide correos
+de lead duplicados sin distinguir mayúsculas y presupuestos cuyo mínimo supere al
+máximo.
+
+## Perfil 360 del lead
+
+La ficha reúne datos de contacto y calificación comercial: compra o arriendo,
+presupuesto y moneda, comunas, tipo de propiedad, dormitorios, baños, plazo,
+financiamiento, origen y próxima acción. Los campos son opcionales porque un lead
+puede entrar con información mínima y completarse durante las conversaciones.
+
+Al crear un lead queda asignado automáticamente al ejecutivo que lo registró. La
+reasignación manual se reserva para el módulo de gestión de equipo, para mantener
+esta primera versión simple y auditable.
 
 ## Priorización de leads
 
@@ -183,8 +219,8 @@ Desde la ficha de un lead se pueden pedir dos análisis:
 - **Siguiente acción recomendada**: propone qué hacer, revisando las tareas
   pendientes para no proponer algo que ya está agendado.
 
-El backend arma un texto con los datos registrados (historial de contacto,
-propiedades de interés, prioridad calculada y tareas pendientes), lo envía al modelo
+El backend arma un texto con los datos registrados (perfil de búsqueda, historial
+de contacto, propiedades de interés, prioridad calculada y tareas pendientes), lo envía al modelo
 y guarda en `analisis_ia` tanto lo que se envió como lo que respondió. Los dos tipos
 parten de la misma ficha y se diferencian solo en las instrucciones.
 
@@ -220,6 +256,15 @@ sirve tanto un servicio alojado como un modelo local. Cambiar de proveedor es ca
 
 La llamada al proveedor se hace desde el backend. Si se hiciera desde el navegador la
 clave viajaría al cliente y cualquiera podría leerla.
+
+### Evolución hacia WhatsApp y chatbot
+
+La extensión prevista no es un bot que envía mensajes sin control. El diseño
+defendible para un CRM es un copiloto: la IA redacta usando el perfil y el historial,
+el ejecutivo revisa y aprueba, el sistema registra el envío y deriva la conversación
+a una persona cuando detecta intención de visita, negociación, reclamo o una duda
+que no pueda respaldar con datos. Una etapa posterior puede integrar WhatsApp
+Business con consentimiento, plantillas aprobadas, límites de envío y trazabilidad.
 
 ## Registro de actividad
 
@@ -267,6 +312,7 @@ permitidos, límites y correos duplicados:
 ```powershell
 cd backend
 python prueba_validaciones.py
+python prueba_datos_demo.py
 ```
 
 El orden de los próximos módulos y su criterio de terminado están en
@@ -288,7 +334,8 @@ un historial que se puede alterar no sirve como historial.
   después de traer cambios que agreguen columnas a una tabla existente.
 - CORS está limitado a `localhost:3000`. Al desplegar hay que agregar el dominio en
   `backend/main.py`.
-- No hay asignación de leads por ejecutivo: todos ven la misma cartera.
+- Los leads quedan asignados a quien los crea, pero todavía no existe reasignación
+  ni una vista que filtre la cartera por ejecutivo; eso corresponde al módulo M7.
 - No hay cambio de contraseña desde la interfaz.
 - Solo el registro de actividad está paginado. Los demás listados traen todo, porque
   su tamaño lo acota la operación del negocio; el de actividad crece con cada acción.
@@ -317,9 +364,10 @@ y en Windows `localhost` se resuelve primero a IPv6. Se corrige creando
 
 ## Alcance del proyecto actual (MVP) 
 
-Implementado: leads, propiedades, interacciones, tareas, propiedades de interés,
+Implementado: leads con perfil comercial 360, propiedades, interacciones, tareas, propiedades de interés,
 autenticación con roles, priorización de leads, asistente con IA (resumen y
 recomendación), seguimiento del consumo del agente, registro de actividad y vista de
 inicio.
 
-Pendiente: documentos.
+Pendiente: oportunidades/pipeline, agenda de visitas, matching, comunicaciones,
+documentos y las mejoras de producción detalladas en el roadmap.

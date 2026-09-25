@@ -186,6 +186,19 @@ def _buscar_lead_por_email(db: Session, email: str, excluir_id: Optional[int] = 
     return consulta.first()
 
 
+def _agregar_ejecutivos(db: Session, leads):
+    """Agrega el nombre del responsable sin hacer una consulta por cada lead."""
+    ids = {lead.ejecutivo_id for lead in leads if lead.ejecutivo_id is not None}
+    nombres = {}
+    if ids:
+        nombres = {
+            usuario.id: usuario.nombre
+            for usuario in db.query(models.Usuario).filter(models.Usuario.id.in_(ids)).all()
+        }
+    for lead in leads:
+        lead.ejecutivo_nombre = nombres.get(lead.ejecutivo_id)
+
+
 @router_privado.get("/leads", response_model=List[schemas.LeadRespuesta])
 def listar_leads(db: Session = Depends(database.obtener_db)):
     """
@@ -198,6 +211,7 @@ def listar_leads(db: Session = Depends(database.obtener_db)):
 
     for lead in leads:
         _agregar_prioridad(lead, por_interacciones, por_intereses, ahora)
+    _agregar_ejecutivos(db, leads)
 
     leads.sort(key=lambda lead: lead.puntaje, reverse=True)
     return leads
@@ -222,13 +236,7 @@ def crear_lead(
             detail="Ya existe un lead registrado con ese correo",
         )
 
-    nuevo_lead = models.Lead(
-        nombre=lead.nombre,
-        email=lead.email,
-        telefono=lead.telefono,
-        estado=lead.estado,
-        prioridad=lead.prioridad,
-    )
+    nuevo_lead = models.Lead(**lead.model_dump(), ejecutivo_id=usuario.id)
     db.add(nuevo_lead)
     db.flush()
 
@@ -246,6 +254,7 @@ def crear_lead(
 
     # Un lead recién creado no tiene actividad, así que no hace falta consultarla
     _agregar_prioridad(nuevo_lead, {}, {}, datetime.now(timezone.utc))
+    nuevo_lead.ejecutivo_nombre = usuario.nombre
     return nuevo_lead
 
 
@@ -277,6 +286,20 @@ def actualizar_lead(
             detail="Ya existe otro lead registrado con ese correo",
         )
 
+    # En una actualización parcial puede venir solo uno de los límites. Se combina
+    # con el valor que ya existe antes de validar el rango completo.
+    presupuesto_min = campos.get("presupuesto_min", lead.presupuesto_min)
+    presupuesto_max = campos.get("presupuesto_max", lead.presupuesto_max)
+    if (
+        presupuesto_min is not None
+        and presupuesto_max is not None
+        and presupuesto_min > presupuesto_max
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="El presupuesto mínimo no puede superar el máximo",
+        )
+
     for campo, valor in campos.items():
         setattr(lead, campo, valor)
 
@@ -296,6 +319,7 @@ def actualizar_lead(
     # Cambiar el estado o la prioridad altera el puntaje, así que se recalcula
     por_interacciones, por_intereses = _actividad_de_leads(db, [lead.id])
     _agregar_prioridad(lead, por_interacciones, por_intereses, datetime.now(timezone.utc))
+    _agregar_ejecutivos(db, [lead])
     return lead
 
 

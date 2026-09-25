@@ -15,11 +15,15 @@ probarse y demostrarse por separado antes de pasar al siguiente.
 
 ### M0. Entorno reproducible
 
+**Estado: completado.**
+
 - Dependencias bloqueadas para Python y Node.
 - Plantillas `.env` completas y sin secretos.
 - Instrucciones verificadas para levantar frontend y backend.
 
 ### M1. Integridad de datos
+
+**Estado: completado.**
 
 - Estados y categorías validados en la API.
 - Límites de texto, precios, fechas, correo y teléfono.
@@ -27,6 +31,8 @@ probarse y demostrarse por separado antes de pasar al siguiente.
 - Errores de validación legibles en el frontend.
 
 ### M2. Perfil 360 del lead
+
+**Estado: implementado y migrado; pendiente de prueba visual del usuario y commit.**
 
 - Origen comercial y ejecutivo responsable.
 - Compra o arriendo, presupuesto y moneda.
@@ -85,8 +91,12 @@ probarse y demostrarse por separado antes de pasar al siguiente.
 ### M10. Comunicaciones
 
 - Acciones rápidas para llamada, correo y WhatsApp.
-- Plantillas de seguimiento con revisión humana antes de enviar.
+- Copiloto que redacta respuestas y plantillas usando solo información registrada.
+- Revisión humana obligatoria antes de enviar en la primera versión.
 - Registro automático o asistido de la comunicación en el historial.
+- Consentimiento, plantillas aprobadas, límites de frecuencia y baja de mensajes.
+- Derivación a un ejecutivo ante visita, negociación, reclamo o baja confianza.
+- Chatbot web como canal inicial; WhatsApp Business como integración posterior.
 
 ### M11. Documentos y cierre
 
