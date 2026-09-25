@@ -10,7 +10,7 @@ que se modifica.
 
 ## Stack
 
-- Backend: Python 3.14, FastAPI, SQLAlchemy, Uvicorn
+- Backend: Python 3.12, FastAPI, SQLAlchemy, Uvicorn
 - Frontend: React 18 con Vite 5, Node 24
 - Base de datos: PostgreSQL en Supabase
 - Autenticación: bcrypt para las contraseñas y PyJWT para los tokens
@@ -52,10 +52,14 @@ Hacen falta dos terminales, una para el backend y otra para el frontend.
 cd backend
 python -m venv venv
 .\venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+pip install -r requirements.lock.txt
+Copy-Item .env.example .env
 ```
 
-Crear `backend/.env` a partir de `backend/.env.example` y completar dos valores:
+`requirements.lock.txt` contiene las versiones exactas que se probaron en el
+proyecto; `requirements.txt` enumera las dependencias directas para cuando sea
+necesario actualizarlas. El último comando crea `backend/.env` desde la plantilla.
+Completar al menos dos valores:
 
 ```
 DATABASE_URL=postgresql://...
@@ -70,8 +74,10 @@ con:
 python -c "import secrets; print(secrets.token_urlsafe(48))"
 ```
 
-Cada persona genera su propia clave. El archivo `.env` está en el `.gitignore` y no
-se sube al repositorio.
+Cada persona genera su propia `SECRET_KEY`; no hace falta que sea igual entre
+integrantes. El archivo `.env` está en el `.gitignore` y no se sube al repositorio.
+La configuración no secreta se mantiene sincronizada modificando `.env.example`,
+nunca copiando el `.env` real al repositorio.
 
 Opcionalmente se puede configurar el proveedor de IA que genera los resúmenes. Si se
 deja vacío el sistema funciona igual, solo no ofrece generarlos:
@@ -117,12 +123,15 @@ python cambiar_rol.py
 
 ```powershell
 cd frontend
-npm install
+npm ci
+Copy-Item .env.example .env
 npm run dev
 ```
 
-Queda en `http://localhost:3000` y apunta al backend en `localhost:8000`. Para
-cambiar la dirección, crear `frontend/.env` con `VITE_API_URL=http://127.0.0.1:8000`.
+`npm ci` instala exactamente las versiones registradas en `package-lock.json`. El
+frontend queda en `http://localhost:3000` y apunta al backend en `localhost:8000`.
+Para cambiar la dirección, editar `frontend/.env` y usar, por ejemplo,
+`VITE_API_URL=http://127.0.0.1:8000`.
 
 ## Modelo de datos
 
@@ -251,6 +260,17 @@ filtros, la paginación y el acceso por rol. Corre sobre una base SQLite tempora
 crea y borra sola, así que no toca los datos reales, y reemplaza el proveedor de IA
 por uno falso para no gastar crédito. Al agregar un endpoint de escritura hay que
 sumarlo a esa prueba.
+
+Las reglas de entrada tienen una prueba separada que cubre formatos, valores
+permitidos, límites y correos duplicados:
+
+```powershell
+cd backend
+python prueba_validaciones.py
+```
+
+El orden de los próximos módulos y su criterio de terminado están en
+[`ROADMAP.md`](ROADMAP.md).
 
 No hay forma de borrar ni editar entradas del registro desde la API. Es a propósito:
 un historial que se puede alterar no sirve como historial.

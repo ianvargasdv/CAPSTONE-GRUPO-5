@@ -178,6 +178,14 @@ def _agregar_prioridad(lead, por_interacciones, por_intereses, ahora):
     return lead
 
 
+def _buscar_lead_por_email(db: Session, email: str, excluir_id: Optional[int] = None):
+    """Busca un correo sin distinguir mayúsculas y permite excluir el lead editado."""
+    consulta = db.query(models.Lead).filter(func.lower(models.Lead.email) == email.lower())
+    if excluir_id is not None:
+        consulta = consulta.filter(models.Lead.id != excluir_id)
+    return consulta.first()
+
+
 @router_privado.get("/leads", response_model=List[schemas.LeadRespuesta])
 def listar_leads(db: Session = Depends(database.obtener_db)):
     """
@@ -208,6 +216,12 @@ def crear_lead(
     base de datos y hace falta para dejar constancia de qué lead se creó. El commit
     posterior guarda el lead y su registro en la misma transacción.
     """
+    if _buscar_lead_por_email(db, lead.email):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Ya existe un lead registrado con ese correo",
+        )
+
     nuevo_lead = models.Lead(
         nombre=lead.nombre,
         email=lead.email,
@@ -255,8 +269,15 @@ def actualizar_lead(
         raise HTTPException(status_code=404, detail="Lead no encontrado")
 
     antes = auditoria.instantanea(lead, auditoria.LEAD)
+    campos = datos.model_dump(exclude_unset=True)
 
-    for campo, valor in datos.model_dump(exclude_unset=True).items():
+    if "email" in campos and _buscar_lead_por_email(db, campos["email"], excluir_id=lead.id):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Ya existe otro lead registrado con ese correo",
+        )
+
+    for campo, valor in campos.items():
         setattr(lead, campo, valor)
 
     auditoria.registrar(

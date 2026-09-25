@@ -13,6 +13,43 @@ const CLAVE_TOKEN = 'crm_token';
 // Callback que App registra para saber cuándo la sesión dejó de ser válida
 let alExpirarSesion = null;
 
+const NOMBRES_CAMPOS = {
+  nombre: 'Nombre',
+  email: 'Correo',
+  telefono: 'Teléfono',
+  estado: 'Estado',
+  prioridad: 'Prioridad',
+  titulo: 'Título',
+  precio: 'Precio',
+  direccion: 'Dirección',
+  tipo: 'Tipo',
+  fecha_limite: 'Fecha límite',
+  propiedad_id: 'Propiedad',
+  nivel_interes: 'Nivel de interés',
+};
+
+/** Convierte los errores estructurados de FastAPI/Pydantic a texto para personas. */
+function explicarValidacion(error) {
+  const campoCrudo = error.loc?.[error.loc.length - 1];
+  const campo = NOMBRES_CAMPOS[campoCrudo] || campoCrudo || 'Campo';
+
+  const mensajes = {
+    missing: 'es obligatorio',
+    string_too_short: 'es demasiado corto',
+    string_too_long: 'es demasiado largo',
+    string_pattern_mismatch: 'tiene un formato inválido',
+    literal_error: 'tiene un valor no permitido',
+    greater_than: 'debe ser mayor que cero',
+    less_than_equal: 'supera el máximo permitido',
+    int_parsing: 'debe ser un número entero',
+  };
+
+  const mensaje = mensajes[error.type]
+    || error.msg?.replace(/^Value error,\s*/i, '')
+    || 'no es válido';
+  return `${campo}: ${mensaje}`;
+}
+
 /** Permite a la aplicación reaccionar cuando el backend rechaza el token. */
 export function registrarCierreDeSesion(callback) {
   alExpirarSesion = callback;
@@ -72,9 +109,14 @@ async function pedir(ruta, { metodo = 'GET', cuerpo, mensajeError = 'Error de co
 
   if (!respuesta.ok) {
     const datos = await respuesta.json().catch(() => null);
-    // FastAPI devuelve detail como texto en los errores propios, pero como
-    // arreglo en los de validación, por eso solo se usa si es texto
-    const detalle = typeof datos?.detail === 'string' ? datos.detail : null;
+    // FastAPI usa texto para errores de negocio y un arreglo para errores de
+    // validación. Mostrar los mensajes evita esconder la causa tras un error
+    // genérico que no ayuda a corregir el formulario.
+    const detalle = typeof datos?.detail === 'string'
+      ? datos.detail
+      : Array.isArray(datos?.detail) && datos.detail.length > 0
+        ? datos.detail.map(explicarValidacion).join('. ')
+        : null;
     throw new Error(detalle ?? mensajeError);
   }
 

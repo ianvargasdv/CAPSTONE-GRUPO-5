@@ -1,14 +1,62 @@
-from pydantic import BaseModel
-from typing import List, Optional
+import re
+from typing import Annotated, List, Literal, Optional
+
+from pydantic import BaseModel, Field, StringConstraints, field_validator
 from datetime import date, datetime
 
 
+# Valores que acepta el negocio. Mantenerlos en un solo lugar evita que cada
+# endpoint interprete estados distintos y que entren datos que la interfaz no sabe
+# representar.
+EstadoLead = Literal["Nuevo", "Contactado", "Calificado", "Cerrado"]
+Prioridad = Literal["Alta", "Media", "Baja"]
+TipoPropiedad = Literal["Departamento", "Casa", "Terreno", "Oficina"]
+EstadoPropiedad = Literal["Disponible", "Reservada", "Vendida"]
+TipoInteraccion = Literal["Llamada", "Email", "Visita", "WhatsApp"]
+EstadoTarea = Literal["Pendiente", "En Progreso", "Completada"]
+NivelInteres = Literal["Alto", "Medio", "Bajo"]
+
+Nombre = Annotated[str, StringConstraints(strip_whitespace=True, min_length=2, max_length=100)]
+Correo = Annotated[str, StringConstraints(strip_whitespace=True, to_lower=True, min_length=5, max_length=150)]
+Telefono = Annotated[str, StringConstraints(strip_whitespace=True, min_length=7, max_length=20)]
+TextoCorto = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
+TextoLargo = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=5000)]
+
+PATRON_CORREO = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+PATRON_TELEFONO = re.compile(r"^[+()\d\s-]+$")
+
+
+def _validar_correo(valor: str) -> str:
+    if not PATRON_CORREO.fullmatch(valor):
+        raise ValueError("Ingresa un correo válido")
+    return valor
+
+
+def _validar_telefono(valor: Optional[str]) -> Optional[str]:
+    if valor is not None and not PATRON_TELEFONO.fullmatch(valor):
+        raise ValueError("El teléfono solo puede contener números, espacios, +, - y paréntesis")
+    return valor
+
+
+def _validar_fecha_iso(valor: Optional[str]) -> Optional[str]:
+    if valor in (None, ""):
+        return valor
+    try:
+        date.fromisoformat(valor)
+    except ValueError as error:
+        raise ValueError("La fecha debe tener el formato YYYY-MM-DD y ser válida") from error
+    return valor
+
+
 class LeadBase(BaseModel):
-    nombre: str
-    email: str
-    telefono: Optional[str] = None
-    estado: Optional[str] = "Nuevo"
-    prioridad: Optional[str] = "Media"
+    nombre: Nombre
+    email: Correo
+    telefono: Optional[Telefono] = None
+    estado: EstadoLead = "Nuevo"
+    prioridad: Prioridad = "Media"
+
+    _correo_valido = field_validator("email")(_validar_correo)
+    _telefono_valido = field_validator("telefono")(_validar_telefono)
 
 
 class LeadCrear(LeadBase):
@@ -21,11 +69,16 @@ class LeadActualizar(BaseModel):
     Esquema para actualizar un lead existente.
     Todos los campos son opcionales para permitir actualizaciones parciales.
     """
-    nombre: Optional[str] = None
-    email: Optional[str] = None
-    telefono: Optional[str] = None
-    estado: Optional[str] = None
-    prioridad: Optional[str] = None
+    # El valor por omisión permite omitir el campo; su tipo no acepta null cuando
+    # el cliente lo envía explícitamente. telefono sí acepta null para poder borrarlo.
+    nombre: Nombre = None
+    email: Correo = None
+    telefono: Optional[Telefono] = None
+    estado: EstadoLead = None
+    prioridad: Prioridad = None
+
+    _correo_valido = field_validator("email")(_validar_correo)
+    _telefono_valido = field_validator("telefono")(_validar_telefono)
 
 
 class LeadRespuesta(LeadBase):
@@ -52,11 +105,11 @@ class LeadRespuesta(LeadBase):
 
 
 class PropiedadBase(BaseModel):
-    titulo: str
-    tipo: Optional[str] = "Departamento"
-    precio: int
-    direccion: str
-    estado: Optional[str] = "Disponible"
+    titulo: TextoCorto
+    tipo: TipoPropiedad = "Departamento"
+    precio: int = Field(gt=0, le=999_999_999_999)
+    direccion: TextoCorto
+    estado: EstadoPropiedad = "Disponible"
 
 
 class PropiedadCrear(PropiedadBase):
@@ -69,11 +122,11 @@ class PropiedadActualizar(BaseModel):
     Esquema para actualizar una propiedad existente.
     Todos los campos son opcionales para permitir actualizaciones parciales.
     """
-    titulo: Optional[str] = None
-    tipo: Optional[str] = None
-    precio: Optional[int] = None
-    direccion: Optional[str] = None
-    estado: Optional[str] = None
+    titulo: TextoCorto = None
+    tipo: TipoPropiedad = None
+    precio: Annotated[int, Field(gt=0, le=999_999_999_999)] = None
+    direccion: TextoCorto = None
+    estado: EstadoPropiedad = None
 
 
 class PropiedadRespuesta(PropiedadBase):
@@ -91,8 +144,8 @@ class InteraccionCrear(BaseModel):
     Recibe el tipo de contacto y notas opcionales.
     El lead_id se obtiene de la URL, no del body.
     """
-    tipo: str
-    notas: Optional[str] = None
+    tipo: TipoInteraccion
+    notas: Optional[TextoLargo] = None
 
 
 class InteraccionRespuesta(BaseModel):
@@ -116,12 +169,14 @@ class TareaCrear(BaseModel):
     Esquema para registrar una nueva tarea.
     El lead_id y la fecha_limite son opcionales.
     """
-    titulo: str
-    descripcion: Optional[str] = None
-    estado: Optional[str] = "Pendiente"
-    prioridad: Optional[str] = "Media"
+    titulo: TextoCorto
+    descripcion: Optional[TextoLargo] = None
+    estado: EstadoTarea = "Pendiente"
+    prioridad: Prioridad = "Media"
     fecha_limite: Optional[str] = None   # formato ISO: YYYY-MM-DD
-    lead_id: Optional[int] = None
+    lead_id: Optional[int] = Field(default=None, gt=0)
+
+    _fecha_valida = field_validator("fecha_limite")(_validar_fecha_iso)
 
 
 class TareaActualizar(BaseModel):
@@ -129,12 +184,14 @@ class TareaActualizar(BaseModel):
     Esquema para actualizar una tarea existente.
     Todos los campos son opcionales para permitir actualizaciones parciales.
     """
-    titulo: Optional[str] = None
-    descripcion: Optional[str] = None
-    estado: Optional[str] = None
-    prioridad: Optional[str] = None
+    titulo: TextoCorto = None
+    descripcion: Optional[TextoLargo] = None
+    estado: EstadoTarea = None
+    prioridad: Prioridad = None
     fecha_limite: Optional[str] = None   # formato ISO: YYYY-MM-DD, enviar "" para limpiar
-    lead_id: Optional[int] = None
+    lead_id: Optional[int] = Field(default=None, gt=0)
+
+    _fecha_valida = field_validator("fecha_limite")(_validar_fecha_iso)
 
 
 class TareaRespuesta(BaseModel):
@@ -167,9 +224,9 @@ class InteresCrear(BaseModel):
     Esquema para registrar el interés de un lead en una propiedad.
     El lead_id se obtiene de la URL, no del body.
     """
-    propiedad_id: int
-    nivel_interes: Optional[str] = "Medio"
-    notas: Optional[str] = None
+    propiedad_id: int = Field(gt=0)
+    nivel_interes: NivelInteres = "Medio"
+    notas: Optional[TextoLargo] = None
 
 
 class InteresRespuesta(BaseModel):
@@ -208,8 +265,10 @@ class UsuarioRespuesta(BaseModel):
 
 class LoginPeticion(BaseModel):
     """Credenciales enviadas al iniciar sesión."""
-    email: str
-    password: str
+    email: Correo
+    password: str = Field(min_length=1, max_length=128)
+
+    _correo_valido = field_validator("email")(_validar_correo)
 
 
 class TokenRespuesta(BaseModel):
