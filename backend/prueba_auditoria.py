@@ -8,7 +8,7 @@ Esta prueba es la contraparte de una decisión de diseño: la auditoría se regi
 llamando explícitamente a auditoria.registrar() en cada endpoint, en lugar de
 detectarla automáticamente con un listener de SQLAlchemy. El registro explícito no
 produce entradas falsas, pero se puede olvidar en un endpoint nuevo. Esta prueba
-cubre ese riesgo recorriendo los trece endpoints de escritura y comprobando que
+cubre ese riesgo recorriendo los diecinueve endpoints de escritura y comprobando que
 todos dejen rastro. Si mañana se agrega uno y no se audita, hay que agregarlo acá y
 la falta salta a la vista.
 
@@ -18,7 +18,7 @@ gastar créditos. Llama a las funciones de los endpoints directamente, pasándol
 sesión y el usuario que en producción inyecta FastAPI.
 
 Lo que verifica:
-  1. Que los trece endpoints de escritura dejen un registro de auditoría
+  1. Que los diecinueve endpoints de escritura dejen un registro de auditoría
   2. Que el resumen de cambios describa solo los campos que cambiaron de verdad
   3. Que los filtros del listado funcionen y rechacen valores inválidos
   4. Que la paginación no repita ni pierda registros
@@ -38,7 +38,7 @@ if os.path.exists(RUTA_BD):
 os.environ["DATABASE_URL"] = f"sqlite:///{RUTA_BD}"
 
 import inspect
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from fastapi import HTTPException
 
@@ -156,6 +156,24 @@ main.actualizar_oportunidad(
 )
 revisar(hay(auditoria.ACTUALIZAR, auditoria.OPORTUNIDAD), "actualizar_oportunidad registra")
 
+visita = main.crear_visita(
+    datos=schemas.VisitaCrear(
+        lead_id=lead.id, propiedad_id=propiedad.id, oportunidad_id=oportunidad.id,
+        fecha_hora=datetime.now(timezone.utc) + timedelta(days=1),
+    ),
+    db=db,
+    usuario=ejecutivo,
+)
+revisar(hay(auditoria.CREAR, auditoria.VISITA), "crear_visita registra")
+
+main.actualizar_visita(
+    visita_id=visita.id,
+    datos=schemas.VisitaActualizar(estado="Confirmada"),
+    db=db,
+    usuario=ejecutivo,
+)
+revisar(hay(auditoria.ACTUALIZAR, auditoria.VISITA), "actualizar_visita registra")
+
 main.crear_interaccion(
     lead_id=lead.id,
     datos=schemas.InteraccionCrear(tipo="Llamada", notas="Pidió ver el departamento"),
@@ -192,6 +210,9 @@ revisar(hay(auditoria.ELIMINAR, auditoria.TAREA), "eliminar_tarea registra")
 
 main.eliminar_interes(interes_id=interes.id, db=db, usuario=ejecutivo)
 revisar(hay(auditoria.ELIMINAR, auditoria.INTERES), "eliminar_interes registra")
+
+main.eliminar_visita(visita_id=visita.id, db=db, usuario=ejecutivo)
+revisar(hay(auditoria.ELIMINAR, auditoria.VISITA), "eliminar_visita registra")
 
 main.eliminar_oportunidad(oportunidad_id=oportunidad.id, db=db, usuario=ejecutivo)
 revisar(hay(auditoria.ELIMINAR, auditoria.OPORTUNIDAD), "eliminar_oportunidad registra")
@@ -238,6 +259,9 @@ esperados = {
     (auditoria.CREAR, auditoria.OPORTUNIDAD),
     (auditoria.ACTUALIZAR, auditoria.OPORTUNIDAD),
     (auditoria.ELIMINAR, auditoria.OPORTUNIDAD),
+    (auditoria.CREAR, auditoria.VISITA),
+    (auditoria.ACTUALIZAR, auditoria.VISITA),
+    (auditoria.ELIMINAR, auditoria.VISITA),
     (auditoria.CREAR, auditoria.INTERACCION),
     (auditoria.CREAR, auditoria.TAREA),
     (auditoria.ACTUALIZAR, auditoria.TAREA),
@@ -249,7 +273,7 @@ esperados = {
 obtenidos = {(r.accion, r.entidad) for r in registros()}
 revisar(
     esperados.issubset(obtenidos),
-    f"los 16 endpoints de escritura están cubiertos (faltan: {esperados - obtenidos})",
+    f"los 19 endpoints de escritura están cubiertos (faltan: {esperados - obtenidos})",
 )
 
 # Todo registro debe decir quién actuó, aunque el usuario se borre después

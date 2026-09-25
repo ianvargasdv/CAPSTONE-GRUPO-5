@@ -78,6 +78,29 @@ CAMBIOS = [
     ),
     ("oportunidades: índice por lead", "CREATE INDEX IF NOT EXISTS ix_oportunidades_lead_id ON oportunidades (lead_id)"),
     ("oportunidades: índice por etapa", "CREATE INDEX IF NOT EXISTS ix_oportunidades_etapa ON oportunidades (etapa)"),
+    (
+        "visitas: agenda comercial",
+        """CREATE TABLE IF NOT EXISTS visitas (
+            id SERIAL PRIMARY KEY,
+            lead_id INTEGER REFERENCES leads(id) ON DELETE SET NULL,
+            propiedad_id INTEGER REFERENCES propiedades(id) ON DELETE SET NULL,
+            oportunidad_id INTEGER REFERENCES oportunidades(id) ON DELETE SET NULL,
+            ejecutivo_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+            fecha_hora TIMESTAMPTZ NOT NULL,
+            duracion_minutos INTEGER NOT NULL DEFAULT 60,
+            estado VARCHAR(30) NOT NULL DEFAULT 'Programada',
+            modalidad VARCHAR(20) NOT NULL DEFAULT 'Presencial',
+            punto_encuentro VARCHAR(250),
+            resultado TEXT,
+            motivo_cancelacion VARCHAR(250),
+            proxima_accion VARCHAR(250),
+            fecha_creacion TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+            fecha_actualizacion TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+        )""",
+    ),
+    ("visitas: índice por fecha", "CREATE INDEX IF NOT EXISTS ix_visitas_fecha_hora ON visitas (fecha_hora)"),
+    ("visitas: índice por ejecutivo", "CREATE INDEX IF NOT EXISTS ix_visitas_ejecutivo_id ON visitas (ejecutivo_id)"),
+    ("visitas: índice por lead", "CREATE INDEX IF NOT EXISTS ix_visitas_lead_id ON visitas (lead_id)"),
 ]
 
 

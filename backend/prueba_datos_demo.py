@@ -23,8 +23,8 @@ db = database.SessionLocal()
 try:
     leads = db.query(models.Lead).filter(models.Lead.es_demo.is_(True)).all()
     propiedades = db.query(models.Propiedad).filter(models.Propiedad.titulo.like("[DEMO]%")).all()
-    assert primera == (5, 5, 5), primera
-    assert segunda == (0, 0, 0), segunda
+    assert primera == (5, 5, 5, 5), primera
+    assert segunda == (0, 0, 0, 0), segunda
     assert len(leads) == 5
     assert len(propiedades) == 5
     assert all(lead.email.endswith("@example.test") for lead in leads)
@@ -33,10 +33,14 @@ try:
     assert db.query(models.Interaccion).count() == 5
     assert db.query(models.Tarea).count() == 4
     assert db.query(models.Oportunidad).count() == 5
+    visitas = db.query(models.Visita).all()
+    assert len(visitas) == 5
+    assert any(visita.estado == "Realizada" and visita.resultado for visita in visitas)
+    assert any(visita.estado == "Cancelada" and visita.motivo_cancelacion for visita in visitas)
 finally:
     db.close()
     database.engine.dispose()
     if os.path.exists(RUTA_BD):
         os.remove(RUTA_BD)
 
-print("Las 11 verificaciones de datos demo pasaron")
+print("Las 14 verificaciones de datos demo pasaron")

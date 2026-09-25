@@ -200,7 +200,18 @@ def _fecha(valor) -> str:
     return valor.astimezone(timezone.utc).strftime("%d-%m-%Y")
 
 
-def construir_ficha(lead, interacciones, intereses, propiedades_por_id, tareas=(), oportunidades=()) -> str:
+def _fecha_hora(valor) -> str:
+    """Formatea una cita con hora explícita para evitar ambigüedad en la agenda."""
+    if valor is None:
+        return "sin fecha"
+    if getattr(valor, "tzinfo", None) is None:
+        valor = valor.replace(tzinfo=timezone.utc)
+    return valor.astimezone(timezone.utc).strftime("%d-%m-%Y %H:%M UTC")
+
+
+def construir_ficha(
+    lead, interacciones, intereses, propiedades_por_id, tareas=(), oportunidades=(), visitas=()
+) -> str:
     """
     Arma el texto que se le envía al modelo a partir de los registros del lead.
 
@@ -217,6 +228,7 @@ def construir_ficha(lead, interacciones, intereses, propiedades_por_id, tareas=(
         propiedades_por_id    diccionario id -> propiedad, para describir cada interés
         tareas                sus tareas sin completar
         oportunidades         sus negocios abiertos o cerrados en el pipeline
+        visitas               sus visitas agendadas y sus resultados registrados
     """
     lineas = [
         "FICHA DEL PROSPECTO",
@@ -290,6 +302,24 @@ def construir_ficha(lead, interacciones, intereses, propiedades_por_id, tareas=(
                 texto += f", cierre estimado: {oportunidad.fecha_cierre_estimada}"
             if oportunidad.motivo_cierre:
                 texto += f". Motivo de cierre: {oportunidad.motivo_cierre}"
+            lineas.append(texto)
+    else:
+        lineas.append("- Ninguna registrada")
+
+    lineas.append("")
+    lineas.append("AGENDA Y RESULTADOS DE VISITAS")
+    if visitas:
+        for visita in visitas:
+            texto = (
+                f"- {_fecha_hora(visita.fecha_hora)}, {visita.estado}, "
+                f"{getattr(visita, 'propiedad_titulo', None) or 'propiedad fuera del catálogo'}"
+            )
+            if visita.resultado:
+                texto += f". Resultado: {visita.resultado}"
+            if visita.motivo_cancelacion:
+                texto += f". Motivo de cancelación: {visita.motivo_cancelacion}"
+            if visita.proxima_accion:
+                texto += f". Próxima acción: {visita.proxima_accion}"
             lineas.append(texto)
     else:
         lineas.append("- Ninguna registrada")

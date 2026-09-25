@@ -11,7 +11,7 @@ import Icono from './Iconos';
  * se ordena y se muestra.
  *
  * Props:
- * - leads / propiedades / tareas / oportunidades: listas completas
+ * - leads / propiedades / tareas / oportunidades / visitas: listas completas
  * - cargando: true mientras alguna sigue cargando
  * - alVerFicha: abre la ficha de un lead
  * - alEditarTarea: abre el panel de edición de una tarea
@@ -43,7 +43,7 @@ function fechaCorta(iso) {
   });
 }
 
-function Dashboard({ leads, propiedades, tareas, oportunidades = [], cargando, alVerFicha, alEditarTarea, alIrA }) {
+function Dashboard({ leads, propiedades, tareas, oportunidades = [], visitas = [], cargando, alVerFicha, alEditarTarea, alIrA }) {
   if (cargando) {
     return <div className="state-message">Cargando resumen...</div>;
   }
@@ -55,6 +55,7 @@ function Dashboard({ leads, propiedades, tareas, oportunidades = [], cargando, a
   const leadsActivos = leads.filter((l) => l.estado !== 'Cerrado');
   const urgentes = leads.filter((l) => l.categoria === 'Urgente').length;
   const negociosAbiertos = oportunidades.filter((o) => !['Ganada', 'Perdida'].includes(o.etapa));
+  const visitasProximas = visitas.filter((v) => new Date(v.fecha_hora) >= new Date() && !['Cancelada', 'No asistió'].includes(v.estado));
 
   const leadsPorEstado = {
     Nuevo: leads.filter((l) => l.estado === 'Nuevo').length,
@@ -116,6 +117,15 @@ function Dashboard({ leads, propiedades, tareas, oportunidades = [], cargando, a
           </div>
           <div className="kpi-numero">{negociosAbiertos.length}</div>
           <div className="kpi-detalle">{oportunidades.filter((o) => o.etapa === 'Negociación').length} en negociación</div>
+        </button>
+
+        <button className="kpi-card kpi-clicable" onClick={() => alIrA('visitas')}>
+          <div className="kpi-encabezado">
+            <Icono nombre="calendario" tamano={13} />
+            <span className="kpi-label">Próximas visitas</span>
+          </div>
+          <div className="kpi-numero">{visitasProximas.length}</div>
+          <div className="kpi-detalle">{visitas.filter((v) => v.estado === 'Confirmada').length} confirmadas</div>
         </button>
 
         <div className="kpi-card">

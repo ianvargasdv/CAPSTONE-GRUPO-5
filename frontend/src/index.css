@@ -1495,6 +1495,177 @@ textarea {
   font-size: 0.6875rem;
 }
 
+/* ══════════════════════════════════════
+   AGENDA DE VISITAS
+══════════════════════════════════════ */
+
+.agenda-panel {
+  overflow: hidden;
+}
+
+.agenda-resumen {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-bottom: 1px solid var(--borde);
+}
+
+.agenda-resumen > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.75rem 1rem;
+  border-right: 1px solid var(--borde);
+}
+
+.agenda-resumen > div:last-child {
+  border-right: none;
+}
+
+.agenda-resumen span {
+  color: var(--texto-suave);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.agenda-resumen strong {
+  font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.agenda-herramientas {
+  justify-content: space-between;
+}
+
+.agenda-navegacion {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.agenda-navegacion .btn-secondary {
+  min-width: 32px;
+  justify-content: center;
+}
+
+.agenda-rango {
+  color: var(--texto-medio);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.agenda-semana {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(190px, 1fr));
+  gap: 0.5rem;
+  padding: 0.875rem;
+  overflow-x: auto;
+  align-items: start;
+  background: var(--superficie-alt);
+}
+
+.agenda-dia {
+  min-width: 190px;
+  overflow: hidden;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-lg);
+  background: var(--superficie);
+}
+
+.agenda-dia.hoy {
+  border-color: var(--info-borde);
+  box-shadow: 0 0 0 1px var(--info-borde);
+}
+
+.agenda-dia-titulo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.625rem;
+  border-bottom: 1px solid var(--borde);
+  color: var(--texto-medio);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.agenda-dia.hoy .agenda-dia-titulo {
+  background: var(--info-bg);
+  color: var(--info);
+}
+
+.agenda-dia-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4375rem;
+  min-height: 96px;
+  padding: 0.4375rem;
+}
+
+.visita-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1875rem;
+  padding: 0.5625rem;
+  border: 1px solid var(--borde);
+  border-left: 3px solid var(--borde-fuerte);
+  border-radius: var(--radio);
+  background: var(--superficie);
+}
+
+.visita-card.visita-confirmada { border-left-color: var(--info); }
+.visita-card.visita-realizada { border-left-color: var(--exito); }
+.visita-card.visita-cancelada,
+.visita-card.visita-no-asistio { border-left-color: var(--peligro); opacity: 0.78; }
+
+.visita-hora {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-variant-numeric: tabular-nums;
+}
+
+.visita-hora strong,
+.visita-lead {
+  color: var(--texto);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.visita-hora span,
+.visita-propiedad,
+.visita-estado {
+  color: var(--texto-suave);
+  font-size: 0.6875rem;
+}
+
+.visita-acciones {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  margin-top: 0.25rem;
+  padding-top: 0.375rem;
+  border-top: 1px solid var(--borde);
+}
+
+.visita-acciones select {
+  min-width: 0;
+  flex: 1;
+  height: 28px;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: 4px;
+  background: var(--superficie);
+  color: var(--texto-medio);
+  font-size: 0.6875rem;
+}
+
+.agenda-vacio {
+  padding: 1rem 0.25rem;
+  color: var(--texto-suave);
+  font-size: 0.6875rem;
+  text-align: center;
+}
+
 .ficha-perfil {
   padding: 0.875rem;
   border: 1px solid var(--borde) !important;
@@ -1674,6 +1845,9 @@ textarea {
 }
 
 @media (max-width: 860px) {
+  .agenda-resumen {
+    grid-template-columns: repeat(2, 1fr);
+  }
   .pipeline-resumen {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1712,6 +1886,9 @@ textarea {
 }
 
 @media (max-width: 560px) {
+  .agenda-resumen {
+    grid-template-columns: 1fr;
+  }
   .pipeline-resumen {
     grid-template-columns: 1fr;
   }

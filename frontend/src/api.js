@@ -45,6 +45,12 @@ const NOMBRES_CAMPOS = {
   probabilidad: 'Probabilidad',
   fecha_cierre_estimada: 'Fecha estimada de cierre',
   motivo_cierre: 'Motivo de cierre',
+  fecha_hora: 'Fecha y hora',
+  duracion_minutos: 'Duración',
+  modalidad: 'Modalidad',
+  punto_encuentro: 'Punto de encuentro',
+  resultado: 'Resultado',
+  motivo_cancelacion: 'Motivo de cancelación',
 };
 
 /** Convierte los errores estructurados de FastAPI/Pydantic a texto para personas. */
@@ -248,6 +254,30 @@ export function actualizarOportunidad(id, datos) {
 export function eliminarOportunidad(id) {
   return pedir(`/oportunidades/${id}`, {
     metodo: 'DELETE', mensajeError: 'No se pudo eliminar la oportunidad',
+  });
+}
+
+/* ══════════════════ Visitas ══════════════════ */
+
+export function obtenerVisitas() {
+  return pedir('/visitas', { mensajeError: 'No se pudo cargar la agenda de visitas' });
+}
+
+export function crearVisita(datos) {
+  return pedir('/visitas', {
+    metodo: 'POST', cuerpo: datos, mensajeError: 'No se pudo agendar la visita',
+  });
+}
+
+export function actualizarVisita(id, datos) {
+  return pedir(`/visitas/${id}`, {
+    metodo: 'PUT', cuerpo: datos, mensajeError: 'No se pudo actualizar la visita',
+  });
+}
+
+export function eliminarVisita(id) {
+  return pedir(`/visitas/${id}`, {
+    metodo: 'DELETE', mensajeError: 'No se pudo eliminar la visita',
   });
 }
 

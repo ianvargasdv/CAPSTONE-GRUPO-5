@@ -37,8 +37,9 @@ INTERACCION = "interaccion"
 INTERES = "interes"
 ANALISIS = "analisis"
 OPORTUNIDAD = "oportunidad"
+VISITA = "visita"
 
-ENTIDADES = (LEAD, PROPIEDAD, OPORTUNIDAD, TAREA, INTERACCION, INTERES, ANALISIS)
+ENTIDADES = (LEAD, PROPIEDAD, OPORTUNIDAD, VISITA, TAREA, INTERACCION, INTERES, ANALISIS)
 
 # Campos que se comparan al actualizar, por entidad. Se listan explícitamente para
 # no registrar columnas internas ni los campos calculados que se agregan al objeto.
@@ -54,6 +55,11 @@ CAMPOS_COMPARABLES = {
         "lead_id", "propiedad_id", "tipo_operacion", "etapa", "valor_estimado",
         "moneda", "probabilidad", "fecha_cierre_estimada", "fecha_cierre",
         "motivo_cierre", "notas", "ejecutivo_id",
+    ),
+    VISITA: (
+        "lead_id", "propiedad_id", "oportunidad_id", "ejecutivo_id", "fecha_hora",
+        "duracion_minutos", "estado", "modalidad", "punto_encuentro", "resultado",
+        "motivo_cancelacion", "proxima_accion",
     ),
     TAREA: ("titulo", "descripcion", "estado", "prioridad", "fecha_limite", "lead_id"),
 }

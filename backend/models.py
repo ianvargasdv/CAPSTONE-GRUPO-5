@@ -110,6 +110,29 @@ class Oportunidad(Base):
     )
 
 
+class Visita(Base):
+    """Cita de visita a una propiedad con seguimiento de asistencia y resultado."""
+    __tablename__ = "visitas"
+
+    id = Column(Integer, primary_key=True, index=True)
+    lead_id = Column(Integer, ForeignKey("leads.id", ondelete="SET NULL"), nullable=True, index=True)
+    propiedad_id = Column(Integer, ForeignKey("propiedades.id", ondelete="SET NULL"), nullable=True)
+    oportunidad_id = Column(Integer, ForeignKey("oportunidades.id", ondelete="SET NULL"), nullable=True)
+    ejecutivo_id = Column(Integer, ForeignKey("usuarios.id", ondelete="SET NULL"), nullable=True, index=True)
+    fecha_hora = Column(DateTime(timezone=True), nullable=False, index=True)
+    duracion_minutos = Column(Integer, nullable=False, default=60)
+    estado = Column(String(30), nullable=False, default="Programada")
+    modalidad = Column(String(20), nullable=False, default="Presencial")
+    punto_encuentro = Column(String(250), nullable=True)
+    resultado = Column(Text, nullable=True)
+    motivo_cancelacion = Column(String(250), nullable=True)
+    proxima_accion = Column(String(250), nullable=True)
+    fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())
+    fecha_actualizacion = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
 class Interaccion(Base):
     """
     Modelo ORM que representa una interacción registrada con un lead.

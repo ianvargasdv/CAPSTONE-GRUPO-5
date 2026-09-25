@@ -23,6 +23,8 @@ OrigenLead = Literal[
     "Referido", "Portal inmobiliario", "Redes sociales", "Sitio web", "Llamada", "Otro", "Demo capstone"
 ]
 EtapaOportunidad = Literal["Contacto", "Visita", "Oferta", "Negociación", "Ganada", "Perdida"]
+EstadoVisita = Literal["Programada", "Confirmada", "Realizada", "Cancelada", "No asistió"]
+ModalidadVisita = Literal["Presencial", "Virtual"]
 
 Nombre = Annotated[str, StringConstraints(strip_whitespace=True, min_length=2, max_length=100)]
 Correo = Annotated[str, StringConstraints(strip_whitespace=True, to_lower=True, min_length=5, max_length=150)]
@@ -237,6 +239,79 @@ class OportunidadRespuesta(BaseModel):
     fecha_cierre: Optional[date] = None
     motivo_cierre: Optional[str] = None
     notas: Optional[str] = None
+    fecha_creacion: Optional[datetime] = None
+    fecha_actualizacion: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+def _validar_visita(estado, resultado, motivo_cancelacion):
+    if estado == "Realizada" and not resultado:
+        raise ValueError("Debes registrar el resultado de una visita realizada")
+    if estado == "Cancelada" and not motivo_cancelacion:
+        raise ValueError("Debes indicar el motivo de cancelación")
+
+
+class VisitaCrear(BaseModel):
+    lead_id: int = Field(gt=0)
+    propiedad_id: int = Field(gt=0)
+    oportunidad_id: Optional[int] = Field(default=None, gt=0)
+    fecha_hora: datetime
+    duracion_minutos: int = Field(default=60, ge=15, le=480)
+    estado: EstadoVisita = "Programada"
+    modalidad: ModalidadVisita = "Presencial"
+    punto_encuentro: Optional[TextoCorto] = None
+    resultado: Optional[TextoLargo] = None
+    motivo_cancelacion: Optional[TextoCorto] = None
+    proxima_accion: Optional[TextoCorto] = None
+
+    @model_validator(mode="after")
+    def validar_visita(self):
+        if self.fecha_hora.utcoffset() is None:
+            raise ValueError("La fecha y hora deben incluir zona horaria")
+        _validar_visita(self.estado, self.resultado, self.motivo_cancelacion)
+        return self
+
+
+class VisitaActualizar(BaseModel):
+    propiedad_id: int = Field(default=None, gt=0)
+    oportunidad_id: Optional[int] = Field(default=None, gt=0)
+    fecha_hora: datetime = None
+    duracion_minutos: int = Field(default=None, ge=15, le=480)
+    estado: EstadoVisita = None
+    modalidad: ModalidadVisita = None
+    punto_encuentro: Optional[TextoCorto] = None
+    resultado: Optional[TextoLargo] = None
+    motivo_cancelacion: Optional[TextoCorto] = None
+    proxima_accion: Optional[TextoCorto] = None
+
+    @field_validator("fecha_hora")
+    @classmethod
+    def fecha_con_zona(cls, valor):
+        if valor is not None and valor.utcoffset() is None:
+            raise ValueError("La fecha y hora deben incluir zona horaria")
+        return valor
+
+
+class VisitaRespuesta(BaseModel):
+    id: int
+    lead_id: Optional[int] = None
+    lead_nombre: Optional[str] = None
+    propiedad_id: Optional[int] = None
+    propiedad_titulo: Optional[str] = None
+    propiedad_direccion: Optional[str] = None
+    oportunidad_id: Optional[int] = None
+    ejecutivo_id: Optional[int] = None
+    ejecutivo_nombre: Optional[str] = None
+    fecha_hora: datetime
+    duracion_minutos: int
+    estado: str
+    modalidad: str
+    punto_encuentro: Optional[str] = None
+    resultado: Optional[str] = None
+    motivo_cancelacion: Optional[str] = None
+    proxima_accion: Optional[str] = None
     fecha_creacion: Optional[datetime] = None
     fecha_actualizacion: Optional[datetime] = None
 

@@ -78,11 +78,12 @@ PROPIEDADES = [
 ]
 
 
-def cargar() -> tuple[int, int, int]:
+def cargar() -> tuple[int, int, int, int]:
     db = database.SessionLocal()
     nuevos_leads = 0
     nuevas_propiedades = 0
     nuevas_oportunidades = 0
+    nuevas_visitas = 0
     hoy = date.today()
     ahora = datetime.now(timezone.utc)
     try:
@@ -181,8 +182,63 @@ def cargar() -> tuple[int, int, int]:
                 ))
                 nuevas_oportunidades += 1
 
+        db.flush()
+        visitas = [
+            (
+                "camila.rojas@example.test", "[DEMO] Departamento Plaza Ñuñoa",
+                "Confirmada", 2, 60, "Presencial", None, None,
+                "Preparar comparativo de gastos comunes",
+            ),
+            (
+                "matias.fuentes@example.test", "[DEMO] Departamento Barrio Italia",
+                "Programada", 4, 45, "Presencial", None, None,
+                "Confirmar asistencia durante la mañana",
+            ),
+            (
+                "valentina.perez@example.test", "[DEMO] Casa Familiar La Reina",
+                "Programada", 7, 90, "Presencial", None, None,
+                "Enviar ubicación y condiciones de visita",
+            ),
+            (
+                "diego.morales@example.test", "[DEMO] Departamento Metro San Miguel",
+                "Realizada", -3, 60, "Presencial",
+                "Visitó la propiedad, valoró la cercanía al metro y solicitó antecedentes de la reserva.",
+                None, "Verificar estado de la reserva con el propietario",
+            ),
+            (
+                "fernanda.silva@example.test", "[DEMO] Casa Familiar La Reina",
+                "Cancelada", -6, 60, "Virtual", None,
+                "La clienta pausó la búsqueda mientras termina su evaluación bancaria.",
+                "Retomar contacto al finalizar la evaluación bancaria",
+            ),
+        ]
+        for indice, (correo, titulo, estado, dias, duracion, modalidad, resultado, motivo, proxima) in enumerate(visitas):
+            lead, propiedad = leads[correo], propiedades[titulo]
+            oportunidad = db.query(models.Oportunidad).filter_by(
+                lead_id=lead.id, propiedad_id=propiedad.id
+            ).first()
+            existe = db.query(models.Visita).filter_by(
+                lead_id=lead.id, proxima_accion=proxima
+            ).first()
+            if not existe:
+                db.add(models.Visita(
+                    lead_id=lead.id,
+                    propiedad_id=propiedad.id,
+                    oportunidad_id=oportunidad.id if oportunidad else None,
+                    ejecutivo_id=responsable.id if responsable else None,
+                    fecha_hora=ahora + timedelta(days=dias, hours=10 + indice),
+                    duracion_minutos=duracion,
+                    estado=estado,
+                    modalidad=modalidad,
+                    punto_encuentro=propiedad.direccion,
+                    resultado=resultado,
+                    motivo_cancelacion=motivo,
+                    proxima_accion=proxima,
+                ))
+                nuevas_visitas += 1
+
         db.commit()
-        return nuevos_leads, nuevas_propiedades, nuevas_oportunidades
+        return nuevos_leads, nuevas_propiedades, nuevas_oportunidades, nuevas_visitas
     except Exception:
         db.rollback()
         raise
@@ -191,9 +247,9 @@ def cargar() -> tuple[int, int, int]:
 
 
 if __name__ == "__main__":
-    cantidad_leads, cantidad_propiedades, cantidad_oportunidades = cargar()
+    cantidad_leads, cantidad_propiedades, cantidad_oportunidades, cantidad_visitas = cargar()
     print(
         f"Datos demo listos: {cantidad_leads} leads, {cantidad_propiedades} propiedades "
-        f"y {cantidad_oportunidades} oportunidades nuevas."
+        f"{cantidad_oportunidades} oportunidades y {cantidad_visitas} visitas nuevas."
     )
     print("Los registros se distinguen por '(Demo)', '[DEMO]' y es_demo=true.")

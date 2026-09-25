@@ -12,6 +12,10 @@ import {
   crearOportunidad,
   actualizarOportunidad,
   eliminarOportunidad,
+  obtenerVisitas,
+  crearVisita,
+  actualizarVisita,
+  eliminarVisita,
   obtenerInteracciones,
   crearInteraccion,
   obtenerTareas,
@@ -42,10 +46,12 @@ import TablaLeads from './components/TablaLeads';
 import TablaPropiedades from './components/TablaPropiedades';
 import TablaTareas from './components/TablaTareas';
 import PipelineOportunidades from './components/PipelineOportunidades';
+import AgendaVisitas from './components/AgendaVisitas';
 import FormularioLead from './components/FormularioLead';
 import FormularioPropiedad from './components/FormularioPropiedad';
 import FormularioTarea from './components/FormularioTarea';
 import FormularioOportunidad from './components/FormularioOportunidad';
+import FormularioVisita from './components/FormularioVisita';
 import FormularioInteraccion from './components/FormularioInteraccion';
 import PropiedadesInteres from './components/PropiedadesInteres';
 import HistorialInteracciones from './components/HistorialInteracciones';
@@ -59,6 +65,7 @@ const VISTAS = {
   leads: { titulo: 'Leads', accion: 'Nuevo lead', entidad: 'lead' },
   propiedades: { titulo: 'Propiedades', accion: 'Nueva propiedad', entidad: 'propiedad' },
   oportunidades: { titulo: 'Pipeline', accion: 'Nueva oportunidad', entidad: 'oportunidad' },
+  visitas: { titulo: 'Agenda', accion: 'Agendar visita', entidad: 'visita' },
   tareas: { titulo: 'Tareas', accion: 'Nueva tarea', entidad: 'tarea' },
   consumo: { titulo: 'Consumo de IA', subtitulo: 'Gasto del agente' },
   auditoria: { titulo: 'Actividad', subtitulo: 'Quién hizo qué y cuándo' },
@@ -70,6 +77,7 @@ const TITULOS_PANEL = {
   propiedad: { crear: 'Nueva propiedad', editar: 'Editar propiedad' },
   tarea: { crear: 'Nueva tarea', editar: 'Editar tarea' },
   oportunidad: { crear: 'Nueva oportunidad', editar: 'Editar oportunidad' },
+  visita: { crear: 'Agendar visita', editar: 'Editar visita' },
 };
 
 /** Tono de la etiqueta según el nivel de atención que requiere el lead. */
@@ -110,6 +118,10 @@ const TEXTOS_ELIMINAR = {
   oportunidad: (r) => ({
     titulo: 'Eliminar oportunidad',
     mensaje: `Se eliminará el negocio de ${r.lead_nombre || 'este lead'}. Esta acción no se puede deshacer.`,
+  }),
+  visita: (r) => ({
+    titulo: 'Eliminar visita',
+    mensaje: `Se eliminará la visita de ${r.lead_nombre || 'este lead'}. Esta acción no se puede deshacer.`,
   }),
 };
 
@@ -156,6 +168,10 @@ function App() {
   const [oportunidades, setOportunidades] = useState([]);
   const [cargandoOportunidades, setCargandoOportunidades] = useState(true);
   const [errorOportunidades, setErrorOportunidades] = useState(null);
+
+  const [visitas, setVisitas] = useState([]);
+  const [cargandoVisitas, setCargandoVisitas] = useState(true);
+  const [errorVisitas, setErrorVisitas] = useState(null);
 
   // ── Panel lateral de formularios: { entidad, registro } o null ──
   const [panelForm, setPanelForm] = useState(null);
@@ -234,6 +250,18 @@ function App() {
     }
   };
 
+  const cargarVisitas = async () => {
+    try {
+      setCargandoVisitas(true);
+      setErrorVisitas(null);
+      setVisitas(await obtenerVisitas());
+    } catch {
+      setErrorVisitas('No se pudo conectar con el backend para cargar la agenda.');
+    } finally {
+      setCargandoVisitas(false);
+    }
+  };
+
   // Los datos se piden solo cuando hay sesión: sin token la API responde 401
   useEffect(() => {
     if (!usuario) return;
@@ -241,6 +269,7 @@ function App() {
     cargarPropiedades();
     cargarTareas();
     cargarOportunidades();
+    cargarVisitas();
     // El estado de la IA no cambia por lead, así que se consulta una sola vez
     obtenerEstadoIA()
       .then((estado) => setIaConfigurada(estado.configurada))
@@ -255,12 +284,14 @@ function App() {
     setPropiedades([]);
     setTareas([]);
     setOportunidades([]);
+    setVisitas([]);
     setConsumo(null);
     setErrorConsumo(null);
     setCargandoLeads(true);
     setCargandoPropiedades(true);
     setCargandoTareas(true);
     setCargandoOportunidades(true);
+    setCargandoVisitas(true);
     setPanelForm(null);
     setConfirmacion(null);
     setFichaLead(null);
@@ -514,6 +545,37 @@ function App() {
     }
   };
 
+  // ══════════ Agenda de visitas ══════════
+
+  const guardarVisita = async (datos) => {
+    const editando = panelForm?.registro;
+    if (editando) {
+      const actualizada = await actualizarVisita(editando.id, datos);
+      setVisitas((prev) => prev.map((v) => (v.id === actualizada.id ? actualizada : v)));
+      mostrarToast('Visita actualizada');
+    } else {
+      const creada = await crearVisita(datos);
+      setVisitas((prev) => [...prev, creada].sort((a, b) => new Date(a.fecha_hora) - new Date(b.fecha_hora)));
+      mostrarToast('Visita agendada');
+    }
+    cerrarPanelForm();
+  };
+
+  const cambiarEstadoVisita = async (visita, estado) => {
+    if (estado === visita.estado) return;
+    if (['Realizada', 'Cancelada'].includes(estado)) {
+      abrirEditar('visita', { ...visita, estado });
+      return;
+    }
+    try {
+      const actualizada = await actualizarVisita(visita.id, { estado });
+      setVisitas((prev) => prev.map((v) => (v.id === actualizada.id ? actualizada : v)));
+      mostrarToast(`Visita marcada como "${estado}"`);
+    } catch (err) {
+      mostrarToast(err.message || 'No se pudo cambiar el estado');
+    }
+  };
+
   // ══════════ Tareas ══════════
 
   const guardarTarea = async (datos) => {
@@ -593,6 +655,9 @@ function App() {
         setOportunidades((prev) => prev.map((o) => o.lead_id === registro.id
           ? { ...o, lead_id: null, lead_nombre: null }
           : o));
+        setVisitas((prev) => prev.map((v) => v.lead_id === registro.id
+          ? { ...v, lead_id: null, lead_nombre: null }
+          : v));
         mostrarToast('Lead eliminado');
       } else if (entidad === 'propiedad') {
         await eliminarPropiedad(registro.id);
@@ -601,6 +666,9 @@ function App() {
         setOportunidades((prev) => prev.map((o) => o.propiedad_id === registro.id
           ? { ...o, propiedad_id: null, propiedad_titulo: null }
           : o));
+        setVisitas((prev) => prev.map((v) => v.propiedad_id === registro.id
+          ? { ...v, propiedad_id: null, propiedad_titulo: null, propiedad_direccion: null }
+          : v));
         mostrarToast('Propiedad eliminada');
       } else if (entidad === 'tarea') {
         await eliminarTarea(registro.id);
@@ -610,6 +678,13 @@ function App() {
         await eliminarOportunidad(registro.id);
         setOportunidades((prev) => prev.filter((o) => o.id !== registro.id));
         mostrarToast('Oportunidad eliminada');
+        setVisitas((prev) => prev.map((v) => v.oportunidad_id === registro.id
+          ? { ...v, oportunidad_id: null }
+          : v));
+      } else if (entidad === 'visita') {
+        await eliminarVisita(registro.id);
+        setVisitas((prev) => prev.filter((v) => v.id !== registro.id));
+        mostrarToast('Visita eliminada');
       }
 
       setConfirmacion(null);
@@ -624,7 +699,9 @@ function App() {
 
   const tareasAbiertas = tareas.filter((t) => t.estado !== 'Completada').length;
   const oportunidadesAbiertas = oportunidades.filter((o) => !['Ganada', 'Perdida'].includes(o.etapa)).length;
-  const cargandoTodo = cargandoLeads || cargandoPropiedades || cargandoTareas || cargandoOportunidades;
+  const ahora = new Date();
+  const visitasProximas = visitas.filter((v) => new Date(v.fecha_hora) >= ahora && !['Cancelada', 'No asistió'].includes(v.estado)).length;
+  const cargandoTodo = cargandoLeads || cargandoPropiedades || cargandoTareas || cargandoOportunidades || cargandoVisitas;
   const configVista = VISTAS[vista];
   const textoConfirmacion = confirmacion
     ? TEXTOS_ELIMINAR[confirmacion.entidad](confirmacion.registro)
@@ -649,6 +726,7 @@ function App() {
           leads: leads.length,
           propiedades: propiedades.length,
           oportunidades: oportunidadesAbiertas,
+          visitas: visitasProximas,
           tareasPendientes: tareasAbiertas,
         }}
         usuario={usuario}
@@ -681,6 +759,7 @@ function App() {
               propiedades={propiedades}
               tareas={tareas}
               oportunidades={oportunidades}
+              visitas={visitas}
               cargando={cargandoTodo}
               alVerFicha={abrirFicha}
               alEditarTarea={(tarea) => abrirEditar('tarea', tarea)}
@@ -724,6 +803,19 @@ function App() {
                 alEditar={(oportunidad) => abrirEditar('oportunidad', oportunidad)}
                 alEliminar={(oportunidad) => pedirEliminar('oportunidad', oportunidad)}
                 alCambiarEtapa={cambiarEtapaOportunidad}
+              />
+            </div>
+          )}
+
+          {vista === 'visitas' && (
+            <div className="panel agenda-panel">
+              <AgendaVisitas
+                visitas={visitas}
+                cargando={cargandoVisitas}
+                error={errorVisitas}
+                alEditar={(visita) => abrirEditar('visita', visita)}
+                alEliminar={(visita) => pedirEliminar('visita', visita)}
+                alCambiarEstado={cambiarEstadoVisita}
               />
             </div>
           )}
@@ -801,6 +893,17 @@ function App() {
             oportunidadEditar={panelForm.registro}
             leads={leads}
             propiedades={propiedades}
+            alCancelar={cerrarPanelForm}
+          />
+        )}
+
+        {panelForm?.entidad === 'visita' && (
+          <FormularioVisita
+            alGuardar={guardarVisita}
+            visitaEditar={panelForm.registro}
+            leads={leads}
+            propiedades={propiedades}
+            oportunidades={oportunidades}
             alCancelar={cerrarPanelForm}
           />
         )}
@@ -911,6 +1014,29 @@ function App() {
                     <button key={o.id} onClick={() => { cerrarFicha(); abrirEditar('oportunidad', o); }}>
                       <span><strong>{o.etapa}</strong><small>{o.propiedad_titulo || 'Sin propiedad asociada'}</small></span>
                       <span><strong>{formatearValor(o.valor_estimado, o.moneda)}</strong><small>{o.probabilidad}% prob.</small></span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="ficha-seccion">
+              <div className="ficha-seccion-encabezado">
+                <span className="ficha-seccion-titulo">
+                  Visitas ({visitas.filter((v) => v.lead_id === fichaLead.id).length})
+                </span>
+                <button className="btn-secondary" onClick={() => { cerrarFicha(); setVista('visitas'); }}>
+                  Ver agenda
+                </button>
+              </div>
+              {visitas.filter((v) => v.lead_id === fichaLead.id).length === 0 ? (
+                <p className="nota-prioridad">Este lead todavía no tiene visitas registradas.</p>
+              ) : (
+                <div className="oportunidades-lead">
+                  {visitas.filter((v) => v.lead_id === fichaLead.id).map((v) => (
+                    <button key={v.id} onClick={() => { cerrarFicha(); abrirEditar('visita', v); }}>
+                      <span><strong>{v.estado}</strong><small>{v.propiedad_titulo || 'Propiedad eliminada'}</small></span>
+                      <span><strong>{new Date(v.fecha_hora).toLocaleDateString('es-CL')}</strong><small>{new Date(v.fecha_hora).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</small></span>
                     </button>
                   ))}
                 </div>

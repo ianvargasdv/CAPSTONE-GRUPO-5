@@ -37,6 +37,7 @@ backend/
   prueba_auditoria.py  Verifica que ningún endpoint de escritura quede sin auditar
   prueba_validaciones.py  Verifica reglas de entrada y casos límite
   prueba_oportunidades.py  Verifica el avance, cierre y reapertura del pipeline
+  prueba_visitas.py  Verifica agenda, cruces de horario, estados y auditoría
 
 frontend/src/
   App.jsx            Estado general y navegación
@@ -127,8 +128,8 @@ python cambiar_rol.py
 ### Datos para una demostración
 
 Después de crear al menos un usuario y ejecutar la migración se puede cargar un
-escenario coherente con cinco leads, cinco propiedades, cinco oportunidades,
-intereses, contactos y tareas:
+escenario coherente con cinco leads, cinco propiedades, cinco oportunidades, cinco
+visitas, intereses, contactos y tareas:
 
 ```powershell
 python cargar_datos_demo.py
@@ -166,6 +167,9 @@ propiedades    id, titulo, tipo, precio, direccion, estado, fecha_creacion
 oportunidades  id, lead_id, propiedad_id, ejecutivo_id, tipo_operacion, etapa,
                valor_estimado, moneda, probabilidad, fecha_cierre_estimada,
                fecha_cierre, motivo_cierre, notas, fechas de creación/actualización
+visitas        id, lead_id, propiedad_id, oportunidad_id, ejecutivo_id, fecha_hora,
+               duracion_minutos, estado, modalidad, punto_encuentro, resultado,
+               motivo_cancelacion, proxima_accion, fechas de creación/actualización
 interacciones  id, lead_id, tipo, notas, fecha_creacion
 tareas         id, titulo, descripcion, estado, prioridad, fecha_limite, lead_id
 intereses      id, lead_id, propiedad_id, nivel_interes, notas, fecha_creacion
@@ -183,6 +187,8 @@ Sobre las relaciones:
   pendiente puede seguir siendo válido.
 - Al borrar un lead o una propiedad, las oportunidades se conservan con el vínculo
   correspondiente en nulo para no perder el historial de ventas y cierres.
+- Al borrar un lead, una propiedad, una oportunidad o un ejecutivo, las visitas se
+  conservan y el vínculo eliminado queda en nulo para mantener el historial.
 - Al borrar un usuario, sus análisis y sus registros de auditoría se conservan con la
   clave foránea en nulo. En auditoría el correo está además guardado como texto, para
   que el registro siga diciendo quién actuó aunque la cuenta ya no exista.
@@ -223,6 +229,19 @@ fecha real. Si el negocio se reabre, se limpian la fecha y el motivo anterior. L
 oportunidades conservan su historial aunque el lead o la propiedad se eliminen, y
 todas sus escrituras quedan en auditoría.
 
+## Agenda de visitas
+
+Cada visita relaciona lead, propiedad, oportunidad opcional y ejecutivo. La vista
+semanal permite avanzar o retroceder por semanas, filtrar por estado y alternar con
+una lista. También muestra cuántas visitas hay hoy, próximas, confirmadas y
+realizadas.
+
+El sistema impide que un ejecutivo tenga dos visitas superpuestas; sí permite que
+una comience exactamente cuando termina la anterior. Una visita realizada exige
+registrar su resultado y una cancelada exige el motivo. Las canceladas y las
+inasistencias dejan libre el horario. Todas las creaciones, cambios y eliminaciones
+quedan registradas en auditoría.
+
 ## Priorización de leads
 
 `GET /api/leads` devuelve cada lead con un puntaje calculado y los motivos que lo
@@ -243,7 +262,8 @@ Desde la ficha de un lead se pueden pedir dos análisis:
   pendientes para no proponer algo que ya está agendado.
 
 El backend arma un texto con los datos registrados (perfil de búsqueda, oportunidades,
-historial de contacto, propiedades de interés, prioridad calculada y tareas pendientes), lo envía al modelo
+agenda y resultados de visitas, historial de contacto, propiedades de interés,
+prioridad calculada y tareas pendientes), lo envía al modelo
 y guarda en `analisis_ia` tanto lo que se envió como lo que respondió. Los dos tipos
 parten de la misma ficha y se diferencian solo en las instrucciones.
 
@@ -337,6 +357,7 @@ cd backend
 python prueba_validaciones.py
 python prueba_datos_demo.py
 python prueba_oportunidades.py
+python prueba_visitas.py
 ```
 
 El orden de los próximos módulos y su criterio de terminado están en
@@ -388,11 +409,11 @@ y en Windows `localhost` se resuelve primero a IPv6. Se corrige creando
 
 ## Alcance del proyecto actual (MVP) 
 
-Implementado: leads con perfil comercial 360, oportunidades y pipeline, propiedades,
-interacciones, tareas, propiedades de interés,
+Implementado: leads con perfil comercial 360, oportunidades y pipeline, agenda de
+visitas, propiedades, interacciones, tareas, propiedades de interés,
 autenticación con roles, priorización de leads, asistente con IA (resumen y
 recomendación), seguimiento del consumo del agente, registro de actividad y vista de
 inicio.
 
-Pendiente: agenda de visitas, matching, comunicaciones, documentos y las mejoras
-de producción detalladas en el roadmap.
+Pendiente: matching, comunicaciones, documentos y las mejoras de producción
+detalladas en el roadmap.

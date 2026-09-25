@@ -632,6 +632,195 @@ def eliminar_oportunidad(
 
 
 # ══════════════════════════════════════════════════════════════
+# Agenda de visitas
+# ══════════════════════════════════════════════════════════════
+
+ESTADOS_VISITA_SIN_BLOQUEO = {"Cancelada", "No asistió"}
+
+
+def _agregar_detalle_visitas(db: Session, visitas):
+    lead_ids = {v.lead_id for v in visitas if v.lead_id is not None}
+    propiedad_ids = {v.propiedad_id for v in visitas if v.propiedad_id is not None}
+    usuario_ids = {v.ejecutivo_id for v in visitas if v.ejecutivo_id is not None}
+    leads = {
+        lead.id: lead.nombre
+        for lead in db.query(models.Lead).filter(models.Lead.id.in_(lead_ids)).all()
+    } if lead_ids else {}
+    propiedades = {
+        propiedad.id: (propiedad.titulo, propiedad.direccion)
+        for propiedad in db.query(models.Propiedad).filter(models.Propiedad.id.in_(propiedad_ids)).all()
+    } if propiedad_ids else {}
+    usuarios = {
+        usuario.id: usuario.nombre
+        for usuario in db.query(models.Usuario).filter(models.Usuario.id.in_(usuario_ids)).all()
+    } if usuario_ids else {}
+    for visita in visitas:
+        visita.lead_nombre = leads.get(visita.lead_id)
+        propiedad = propiedades.get(visita.propiedad_id)
+        visita.propiedad_titulo = propiedad[0] if propiedad else None
+        visita.propiedad_direccion = propiedad[1] if propiedad else None
+        visita.ejecutivo_nombre = usuarios.get(visita.ejecutivo_id)
+
+
+def _validar_relaciones_visita(db: Session, lead_id, propiedad_id, oportunidad_id=None):
+    if not db.query(models.Lead).filter(models.Lead.id == lead_id).first():
+        raise HTTPException(status_code=404, detail="Lead no encontrado")
+    if not db.query(models.Propiedad).filter(models.Propiedad.id == propiedad_id).first():
+        raise HTTPException(status_code=404, detail="Propiedad no encontrada")
+    if oportunidad_id is not None:
+        oportunidad = (
+            db.query(models.Oportunidad)
+            .filter(models.Oportunidad.id == oportunidad_id)
+            .first()
+        )
+        if not oportunidad:
+            raise HTTPException(status_code=404, detail="Oportunidad no encontrada")
+        if oportunidad.lead_id != lead_id:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="La oportunidad no pertenece al lead seleccionado",
+            )
+        if oportunidad.propiedad_id is not None and oportunidad.propiedad_id != propiedad_id:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="La oportunidad corresponde a otra propiedad",
+            )
+
+
+def _como_utc(valor: datetime) -> datetime:
+    """Normaliza fechas; SQLite pierde la zona en pruebas aunque PostgreSQL no."""
+    if valor.tzinfo is None:
+        return valor.replace(tzinfo=timezone.utc)
+    return valor.astimezone(timezone.utc)
+
+
+def _validar_disponibilidad_visita(
+    db: Session,
+    ejecutivo_id: int,
+    fecha_hora: datetime,
+    duracion_minutos: int,
+    estado: str,
+    excluir_id: Optional[int] = None,
+):
+    if estado in ESTADOS_VISITA_SIN_BLOQUEO:
+        return
+    inicio = _como_utc(fecha_hora)
+    fin = inicio + timedelta(minutes=duracion_minutos)
+    consulta = db.query(models.Visita).filter(
+        models.Visita.ejecutivo_id == ejecutivo_id,
+        models.Visita.estado.notin_(ESTADOS_VISITA_SIN_BLOQUEO),
+    )
+    if excluir_id is not None:
+        consulta = consulta.filter(models.Visita.id != excluir_id)
+    for existente in consulta.all():
+        inicio_existente = _como_utc(existente.fecha_hora)
+        fin_existente = inicio_existente + timedelta(minutes=existente.duracion_minutos)
+        if inicio < fin_existente and fin > inicio_existente:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="El ejecutivo ya tiene una visita que se cruza con ese horario",
+            )
+
+
+@router_privado.get("/visitas", response_model=List[schemas.VisitaRespuesta])
+def listar_visitas(db: Session = Depends(database.obtener_db)):
+    visitas = db.query(models.Visita).order_by(models.Visita.fecha_hora.asc()).all()
+    _agregar_detalle_visitas(db, visitas)
+    return visitas
+
+
+@router_privado.post("/visitas", response_model=schemas.VisitaRespuesta, status_code=status.HTTP_201_CREATED)
+def crear_visita(
+    datos: schemas.VisitaCrear,
+    db: Session = Depends(database.obtener_db),
+    usuario: models.Usuario = Depends(seguridad.usuario_actual),
+):
+    _validar_relaciones_visita(db, datos.lead_id, datos.propiedad_id, datos.oportunidad_id)
+    _validar_disponibilidad_visita(
+        db, usuario.id, datos.fecha_hora, datos.duracion_minutos, datos.estado
+    )
+    visita = models.Visita(**datos.model_dump(), ejecutivo_id=usuario.id)
+    db.add(visita)
+    db.flush()
+    auditoria.registrar(
+        db, usuario, auditoria.CREAR, auditoria.VISITA, visita.id,
+        f"Agendó una visita para el lead #{visita.lead_id}",
+    )
+    db.commit()
+    db.refresh(visita)
+    _agregar_detalle_visitas(db, [visita])
+    return visita
+
+
+@router_privado.put("/visitas/{visita_id}", response_model=schemas.VisitaRespuesta)
+def actualizar_visita(
+    visita_id: int,
+    datos: schemas.VisitaActualizar,
+    db: Session = Depends(database.obtener_db),
+    usuario: models.Usuario = Depends(seguridad.usuario_actual),
+):
+    visita = db.query(models.Visita).filter(models.Visita.id == visita_id).first()
+    if not visita:
+        raise HTTPException(status_code=404, detail="Visita no encontrada")
+    campos = datos.model_dump(exclude_unset=True)
+    propiedad_id = campos.get("propiedad_id", visita.propiedad_id)
+    oportunidad_id = campos.get("oportunidad_id", visita.oportunidad_id)
+    _validar_relaciones_visita(db, visita.lead_id, propiedad_id, oportunidad_id)
+
+    estado = campos.get("estado", visita.estado)
+    resultado = campos.get("resultado", visita.resultado)
+    motivo = campos.get("motivo_cancelacion", visita.motivo_cancelacion)
+    try:
+        schemas._validar_visita(estado, resultado, motivo)
+    except ValueError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(error)
+        ) from error
+
+    fecha_hora = campos.get("fecha_hora", visita.fecha_hora)
+    duracion = campos.get("duracion_minutos", visita.duracion_minutos)
+    _validar_disponibilidad_visita(
+        db, visita.ejecutivo_id, fecha_hora, duracion, estado, excluir_id=visita.id
+    )
+
+    antes = auditoria.instantanea(visita, auditoria.VISITA)
+    if "estado" in campos:
+        if estado != "Cancelada" and visita.estado == "Cancelada" and "motivo_cancelacion" not in campos:
+            campos["motivo_cancelacion"] = None
+        if estado != "Realizada" and visita.estado == "Realizada" and "resultado" not in campos:
+            campos["resultado"] = None
+    for campo, valor in campos.items():
+        setattr(visita, campo, valor)
+
+    auditoria.registrar(
+        db, usuario, auditoria.ACTUALIZAR, auditoria.VISITA, visita.id,
+        f"Actualizó la visita #{visita.id}",
+        auditoria.resumir_cambios(antes, auditoria.instantanea(visita, auditoria.VISITA)),
+    )
+    db.commit()
+    db.refresh(visita)
+    _agregar_detalle_visitas(db, [visita])
+    return visita
+
+
+@router_privado.delete("/visitas/{visita_id}", status_code=status.HTTP_204_NO_CONTENT)
+def eliminar_visita(
+    visita_id: int,
+    db: Session = Depends(database.obtener_db),
+    usuario: models.Usuario = Depends(seguridad.usuario_actual),
+):
+    visita = db.query(models.Visita).filter(models.Visita.id == visita_id).first()
+    if not visita:
+        raise HTTPException(status_code=404, detail="Visita no encontrada")
+    db.delete(visita)
+    auditoria.registrar(
+        db, usuario, auditoria.ELIMINAR, auditoria.VISITA, visita_id,
+        f"Eliminó la visita #{visita_id}",
+    )
+    db.commit()
+
+
+# ══════════════════════════════════════════════════════════════
 # Interacciones
 # ══════════════════════════════════════════════════════════════
 
@@ -1154,10 +1343,18 @@ def crear_analisis(
     )
     _agregar_detalle_oportunidades(db, oportunidades)
 
+    visitas = (
+        db.query(models.Visita)
+        .filter(models.Visita.lead_id == lead_id)
+        .order_by(models.Visita.fecha_hora.desc())
+        .all()
+    )
+    _agregar_detalle_visitas(db, visitas)
+
     # La ficha interpola la fecha en un texto, así que el objeto date se escribe
     # igual que antes ("vence el 2026-09-20") sin tener que convertirlo a mano
     ficha = ia.construir_ficha(
-        lead, interacciones, intereses, propiedades_por_id, tareas, oportunidades
+        lead, interacciones, intereses, propiedades_por_id, tareas, oportunidades, visitas
     )
 
     try:
