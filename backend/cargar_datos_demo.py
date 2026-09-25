@@ -78,10 +78,11 @@ PROPIEDADES = [
 ]
 
 
-def cargar() -> tuple[int, int]:
+def cargar() -> tuple[int, int, int]:
     db = database.SessionLocal()
     nuevos_leads = 0
     nuevas_propiedades = 0
+    nuevas_oportunidades = 0
     hoy = date.today()
     ahora = datetime.now(timezone.utc)
     try:
@@ -148,8 +149,40 @@ def cargar() -> tuple[int, int]:
             if not existe:
                 db.add(models.Tarea(titulo=titulo, estado="Pendiente", prioridad=prioridad, fecha_limite=hoy + timedelta(days=dias), lead_id=lead.id))
 
+        oportunidades = [
+            ("camila.rojas@example.test", "[DEMO] Departamento Plaza Ñuñoa", "Compra", "Negociación", 169_000_000, 80, 14, None),
+            ("matias.fuentes@example.test", "[DEMO] Departamento Barrio Italia", "Arriendo", "Visita", 790_000, 30, 5, None),
+            ("valentina.perez@example.test", "[DEMO] Casa Familiar La Reina", "Compra", "Contacto", 259_000_000, 10, 45, None),
+            ("diego.morales@example.test", "[DEMO] Departamento Metro San Miguel", "Compra", "Ganada", 112_000_000, 100, -2, "Oferta aceptada"),
+            ("fernanda.silva@example.test", None, "Compra", "Perdida", 180_000_000, 0, -5, "Financiamiento no aprobado"),
+        ]
+        for correo, titulo, tipo, etapa, valor, probabilidad, dias, motivo in oportunidades:
+            lead = leads[correo]
+            propiedad = propiedades.get(titulo) if titulo else None
+            consulta = db.query(models.Oportunidad).filter(models.Oportunidad.lead_id == lead.id)
+            consulta = consulta.filter(
+                models.Oportunidad.propiedad_id == propiedad.id
+                if propiedad else models.Oportunidad.propiedad_id.is_(None)
+            )
+            if not consulta.first():
+                db.add(models.Oportunidad(
+                    lead_id=lead.id,
+                    propiedad_id=propiedad.id if propiedad else None,
+                    ejecutivo_id=responsable.id if responsable else None,
+                    tipo_operacion=tipo,
+                    etapa=etapa,
+                    valor_estimado=valor,
+                    moneda="CLP",
+                    probabilidad=probabilidad,
+                    fecha_cierre_estimada=hoy + timedelta(days=dias),
+                    fecha_cierre=hoy + timedelta(days=dias) if etapa in {"Ganada", "Perdida"} else None,
+                    motivo_cierre=motivo,
+                    notas="Escenario ficticio para demostrar el pipeline del capstone.",
+                ))
+                nuevas_oportunidades += 1
+
         db.commit()
-        return nuevos_leads, nuevas_propiedades
+        return nuevos_leads, nuevas_propiedades, nuevas_oportunidades
     except Exception:
         db.rollback()
         raise
@@ -158,6 +191,9 @@ def cargar() -> tuple[int, int]:
 
 
 if __name__ == "__main__":
-    cantidad_leads, cantidad_propiedades = cargar()
-    print(f"Datos demo listos: {cantidad_leads} leads y {cantidad_propiedades} propiedades nuevas.")
+    cantidad_leads, cantidad_propiedades, cantidad_oportunidades = cargar()
+    print(
+        f"Datos demo listos: {cantidad_leads} leads, {cantidad_propiedades} propiedades "
+        f"y {cantidad_oportunidades} oportunidades nuevas."
+    )
     print("Los registros se distinguen por '(Demo)', '[DEMO]' y es_demo=true.")

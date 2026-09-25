@@ -200,7 +200,7 @@ def _fecha(valor) -> str:
     return valor.astimezone(timezone.utc).strftime("%d-%m-%Y")
 
 
-def construir_ficha(lead, interacciones, intereses, propiedades_por_id, tareas=()) -> str:
+def construir_ficha(lead, interacciones, intereses, propiedades_por_id, tareas=(), oportunidades=()) -> str:
     """
     Arma el texto que se le envía al modelo a partir de los registros del lead.
 
@@ -216,6 +216,7 @@ def construir_ficha(lead, interacciones, intereses, propiedades_por_id, tareas=(
         intereses             sus propiedades de interés
         propiedades_por_id    diccionario id -> propiedad, para describir cada interés
         tareas                sus tareas sin completar
+        oportunidades         sus negocios abiertos o cerrados en el pipeline
     """
     lineas = [
         "FICHA DEL PROSPECTO",
@@ -268,6 +269,27 @@ def construir_ficha(lead, interacciones, intereses, propiedades_por_id, tareas=(
             texto = f"- {detalle}. Nivel de interés: {interes.nivel_interes}"
             if interes.notas:
                 texto += f". Nota: {interes.notas}"
+            lineas.append(texto)
+    else:
+        lineas.append("- Ninguna registrada")
+
+    lineas.append("")
+    lineas.append("OPORTUNIDADES COMERCIALES")
+    if oportunidades:
+        for oportunidad in oportunidades:
+            texto = (
+                f"- {oportunidad.tipo_operacion}, etapa {oportunidad.etapa}, "
+                f"probabilidad {oportunidad.probabilidad}%"
+            )
+            if oportunidad.valor_estimado is not None:
+                texto += f", valor {oportunidad.valor_estimado} {oportunidad.moneda or ''}".rstrip()
+            propiedad = getattr(oportunidad, "propiedad_titulo", None)
+            if propiedad:
+                texto += f", propiedad: {propiedad}"
+            if oportunidad.fecha_cierre_estimada:
+                texto += f", cierre estimado: {oportunidad.fecha_cierre_estimada}"
+            if oportunidad.motivo_cierre:
+                texto += f". Motivo de cierre: {oportunidad.motivo_cierre}"
             lineas.append(texto)
     else:
         lineas.append("- Ninguna registrada")

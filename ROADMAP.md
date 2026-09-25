@@ -32,7 +32,7 @@ probarse y demostrarse por separado antes de pasar al siguiente.
 
 ### M2. Perfil 360 del lead
 
-**Estado: implementado y migrado; pendiente de prueba visual del usuario y commit.**
+**Estado: completado y publicado.**
 
 - Origen comercial y ejecutivo responsable.
 - Compra o arriendo, presupuesto y moneda.
@@ -41,6 +41,8 @@ probarse y demostrarse por separado antes de pasar al siguiente.
 - Próxima acción visible junto al historial.
 
 ### M3. Oportunidades y pipeline
+
+**Estado: implementado y migrado; pendiente de prueba visual del usuario y commit.**
 
 - Separar la persona del negocio comercial.
 - Relacionar lead, propiedad, ejecutivo y operación.

@@ -138,6 +138,24 @@ main.actualizar_propiedad(
 )
 revisar(hay(auditoria.ACTUALIZAR, auditoria.PROPIEDAD), "actualizar_propiedad registra")
 
+oportunidad = main.crear_oportunidad(
+    datos=schemas.OportunidadCrear(
+        lead_id=lead.id, propiedad_id=propiedad.id, tipo_operacion="Compra",
+        valor_estimado=120000000, moneda="CLP",
+    ),
+    db=db,
+    usuario=ejecutivo,
+)
+revisar(hay(auditoria.CREAR, auditoria.OPORTUNIDAD), "crear_oportunidad registra")
+
+main.actualizar_oportunidad(
+    oportunidad_id=oportunidad.id,
+    datos=schemas.OportunidadActualizar(etapa="Visita"),
+    db=db,
+    usuario=ejecutivo,
+)
+revisar(hay(auditoria.ACTUALIZAR, auditoria.OPORTUNIDAD), "actualizar_oportunidad registra")
+
 main.crear_interaccion(
     lead_id=lead.id,
     datos=schemas.InteraccionCrear(tipo="Llamada", notas="Pidió ver el departamento"),
@@ -174,6 +192,9 @@ revisar(hay(auditoria.ELIMINAR, auditoria.TAREA), "eliminar_tarea registra")
 
 main.eliminar_interes(interes_id=interes.id, db=db, usuario=ejecutivo)
 revisar(hay(auditoria.ELIMINAR, auditoria.INTERES), "eliminar_interes registra")
+
+main.eliminar_oportunidad(oportunidad_id=oportunidad.id, db=db, usuario=ejecutivo)
+revisar(hay(auditoria.ELIMINAR, auditoria.OPORTUNIDAD), "eliminar_oportunidad registra")
 
 
 # El proveedor de IA se reemplaza por uno falso: interesa comprobar que la
@@ -214,6 +235,9 @@ esperados = {
     (auditoria.CREAR, auditoria.PROPIEDAD),
     (auditoria.ACTUALIZAR, auditoria.PROPIEDAD),
     (auditoria.ELIMINAR, auditoria.PROPIEDAD),
+    (auditoria.CREAR, auditoria.OPORTUNIDAD),
+    (auditoria.ACTUALIZAR, auditoria.OPORTUNIDAD),
+    (auditoria.ELIMINAR, auditoria.OPORTUNIDAD),
     (auditoria.CREAR, auditoria.INTERACCION),
     (auditoria.CREAR, auditoria.TAREA),
     (auditoria.ACTUALIZAR, auditoria.TAREA),
@@ -225,7 +249,7 @@ esperados = {
 obtenidos = {(r.accion, r.entidad) for r in registros()}
 revisar(
     esperados.issubset(obtenidos),
-    f"los 13 endpoints de escritura están cubiertos (faltan: {esperados - obtenidos})",
+    f"los 16 endpoints de escritura están cubiertos (faltan: {esperados - obtenidos})",
 )
 
 # Todo registro debe decir quién actuó, aunque el usuario se borre después

@@ -39,6 +39,12 @@ const NOMBRES_CAMPOS = {
   origen: 'Origen',
   proxima_accion: 'Próxima acción',
   fecha_proxima_accion: 'Fecha de próxima acción',
+  lead_id: 'Lead',
+  etapa: 'Etapa',
+  valor_estimado: 'Valor estimado',
+  probabilidad: 'Probabilidad',
+  fecha_cierre_estimada: 'Fecha estimada de cierre',
+  motivo_cierre: 'Motivo de cierre',
 };
 
 /** Convierte los errores estructurados de FastAPI/Pydantic a texto para personas. */
@@ -218,6 +224,30 @@ export function eliminarPropiedad(id) {
   return pedir(`/propiedades/${id}`, {
     metodo: 'DELETE',
     mensajeError: 'No se pudo eliminar la propiedad',
+  });
+}
+
+/* ══════════════════ Oportunidades ══════════════════ */
+
+export function obtenerOportunidades() {
+  return pedir('/oportunidades', { mensajeError: 'No se pudo cargar el pipeline' });
+}
+
+export function crearOportunidad(datos) {
+  return pedir('/oportunidades', {
+    metodo: 'POST', cuerpo: datos, mensajeError: 'No se pudo crear la oportunidad',
+  });
+}
+
+export function actualizarOportunidad(id, datos) {
+  return pedir(`/oportunidades/${id}`, {
+    metodo: 'PUT', cuerpo: datos, mensajeError: 'No se pudo actualizar la oportunidad',
+  });
+}
+
+export function eliminarOportunidad(id) {
+  return pedir(`/oportunidades/${id}`, {
+    metodo: 'DELETE', mensajeError: 'No se pudo eliminar la oportunidad',
   });
 }
 

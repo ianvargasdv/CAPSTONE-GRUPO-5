@@ -467,6 +467,171 @@ def eliminar_propiedad(
 
 
 # ══════════════════════════════════════════════════════════════
+# Oportunidades y pipeline
+# ══════════════════════════════════════════════════════════════
+
+PROBABILIDAD_POR_ETAPA = {
+    "Contacto": 10,
+    "Visita": 30,
+    "Oferta": 60,
+    "Negociación": 80,
+    "Ganada": 100,
+    "Perdida": 0,
+}
+ETAPAS_CERRADAS = {"Ganada", "Perdida"}
+
+
+def _agregar_detalle_oportunidades(db: Session, oportunidades):
+    """Adjunta nombres relacionados usando tres consultas como máximo."""
+    lead_ids = {o.lead_id for o in oportunidades if o.lead_id is not None}
+    propiedad_ids = {o.propiedad_id for o in oportunidades if o.propiedad_id is not None}
+    usuario_ids = {o.ejecutivo_id for o in oportunidades if o.ejecutivo_id is not None}
+
+    leads = {
+        lead.id: lead.nombre
+        for lead in db.query(models.Lead).filter(models.Lead.id.in_(lead_ids)).all()
+    } if lead_ids else {}
+    propiedades = {
+        propiedad.id: propiedad.titulo
+        for propiedad in db.query(models.Propiedad).filter(models.Propiedad.id.in_(propiedad_ids)).all()
+    } if propiedad_ids else {}
+    usuarios = {
+        usuario.id: usuario.nombre
+        for usuario in db.query(models.Usuario).filter(models.Usuario.id.in_(usuario_ids)).all()
+    } if usuario_ids else {}
+
+    for oportunidad in oportunidades:
+        oportunidad.lead_nombre = leads.get(oportunidad.lead_id)
+        oportunidad.propiedad_titulo = propiedades.get(oportunidad.propiedad_id)
+        oportunidad.ejecutivo_nombre = usuarios.get(oportunidad.ejecutivo_id)
+
+
+def _validar_relaciones_oportunidad(db: Session, lead_id, propiedad_id):
+    if lead_id is not None and not db.query(models.Lead).filter(models.Lead.id == lead_id).first():
+        raise HTTPException(status_code=404, detail="Lead no encontrado")
+    if propiedad_id is not None and not db.query(models.Propiedad).filter(models.Propiedad.id == propiedad_id).first():
+        raise HTTPException(status_code=404, detail="Propiedad no encontrada")
+
+
+@router_privado.get("/oportunidades", response_model=List[schemas.OportunidadRespuesta])
+def listar_oportunidades(db: Session = Depends(database.obtener_db)):
+    oportunidades = (
+        db.query(models.Oportunidad)
+        .order_by(models.Oportunidad.fecha_actualizacion.desc(), models.Oportunidad.id.desc())
+        .all()
+    )
+    _agregar_detalle_oportunidades(db, oportunidades)
+    return oportunidades
+
+
+@router_privado.post(
+    "/oportunidades",
+    response_model=schemas.OportunidadRespuesta,
+    status_code=status.HTTP_201_CREATED,
+)
+def crear_oportunidad(
+    datos: schemas.OportunidadCrear,
+    db: Session = Depends(database.obtener_db),
+    usuario: models.Usuario = Depends(seguridad.usuario_actual),
+):
+    _validar_relaciones_oportunidad(db, datos.lead_id, datos.propiedad_id)
+    campos = datos.model_dump()
+    etapa = campos["etapa"]
+    campos["probabilidad"] = (
+        datos.probabilidad
+        if datos.probabilidad is not None
+        else PROBABILIDAD_POR_ETAPA[etapa]
+    )
+    campos["fecha_cierre"] = date.today() if etapa in ETAPAS_CERRADAS else None
+    campos["ejecutivo_id"] = usuario.id
+
+    oportunidad = models.Oportunidad(**campos)
+    db.add(oportunidad)
+    db.flush()
+    auditoria.registrar(
+        db, usuario, auditoria.CREAR, auditoria.OPORTUNIDAD, oportunidad.id,
+        f"Creó una oportunidad para el lead #{oportunidad.lead_id}",
+    )
+    db.commit()
+    db.refresh(oportunidad)
+    _agregar_detalle_oportunidades(db, [oportunidad])
+    return oportunidad
+
+
+@router_privado.put("/oportunidades/{oportunidad_id}", response_model=schemas.OportunidadRespuesta)
+def actualizar_oportunidad(
+    oportunidad_id: int,
+    datos: schemas.OportunidadActualizar,
+    db: Session = Depends(database.obtener_db),
+    usuario: models.Usuario = Depends(seguridad.usuario_actual),
+):
+    oportunidad = db.query(models.Oportunidad).filter(models.Oportunidad.id == oportunidad_id).first()
+    if not oportunidad:
+        raise HTTPException(status_code=404, detail="Oportunidad no encontrada")
+
+    campos = datos.model_dump(exclude_unset=True)
+    lead_id = campos.get("lead_id", oportunidad.lead_id)
+    propiedad_id = campos.get("propiedad_id", oportunidad.propiedad_id)
+    _validar_relaciones_oportunidad(db, lead_id, propiedad_id)
+
+    etapa = campos.get("etapa", oportunidad.etapa)
+    valor = campos.get("valor_estimado", oportunidad.valor_estimado)
+    moneda = campos.get("moneda", oportunidad.moneda)
+    motivo = campos.get("motivo_cierre", oportunidad.motivo_cierre)
+    if valor is not None and moneda is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Debes indicar la moneda del valor estimado",
+        )
+    if etapa == "Perdida" and not motivo:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Debes indicar el motivo de pérdida",
+        )
+
+    antes = auditoria.instantanea(oportunidad, auditoria.OPORTUNIDAD)
+    etapa_anterior = oportunidad.etapa
+    if "etapa" in campos:
+        if "probabilidad" not in campos:
+            campos["probabilidad"] = PROBABILIDAD_POR_ETAPA[etapa]
+        campos["fecha_cierre"] = date.today() if etapa in ETAPAS_CERRADAS else None
+        if etapa != "Perdida" and etapa_anterior == "Perdida" and "motivo_cierre" not in campos:
+            campos["motivo_cierre"] = None
+
+    for campo, valor_campo in campos.items():
+        setattr(oportunidad, campo, valor_campo)
+
+    auditoria.registrar(
+        db, usuario, auditoria.ACTUALIZAR, auditoria.OPORTUNIDAD, oportunidad.id,
+        f"Actualizó la oportunidad #{oportunidad.id}",
+        auditoria.resumir_cambios(
+            antes, auditoria.instantanea(oportunidad, auditoria.OPORTUNIDAD)
+        ),
+    )
+    db.commit()
+    db.refresh(oportunidad)
+    _agregar_detalle_oportunidades(db, [oportunidad])
+    return oportunidad
+
+
+@router_privado.delete("/oportunidades/{oportunidad_id}", status_code=status.HTTP_204_NO_CONTENT)
+def eliminar_oportunidad(
+    oportunidad_id: int,
+    db: Session = Depends(database.obtener_db),
+    usuario: models.Usuario = Depends(seguridad.usuario_actual),
+):
+    oportunidad = db.query(models.Oportunidad).filter(models.Oportunidad.id == oportunidad_id).first()
+    if not oportunidad:
+        raise HTTPException(status_code=404, detail="Oportunidad no encontrada")
+    db.delete(oportunidad)
+    auditoria.registrar(
+        db, usuario, auditoria.ELIMINAR, auditoria.OPORTUNIDAD, oportunidad_id,
+        f"Eliminó la oportunidad #{oportunidad_id}",
+    )
+    db.commit()
+
+
+# ══════════════════════════════════════════════════════════════
 # Interacciones
 # ══════════════════════════════════════════════════════════════
 
@@ -981,9 +1146,19 @@ def crear_analisis(
         .all()
     )
 
+    oportunidades = (
+        db.query(models.Oportunidad)
+        .filter(models.Oportunidad.lead_id == lead_id)
+        .order_by(models.Oportunidad.fecha_actualizacion.desc())
+        .all()
+    )
+    _agregar_detalle_oportunidades(db, oportunidades)
+
     # La ficha interpola la fecha en un texto, así que el objeto date se escribe
     # igual que antes ("vence el 2026-09-20") sin tener que convertirlo a mano
-    ficha = ia.construir_ficha(lead, interacciones, intereses, propiedades_por_id, tareas)
+    ficha = ia.construir_ficha(
+        lead, interacciones, intereses, propiedades_por_id, tareas, oportunidades
+    )
 
     try:
         resultado = ia.generar_analisis(ficha, tipo)

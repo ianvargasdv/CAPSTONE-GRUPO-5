@@ -87,6 +87,29 @@ class Propiedad(Base):
     fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())
 
 
+class Oportunidad(Base):
+    """Negocio comercial que avanza por el pipeline inmobiliario."""
+    __tablename__ = "oportunidades"
+
+    id = Column(Integer, primary_key=True, index=True)
+    lead_id = Column(Integer, ForeignKey("leads.id", ondelete="SET NULL"), nullable=True, index=True)
+    propiedad_id = Column(Integer, ForeignKey("propiedades.id", ondelete="SET NULL"), nullable=True)
+    ejecutivo_id = Column(Integer, ForeignKey("usuarios.id", ondelete="SET NULL"), nullable=True)
+    tipo_operacion = Column(String(20), nullable=False)
+    etapa = Column(String(30), nullable=False, default="Contacto", index=True)
+    valor_estimado = Column(Integer, nullable=True)
+    moneda = Column(String(10), nullable=True)
+    probabilidad = Column(Integer, nullable=False, default=10)
+    fecha_cierre_estimada = Column(Date, nullable=True)
+    fecha_cierre = Column(Date, nullable=True)
+    motivo_cierre = Column(String(250), nullable=True)
+    notas = Column(Text, nullable=True)
+    fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())
+    fecha_actualizacion = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
 class Interaccion(Base):
     """
     Modelo ORM que representa una interacción registrada con un lead.

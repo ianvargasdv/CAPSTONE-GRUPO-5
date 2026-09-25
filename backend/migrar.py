@@ -56,6 +56,28 @@ CAMBIOS = [
     ("leads: fecha de próxima acción", "ALTER TABLE leads ADD COLUMN IF NOT EXISTS fecha_proxima_accion DATE"),
     ("leads: marcador de datos demo", "ALTER TABLE leads ADD COLUMN IF NOT EXISTS es_demo BOOLEAN NOT NULL DEFAULT FALSE"),
     ("leads: ejecutivo responsable", "ALTER TABLE leads ADD COLUMN IF NOT EXISTS ejecutivo_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL"),
+    (
+        "oportunidades: tabla del pipeline comercial",
+        """CREATE TABLE IF NOT EXISTS oportunidades (
+            id SERIAL PRIMARY KEY,
+            lead_id INTEGER REFERENCES leads(id) ON DELETE SET NULL,
+            propiedad_id INTEGER REFERENCES propiedades(id) ON DELETE SET NULL,
+            ejecutivo_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+            tipo_operacion VARCHAR(20) NOT NULL,
+            etapa VARCHAR(30) NOT NULL DEFAULT 'Contacto',
+            valor_estimado INTEGER,
+            moneda VARCHAR(10),
+            probabilidad INTEGER NOT NULL DEFAULT 10,
+            fecha_cierre_estimada DATE,
+            fecha_cierre DATE,
+            motivo_cierre VARCHAR(250),
+            notas TEXT,
+            fecha_creacion TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+            fecha_actualizacion TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+        )""",
+    ),
+    ("oportunidades: índice por lead", "CREATE INDEX IF NOT EXISTS ix_oportunidades_lead_id ON oportunidades (lead_id)"),
+    ("oportunidades: índice por etapa", "CREATE INDEX IF NOT EXISTS ix_oportunidades_etapa ON oportunidades (etapa)"),
 ]
 
 

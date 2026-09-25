@@ -1035,7 +1035,7 @@ textarea {
 
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 0.75rem;
 }
 
@@ -1242,6 +1242,259 @@ textarea {
   white-space: nowrap;
 }
 
+.kpi-clicable {
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.kpi-clicable:hover {
+  border-color: var(--borde-fuerte);
+  box-shadow: 0 2px 8px rgba(24, 24, 27, 0.06);
+}
+
+/* ══════════════════════════════════════
+   PIPELINE COMERCIAL
+══════════════════════════════════════ */
+
+.pipeline-panel {
+  overflow: hidden;
+}
+
+.pipeline-resumen {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-bottom: 1px solid var(--borde);
+}
+
+.pipeline-resumen > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.75rem 1rem;
+  border-right: 1px solid var(--borde);
+}
+
+.pipeline-resumen > div:last-child {
+  border-right: none;
+}
+
+.pipeline-resumen span {
+  color: var(--texto-suave);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pipeline-resumen strong {
+  color: var(--texto);
+  font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.selector-vista {
+  display: flex;
+  padding: 2px;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio);
+  background: var(--superficie-alt);
+}
+
+.selector-vista button {
+  padding: 0.25rem 0.625rem;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--texto-suave);
+  cursor: pointer;
+}
+
+.selector-vista button.activo {
+  background: var(--superficie);
+  color: var(--texto);
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.08);
+}
+
+.pipeline-kanban {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(225px, 1fr));
+  gap: 0.625rem;
+  padding: 0.875rem;
+  overflow-x: auto;
+  align-items: start;
+  background: var(--superficie-alt);
+}
+
+.pipeline-columna {
+  min-width: 225px;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-lg);
+  background: var(--superficie);
+  overflow: hidden;
+}
+
+.pipeline-columna-titulo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5625rem 0.6875rem;
+  border-bottom: 1px solid var(--borde);
+  color: var(--texto-medio);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.pipeline-columna-titulo span:last-child {
+  min-width: 20px;
+  padding: 0.0625rem 0.3rem;
+  border-radius: 999px;
+  background: var(--superficie-alt);
+  color: var(--texto-suave);
+  text-align: center;
+}
+
+.pipeline-columna-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 90px;
+  padding: 0.5rem;
+}
+
+.pipeline-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3125rem;
+  padding: 0.625rem;
+  border: 1px solid var(--borde);
+  border-left: 3px solid var(--borde-fuerte);
+  border-radius: var(--radio);
+  background: var(--superficie);
+}
+
+.pipeline-card.etapa-negociacion { border-left-color: var(--alerta); }
+.pipeline-card.etapa-ganada { border-left-color: var(--exito); }
+.pipeline-card.etapa-perdida { border-left-color: var(--peligro); opacity: 0.82; }
+
+.pipeline-card-cabecera {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.pipeline-card-lead {
+  color: var(--texto);
+  font-weight: 600;
+}
+
+.pipeline-probabilidad {
+  color: var(--texto-suave);
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.pipeline-card-propiedad,
+.pipeline-card-meta,
+.pipeline-motivo {
+  color: var(--texto-suave);
+  font-size: 0.6875rem;
+}
+
+.pipeline-card-valor {
+  color: var(--texto);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.pipeline-card-meta {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.pipeline-motivo {
+  margin-top: 0.1875rem;
+  padding: 0.375rem;
+  border-radius: 4px;
+  background: var(--peligro-bg);
+  color: var(--peligro);
+  line-height: 1.35;
+}
+
+.pipeline-card-acciones {
+  display: flex;
+  align-items: center;
+  gap: 0.1875rem;
+  margin-top: 0.25rem;
+  padding-top: 0.375rem;
+  border-top: 1px solid var(--borde);
+}
+
+.pipeline-card-acciones select {
+  min-width: 0;
+  flex: 1;
+  height: 28px;
+  padding: 0 0.3rem;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: 4px;
+  background: var(--superficie);
+  color: var(--texto-medio);
+  font-size: 0.6875rem;
+}
+
+.pipeline-vacio {
+  padding: 1rem 0.5rem;
+  color: var(--texto-suave);
+  font-size: 0.6875rem;
+  text-align: center;
+}
+
+.oportunidades-lead {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.oportunidades-lead button {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--superficie-alt);
+  text-align: left;
+  cursor: pointer;
+}
+
+.oportunidades-lead button:hover {
+  border-color: var(--borde-fuerte);
+  background: var(--superficie-hover);
+}
+
+.oportunidades-lead button > span {
+  display: flex;
+  flex-direction: column;
+}
+
+.oportunidades-lead button > span:last-child {
+  text-align: right;
+}
+
+.oportunidades-lead strong {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.oportunidades-lead small {
+  color: var(--texto-suave);
+  font-size: 0.6875rem;
+}
+
 .ficha-perfil {
   padding: 0.875rem;
   border: 1px solid var(--borde) !important;
@@ -1421,6 +1674,15 @@ textarea {
 }
 
 @media (max-width: 860px) {
+  .pipeline-resumen {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .pipeline-resumen > div:nth-child(2) {
+    border-right: none;
+  }
+  .pipeline-resumen > div:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--borde);
+  }
   .sidebar {
     width: 60px;
   }
@@ -1450,6 +1712,13 @@ textarea {
 }
 
 @media (max-width: 560px) {
+  .pipeline-resumen {
+    grid-template-columns: 1fr;
+  }
+  .pipeline-resumen > div {
+    border-right: none;
+    border-bottom: 1px solid var(--borde);
+  }
   .kpi-grid {
     grid-template-columns: 1fr;
   }

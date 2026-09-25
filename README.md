@@ -36,6 +36,7 @@ backend/
   cargar_datos_demo.py  Carga un escenario ficticio e idempotente para la presentación
   prueba_auditoria.py  Verifica que ningún endpoint de escritura quede sin auditar
   prueba_validaciones.py  Verifica reglas de entrada y casos límite
+  prueba_oportunidades.py  Verifica el avance, cierre y reapertura del pipeline
 
 frontend/src/
   App.jsx            Estado general y navegación
@@ -126,8 +127,8 @@ python cambiar_rol.py
 ### Datos para una demostración
 
 Después de crear al menos un usuario y ejecutar la migración se puede cargar un
-escenario coherente con cinco leads, cinco propiedades, intereses, contactos y
-tareas:
+escenario coherente con cinco leads, cinco propiedades, cinco oportunidades,
+intereses, contactos y tareas:
 
 ```powershell
 python cargar_datos_demo.py
@@ -162,6 +163,9 @@ leads          id, nombre, email, telefono, estado, prioridad, ejecutivo_id,
                banos_min, plazo_decision, financiamiento, origen,
                proxima_accion, fecha_proxima_accion, es_demo, fecha_creacion
 propiedades    id, titulo, tipo, precio, direccion, estado, fecha_creacion
+oportunidades  id, lead_id, propiedad_id, ejecutivo_id, tipo_operacion, etapa,
+               valor_estimado, moneda, probabilidad, fecha_cierre_estimada,
+               fecha_cierre, motivo_cierre, notas, fechas de creación/actualización
 interacciones  id, lead_id, tipo, notas, fecha_creacion
 tareas         id, titulo, descripcion, estado, prioridad, fecha_limite, lead_id
 intereses      id, lead_id, propiedad_id, nivel_interes, notas, fecha_creacion
@@ -177,6 +181,8 @@ Sobre las relaciones:
   no tienen sentido sin él.
 - Al borrar un lead sus tareas se conservan y quedan sin vínculo, porque el trabajo
   pendiente puede seguir siendo válido.
+- Al borrar un lead o una propiedad, las oportunidades se conservan con el vínculo
+  correspondiente en nulo para no perder el historial de ventas y cierres.
 - Al borrar un usuario, sus análisis y sus registros de auditoría se conservan con la
   clave foránea en nulo. En auditoría el correo está además guardado como texto, para
   que el registro siga diciendo quién actuó aunque la cuenta ya no exista.
@@ -200,6 +206,23 @@ Al crear un lead queda asignado automáticamente al ejecutivo que lo registró. 
 reasignación manual se reserva para el módulo de gestión de equipo, para mantener
 esta primera versión simple y auditable.
 
+## Oportunidades y pipeline
+
+Un lead representa a la persona; una oportunidad representa un negocio concreto.
+Puede vincularse a una propiedad y avanza por `Contacto`, `Visita`, `Oferta`,
+`Negociación`, `Ganada` o `Perdida`. La interfaz ofrece un tablero Kanban y una
+vista tabla, con cambio rápido de etapa.
+
+Cada etapa propone una probabilidad comercial (10%, 30%, 60%, 80%, 100% o 0%). El
+ejecutivo puede ajustarla cuando tiene información más precisa. El tablero separa
+CLP y UF al sumar el valor abierto y muestra además el pipeline ponderado: valor
+multiplicado por probabilidad, que es una proyección y no una venta asegurada.
+
+Al cerrar como perdida el motivo es obligatorio; al ganar o perder se registra la
+fecha real. Si el negocio se reabre, se limpian la fecha y el motivo anterior. Las
+oportunidades conservan su historial aunque el lead o la propiedad se eliminen, y
+todas sus escrituras quedan en auditoría.
+
 ## Priorización de leads
 
 `GET /api/leads` devuelve cada lead con un puntaje calculado y los motivos que lo
@@ -219,8 +242,8 @@ Desde la ficha de un lead se pueden pedir dos análisis:
 - **Siguiente acción recomendada**: propone qué hacer, revisando las tareas
   pendientes para no proponer algo que ya está agendado.
 
-El backend arma un texto con los datos registrados (perfil de búsqueda, historial
-de contacto, propiedades de interés, prioridad calculada y tareas pendientes), lo envía al modelo
+El backend arma un texto con los datos registrados (perfil de búsqueda, oportunidades,
+historial de contacto, propiedades de interés, prioridad calculada y tareas pendientes), lo envía al modelo
 y guarda en `analisis_ia` tanto lo que se envió como lo que respondió. Los dos tipos
 parten de la misma ficha y se diferencian solo en las instrucciones.
 
@@ -313,6 +336,7 @@ permitidos, límites y correos duplicados:
 cd backend
 python prueba_validaciones.py
 python prueba_datos_demo.py
+python prueba_oportunidades.py
 ```
 
 El orden de los próximos módulos y su criterio de terminado están en
@@ -364,10 +388,11 @@ y en Windows `localhost` se resuelve primero a IPv6. Se corrige creando
 
 ## Alcance del proyecto actual (MVP) 
 
-Implementado: leads con perfil comercial 360, propiedades, interacciones, tareas, propiedades de interés,
+Implementado: leads con perfil comercial 360, oportunidades y pipeline, propiedades,
+interacciones, tareas, propiedades de interés,
 autenticación con roles, priorización de leads, asistente con IA (resumen y
 recomendación), seguimiento del consumo del agente, registro de actividad y vista de
 inicio.
 
-Pendiente: oportunidades/pipeline, agenda de visitas, matching, comunicaciones,
-documentos y las mejoras de producción detalladas en el roadmap.
+Pendiente: agenda de visitas, matching, comunicaciones, documentos y las mejoras
+de producción detalladas en el roadmap.

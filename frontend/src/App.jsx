@@ -8,6 +8,10 @@ import {
   crearPropiedad,
   actualizarPropiedad,
   eliminarPropiedad,
+  obtenerOportunidades,
+  crearOportunidad,
+  actualizarOportunidad,
+  eliminarOportunidad,
   obtenerInteracciones,
   crearInteraccion,
   obtenerTareas,
@@ -37,9 +41,11 @@ import Dashboard from './components/Dashboard';
 import TablaLeads from './components/TablaLeads';
 import TablaPropiedades from './components/TablaPropiedades';
 import TablaTareas from './components/TablaTareas';
+import PipelineOportunidades from './components/PipelineOportunidades';
 import FormularioLead from './components/FormularioLead';
 import FormularioPropiedad from './components/FormularioPropiedad';
 import FormularioTarea from './components/FormularioTarea';
+import FormularioOportunidad from './components/FormularioOportunidad';
 import FormularioInteraccion from './components/FormularioInteraccion';
 import PropiedadesInteres from './components/PropiedadesInteres';
 import HistorialInteracciones from './components/HistorialInteracciones';
@@ -52,6 +58,7 @@ const VISTAS = {
   inicio: { titulo: 'Inicio', subtitulo: 'Resumen de la operación' },
   leads: { titulo: 'Leads', accion: 'Nuevo lead', entidad: 'lead' },
   propiedades: { titulo: 'Propiedades', accion: 'Nueva propiedad', entidad: 'propiedad' },
+  oportunidades: { titulo: 'Pipeline', accion: 'Nueva oportunidad', entidad: 'oportunidad' },
   tareas: { titulo: 'Tareas', accion: 'Nueva tarea', entidad: 'tarea' },
   consumo: { titulo: 'Consumo de IA', subtitulo: 'Gasto del agente' },
   auditoria: { titulo: 'Actividad', subtitulo: 'Quién hizo qué y cuándo' },
@@ -62,6 +69,7 @@ const TITULOS_PANEL = {
   lead: { crear: 'Nuevo lead', editar: 'Editar lead' },
   propiedad: { crear: 'Nueva propiedad', editar: 'Editar propiedad' },
   tarea: { crear: 'Nueva tarea', editar: 'Editar tarea' },
+  oportunidad: { crear: 'Nueva oportunidad', editar: 'Editar oportunidad' },
 };
 
 /** Tono de la etiqueta según el nivel de atención que requiere el lead. */
@@ -81,6 +89,10 @@ const formatearPresupuesto = (lead) => {
   return `${minimo} – ${maximo} ${lead.moneda || ''}`.trim();
 };
 
+const formatearValor = (valor, moneda) => valor == null
+  ? 'Valor sin definir'
+  : `${new Intl.NumberFormat('es-CL').format(valor)} ${moneda || ''}`.trim();
+
 /** Texto del modal de confirmación para cada tipo de registro. */
 const TEXTOS_ELIMINAR = {
   lead: (r) => ({
@@ -94,6 +106,10 @@ const TEXTOS_ELIMINAR = {
   tarea: (r) => ({
     titulo: 'Eliminar tarea',
     mensaje: `Se eliminará la tarea "${r.titulo}". Esta acción no se puede deshacer.`,
+  }),
+  oportunidad: (r) => ({
+    titulo: 'Eliminar oportunidad',
+    mensaje: `Se eliminará el negocio de ${r.lead_nombre || 'este lead'}. Esta acción no se puede deshacer.`,
   }),
 };
 
@@ -136,6 +152,10 @@ function App() {
   const [tareas, setTareas] = useState([]);
   const [cargandoTareas, setCargandoTareas] = useState(true);
   const [errorTareas, setErrorTareas] = useState(null);
+
+  const [oportunidades, setOportunidades] = useState([]);
+  const [cargandoOportunidades, setCargandoOportunidades] = useState(true);
+  const [errorOportunidades, setErrorOportunidades] = useState(null);
 
   // ── Panel lateral de formularios: { entidad, registro } o null ──
   const [panelForm, setPanelForm] = useState(null);
@@ -202,12 +222,25 @@ function App() {
     }
   };
 
+  const cargarOportunidades = async () => {
+    try {
+      setCargandoOportunidades(true);
+      setErrorOportunidades(null);
+      setOportunidades(await obtenerOportunidades());
+    } catch {
+      setErrorOportunidades('No se pudo conectar con el backend para cargar el pipeline.');
+    } finally {
+      setCargandoOportunidades(false);
+    }
+  };
+
   // Los datos se piden solo cuando hay sesión: sin token la API responde 401
   useEffect(() => {
     if (!usuario) return;
     cargarLeads();
     cargarPropiedades();
     cargarTareas();
+    cargarOportunidades();
     // El estado de la IA no cambia por lead, así que se consulta una sola vez
     obtenerEstadoIA()
       .then((estado) => setIaConfigurada(estado.configurada))
@@ -221,11 +254,13 @@ function App() {
     setLeads([]);
     setPropiedades([]);
     setTareas([]);
+    setOportunidades([]);
     setConsumo(null);
     setErrorConsumo(null);
     setCargandoLeads(true);
     setCargandoPropiedades(true);
     setCargandoTareas(true);
+    setCargandoOportunidades(true);
     setPanelForm(null);
     setConfirmacion(null);
     setFichaLead(null);
@@ -448,6 +483,37 @@ function App() {
     cerrarPanelForm();
   };
 
+  // ══════════ Oportunidades ══════════
+
+  const guardarOportunidad = async (datos) => {
+    const editando = panelForm?.registro;
+    if (editando) {
+      const actualizada = await actualizarOportunidad(editando.id, datos);
+      setOportunidades((prev) => prev.map((o) => (o.id === actualizada.id ? actualizada : o)));
+      mostrarToast('Oportunidad actualizada');
+    } else {
+      const creada = await crearOportunidad(datos);
+      setOportunidades((prev) => [creada, ...prev]);
+      mostrarToast('Oportunidad creada');
+    }
+    cerrarPanelForm();
+  };
+
+  const cambiarEtapaOportunidad = async (oportunidad, etapa) => {
+    if (etapa === oportunidad.etapa) return;
+    if (etapa === 'Perdida') {
+      abrirEditar('oportunidad', { ...oportunidad, etapa, probabilidad: 0 });
+      return;
+    }
+    try {
+      const actualizada = await actualizarOportunidad(oportunidad.id, { etapa });
+      setOportunidades((prev) => prev.map((o) => (o.id === actualizada.id ? actualizada : o)));
+      mostrarToast(`Oportunidad movida a "${etapa}"`);
+    } catch (err) {
+      mostrarToast(err.message || 'No se pudo cambiar la etapa');
+    }
+  };
+
   // ══════════ Tareas ══════════
 
   const guardarTarea = async (datos) => {
@@ -524,16 +590,26 @@ function App() {
           prev.map((t) => (t.lead_id === registro.id ? { ...t, lead_id: null } : t))
         );
         if (fichaLead?.id === registro.id) cerrarFicha();
+        setOportunidades((prev) => prev.map((o) => o.lead_id === registro.id
+          ? { ...o, lead_id: null, lead_nombre: null }
+          : o));
         mostrarToast('Lead eliminado');
       } else if (entidad === 'propiedad') {
         await eliminarPropiedad(registro.id);
         setPropiedades((prev) => prev.filter((p) => p.id !== registro.id));
         setIntereses((prev) => prev.filter((i) => i.propiedad_id !== registro.id));
+        setOportunidades((prev) => prev.map((o) => o.propiedad_id === registro.id
+          ? { ...o, propiedad_id: null, propiedad_titulo: null }
+          : o));
         mostrarToast('Propiedad eliminada');
       } else if (entidad === 'tarea') {
         await eliminarTarea(registro.id);
         setTareas((prev) => prev.filter((t) => t.id !== registro.id));
         mostrarToast('Tarea eliminada');
+      } else if (entidad === 'oportunidad') {
+        await eliminarOportunidad(registro.id);
+        setOportunidades((prev) => prev.filter((o) => o.id !== registro.id));
+        mostrarToast('Oportunidad eliminada');
       }
 
       setConfirmacion(null);
@@ -547,7 +623,8 @@ function App() {
   // ══════════ Valores derivados ══════════
 
   const tareasAbiertas = tareas.filter((t) => t.estado !== 'Completada').length;
-  const cargandoTodo = cargandoLeads || cargandoPropiedades || cargandoTareas;
+  const oportunidadesAbiertas = oportunidades.filter((o) => !['Ganada', 'Perdida'].includes(o.etapa)).length;
+  const cargandoTodo = cargandoLeads || cargandoPropiedades || cargandoTareas || cargandoOportunidades;
   const configVista = VISTAS[vista];
   const textoConfirmacion = confirmacion
     ? TEXTOS_ELIMINAR[confirmacion.entidad](confirmacion.registro)
@@ -571,6 +648,7 @@ function App() {
         contadores={{
           leads: leads.length,
           propiedades: propiedades.length,
+          oportunidades: oportunidadesAbiertas,
           tareasPendientes: tareasAbiertas,
         }}
         usuario={usuario}
@@ -602,6 +680,7 @@ function App() {
               leads={leads}
               propiedades={propiedades}
               tareas={tareas}
+              oportunidades={oportunidades}
               cargando={cargandoTodo}
               alVerFicha={abrirFicha}
               alEditarTarea={(tarea) => abrirEditar('tarea', tarea)}
@@ -632,6 +711,19 @@ function App() {
                 error={errorPropiedades}
                 alEditar={(prop) => abrirEditar('propiedad', prop)}
                 alPedirEliminar={(prop) => pedirEliminar('propiedad', prop)}
+              />
+            </div>
+          )}
+
+          {vista === 'oportunidades' && (
+            <div className="panel pipeline-panel">
+              <PipelineOportunidades
+                oportunidades={oportunidades}
+                cargando={cargandoOportunidades}
+                error={errorOportunidades}
+                alEditar={(oportunidad) => abrirEditar('oportunidad', oportunidad)}
+                alEliminar={(oportunidad) => pedirEliminar('oportunidad', oportunidad)}
+                alCambiarEtapa={cambiarEtapaOportunidad}
               />
             </div>
           )}
@@ -700,6 +792,16 @@ function App() {
             tareaEditar={panelForm.registro}
             alCancelar={cerrarPanelForm}
             leads={leads}
+          />
+        )}
+
+        {panelForm?.entidad === 'oportunidad' && (
+          <FormularioOportunidad
+            alGuardar={guardarOportunidad}
+            oportunidadEditar={panelForm.registro}
+            leads={leads}
+            propiedades={propiedades}
+            alCancelar={cerrarPanelForm}
           />
         )}
       </Drawer>
@@ -790,6 +892,29 @@ function App() {
                 <div className="ficha-dato"><span className="ficha-dato-label">Próxima fecha</span><span className="ficha-dato-valor">{fichaLead.fecha_proxima_accion ? new Date(`${fichaLead.fecha_proxima_accion}T12:00:00`).toLocaleDateString('es-CL') : 'Sin definir'}</span></div>
                 <div className="ficha-dato form-group-full"><span className="ficha-dato-label">Próxima acción</span><span className="ficha-dato-valor texto-completo">{fichaLead.proxima_accion || 'Sin acción registrada'}</span></div>
               </div>
+            </div>
+
+            <div className="ficha-seccion">
+              <div className="ficha-seccion-encabezado">
+                <span className="ficha-seccion-titulo">
+                  Oportunidades ({oportunidades.filter((o) => o.lead_id === fichaLead.id).length})
+                </span>
+                <button className="btn-secondary" onClick={() => { cerrarFicha(); setVista('oportunidades'); }}>
+                  Ver pipeline
+                </button>
+              </div>
+              {oportunidades.filter((o) => o.lead_id === fichaLead.id).length === 0 ? (
+                <p className="nota-prioridad">Este lead todavía no tiene un negocio abierto.</p>
+              ) : (
+                <div className="oportunidades-lead">
+                  {oportunidades.filter((o) => o.lead_id === fichaLead.id).map((o) => (
+                    <button key={o.id} onClick={() => { cerrarFicha(); abrirEditar('oportunidad', o); }}>
+                      <span><strong>{o.etapa}</strong><small>{o.propiedad_titulo || 'Sin propiedad asociada'}</small></span>
+                      <span><strong>{formatearValor(o.valor_estimado, o.moneda)}</strong><small>{o.probabilidad}% prob.</small></span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Explica de dónde sale el puntaje, para que la priorización no sea

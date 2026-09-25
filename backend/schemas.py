@@ -22,6 +22,7 @@ Financiamiento = Literal["Crédito preaprobado", "En evaluación", "Recursos pro
 OrigenLead = Literal[
     "Referido", "Portal inmobiliario", "Redes sociales", "Sitio web", "Llamada", "Otro", "Demo capstone"
 ]
+EtapaOportunidad = Literal["Contacto", "Visita", "Oferta", "Negociación", "Ganada", "Perdida"]
 
 Nombre = Annotated[str, StringConstraints(strip_whitespace=True, min_length=2, max_length=100)]
 Correo = Annotated[str, StringConstraints(strip_whitespace=True, to_lower=True, min_length=5, max_length=150)]
@@ -180,6 +181,64 @@ class PropiedadRespuesta(PropiedadBase):
     """Esquema utilizado para responder información de la propiedad."""
     id: int
     fecha_creacion: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class OportunidadCrear(BaseModel):
+    lead_id: int = Field(gt=0)
+    propiedad_id: Optional[int] = Field(default=None, gt=0)
+    tipo_operacion: TipoOperacion
+    etapa: EtapaOportunidad = "Contacto"
+    valor_estimado: Optional[int] = Field(default=None, gt=0, le=999_999_999_999)
+    moneda: Optional[Moneda] = None
+    probabilidad: Optional[int] = Field(default=None, ge=0, le=100)
+    fecha_cierre_estimada: Optional[date] = None
+    motivo_cierre: Optional[TextoCorto] = None
+    notas: Optional[TextoLargo] = None
+
+    @model_validator(mode="after")
+    def validar_negocio(self):
+        if self.valor_estimado is not None and self.moneda is None:
+            raise ValueError("Debes indicar la moneda del valor estimado")
+        if self.etapa == "Perdida" and not self.motivo_cierre:
+            raise ValueError("Debes indicar el motivo de pérdida")
+        return self
+
+
+class OportunidadActualizar(BaseModel):
+    lead_id: int = Field(default=None, gt=0)
+    propiedad_id: Optional[int] = Field(default=None, gt=0)
+    tipo_operacion: TipoOperacion = None
+    etapa: EtapaOportunidad = None
+    valor_estimado: Optional[int] = Field(default=None, gt=0, le=999_999_999_999)
+    moneda: Optional[Moneda] = None
+    probabilidad: Optional[int] = Field(default=None, ge=0, le=100)
+    fecha_cierre_estimada: Optional[date] = None
+    motivo_cierre: Optional[TextoCorto] = None
+    notas: Optional[TextoLargo] = None
+
+
+class OportunidadRespuesta(BaseModel):
+    id: int
+    lead_id: Optional[int] = None
+    lead_nombre: Optional[str] = None
+    propiedad_id: Optional[int] = None
+    propiedad_titulo: Optional[str] = None
+    ejecutivo_id: Optional[int] = None
+    ejecutivo_nombre: Optional[str] = None
+    tipo_operacion: str
+    etapa: str
+    valor_estimado: Optional[int] = None
+    moneda: Optional[str] = None
+    probabilidad: int
+    fecha_cierre_estimada: Optional[date] = None
+    fecha_cierre: Optional[date] = None
+    motivo_cierre: Optional[str] = None
+    notas: Optional[str] = None
+    fecha_creacion: Optional[datetime] = None
+    fecha_actualizacion: Optional[datetime] = None
 
     class Config:
         from_attributes = True

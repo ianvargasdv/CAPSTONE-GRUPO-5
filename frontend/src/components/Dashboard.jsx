@@ -11,8 +11,8 @@ import Icono from './Iconos';
  * se ordena y se muestra.
  *
  * Props:
- * - leads / propiedades / tareas: listas completas
- * - cargando: true mientras alguna de las tres sigue cargando
+ * - leads / propiedades / tareas / oportunidades: listas completas
+ * - cargando: true mientras alguna sigue cargando
  * - alVerFicha: abre la ficha de un lead
  * - alEditarTarea: abre el panel de edición de una tarea
  * - alIrA: navega a una sección del sistema
@@ -43,7 +43,7 @@ function fechaCorta(iso) {
   });
 }
 
-function Dashboard({ leads, propiedades, tareas, cargando, alVerFicha, alEditarTarea, alIrA }) {
+function Dashboard({ leads, propiedades, tareas, oportunidades = [], cargando, alVerFicha, alEditarTarea, alIrA }) {
   if (cargando) {
     return <div className="state-message">Cargando resumen...</div>;
   }
@@ -54,6 +54,7 @@ function Dashboard({ leads, propiedades, tareas, cargando, alVerFicha, alEditarT
   // ── Leads ──
   const leadsActivos = leads.filter((l) => l.estado !== 'Cerrado');
   const urgentes = leads.filter((l) => l.categoria === 'Urgente').length;
+  const negociosAbiertos = oportunidades.filter((o) => !['Ganada', 'Perdida'].includes(o.etapa));
 
   const leadsPorEstado = {
     Nuevo: leads.filter((l) => l.estado === 'Nuevo').length,
@@ -107,6 +108,15 @@ function Dashboard({ leads, propiedades, tareas, cargando, alVerFicha, alEditarT
               : 'Ninguno urgente'}
           </div>
         </div>
+
+        <button className="kpi-card kpi-clicable" onClick={() => alIrA('oportunidades')}>
+          <div className="kpi-encabezado">
+            <Icono nombre="negocio" tamano={13} />
+            <span className="kpi-label">Pipeline abierto</span>
+          </div>
+          <div className="kpi-numero">{negociosAbiertos.length}</div>
+          <div className="kpi-detalle">{oportunidades.filter((o) => o.etapa === 'Negociación').length} en negociación</div>
+        </button>
 
         <div className="kpi-card">
           <div className="kpi-encabezado">

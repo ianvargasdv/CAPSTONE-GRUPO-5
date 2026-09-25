@@ -10,7 +10,7 @@ import Icono from './Iconos';
  * Props:
  * - vistaActiva: identificador de la vista actual
  * - alCambiarVista: función que recibe el identificador de la vista a mostrar
- * - contadores: { leads, propiedades, tareasPendientes }
+ * - contadores: { leads, oportunidades, propiedades, tareasPendientes }
  * - usuario: usuario con la sesión activa
  * - alCerrarSesion: cierra la sesión
  */
@@ -36,6 +36,7 @@ const SECCIONES = [
     titulo: 'Gestión',
     items: [
       { id: 'leads', etiqueta: 'Leads', icono: 'usuarios', contador: 'leads' },
+      { id: 'oportunidades', etiqueta: 'Pipeline', icono: 'negocio', contador: 'oportunidades' },
       { id: 'propiedades', etiqueta: 'Propiedades', icono: 'edificio', contador: 'propiedades' },
       { id: 'tareas', etiqueta: 'Tareas', icono: 'tareas', contador: 'tareasPendientes', destacar: true },
     ],
