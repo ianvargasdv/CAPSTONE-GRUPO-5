@@ -157,8 +157,13 @@ class LeadRespuesta(LeadBase):
 class PropiedadBase(BaseModel):
     titulo: TextoCorto
     tipo: TipoPropiedad = "Departamento"
+    tipo_operacion: Optional[TipoOperacion] = "Compra"
     precio: int = Field(gt=0, le=999_999_999_999)
+    moneda: Optional[Moneda] = "CLP"
     direccion: TextoCorto
+    comuna: Optional[Nombre] = None
+    dormitorios: Optional[int] = Field(default=None, ge=0, le=20)
+    banos: Optional[int] = Field(default=None, ge=0, le=20)
     estado: EstadoPropiedad = "Disponible"
 
 
@@ -174,8 +179,13 @@ class PropiedadActualizar(BaseModel):
     """
     titulo: TextoCorto = None
     tipo: TipoPropiedad = None
+    tipo_operacion: Optional[TipoOperacion] = None
     precio: Annotated[int, Field(gt=0, le=999_999_999_999)] = None
+    moneda: Optional[Moneda] = None
     direccion: TextoCorto = None
+    comuna: Optional[Nombre] = None
+    dormitorios: Optional[int] = Field(default=None, ge=0, le=20)
+    banos: Optional[int] = Field(default=None, ge=0, le=20)
     estado: EstadoPropiedad = None
 
 
@@ -244,6 +254,22 @@ class OportunidadRespuesta(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class CriterioMatching(BaseModel):
+    nombre: str
+    coincide: bool
+    detalle: str
+    peso: int
+
+
+class MatchingPropiedadRespuesta(BaseModel):
+    propiedad: PropiedadRespuesta
+    puntaje: Optional[int] = None
+    cobertura: int
+    categoria: str
+    criterios: List[CriterioMatching]
+    datos_faltantes: List[str]
 
 
 def _validar_visita(estado, resultado, motivo_cancelacion):

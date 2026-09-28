@@ -101,6 +101,11 @@ CAMBIOS = [
     ("visitas: índice por fecha", "CREATE INDEX IF NOT EXISTS ix_visitas_fecha_hora ON visitas (fecha_hora)"),
     ("visitas: índice por ejecutivo", "CREATE INDEX IF NOT EXISTS ix_visitas_ejecutivo_id ON visitas (ejecutivo_id)"),
     ("visitas: índice por lead", "CREATE INDEX IF NOT EXISTS ix_visitas_lead_id ON visitas (lead_id)"),
+    ("propiedades: tipo de operación", "ALTER TABLE propiedades ADD COLUMN IF NOT EXISTS tipo_operacion VARCHAR(20)"),
+    ("propiedades: moneda", "ALTER TABLE propiedades ADD COLUMN IF NOT EXISTS moneda VARCHAR(10)"),
+    ("propiedades: comuna", "ALTER TABLE propiedades ADD COLUMN IF NOT EXISTS comuna VARCHAR(100)"),
+    ("propiedades: dormitorios", "ALTER TABLE propiedades ADD COLUMN IF NOT EXISTS dormitorios INTEGER"),
+    ("propiedades: baños", "ALTER TABLE propiedades ADD COLUMN IF NOT EXISTS banos INTEGER"),
 ]
 
 

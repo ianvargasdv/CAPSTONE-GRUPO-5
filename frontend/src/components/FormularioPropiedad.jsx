@@ -11,8 +11,13 @@ import React, { useState, useEffect } from 'react';
 function FormularioPropiedad({ alGuardar, propiedadEditar, alCancelar }) {
   const [titulo, setTitulo] = useState('');
   const [tipo, setTipo] = useState('Departamento');
+  const [tipoOperacion, setTipoOperacion] = useState('Compra');
   const [precio, setPrecio] = useState('');
+  const [moneda, setMoneda] = useState('CLP');
   const [direccion, setDireccion] = useState('');
+  const [comuna, setComuna] = useState('');
+  const [dormitorios, setDormitorios] = useState('');
+  const [banos, setBanos] = useState('');
   const [estado, setEstado] = useState('Disponible');
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(null);
@@ -23,14 +28,24 @@ function FormularioPropiedad({ alGuardar, propiedadEditar, alCancelar }) {
     if (propiedadEditar) {
       setTitulo(propiedadEditar.titulo || '');
       setTipo(propiedadEditar.tipo || 'Departamento');
+      setTipoOperacion(propiedadEditar.tipo_operacion || 'Compra');
       setPrecio(propiedadEditar.precio?.toString() || '');
+      setMoneda(propiedadEditar.moneda || 'CLP');
       setDireccion(propiedadEditar.direccion || '');
+      setComuna(propiedadEditar.comuna || '');
+      setDormitorios(propiedadEditar.dormitorios?.toString() ?? '');
+      setBanos(propiedadEditar.banos?.toString() ?? '');
       setEstado(propiedadEditar.estado || 'Disponible');
     } else {
       setTitulo('');
       setTipo('Departamento');
+      setTipoOperacion('Compra');
       setPrecio('');
+      setMoneda('CLP');
       setDireccion('');
+      setComuna('');
+      setDormitorios('');
+      setBanos('');
       setEstado('Disponible');
     }
     setError(null);
@@ -49,8 +64,13 @@ function FormularioPropiedad({ alGuardar, propiedadEditar, alCancelar }) {
       await alGuardar({
         titulo: titulo.trim(),
         tipo,
+        tipo_operacion: tipoOperacion,
         precio: parseInt(precio, 10),
+        moneda,
         direccion: direccion.trim(),
+        comuna: comuna.trim() || null,
+        dormitorios: dormitorios === '' ? null : parseInt(dormitorios, 10),
+        banos: banos === '' ? null : parseInt(banos, 10),
         estado,
       });
     } catch (err) {
@@ -94,6 +114,14 @@ function FormularioPropiedad({ alGuardar, propiedadEditar, alCancelar }) {
         </div>
 
         <div className="form-group">
+          <label htmlFor="tipo_operacion_prop">Operación</label>
+          <select id="tipo_operacion_prop" value={tipoOperacion} onChange={(e) => setTipoOperacion(e.target.value)} disabled={cargando}>
+            <option value="Compra">Venta</option>
+            <option value="Arriendo">Arriendo</option>
+          </select>
+        </div>
+
+        <div className="form-group">
           <label htmlFor="precio">Precio</label>
           <input
             id="precio"
@@ -103,7 +131,14 @@ function FormularioPropiedad({ alGuardar, propiedadEditar, alCancelar }) {
             onChange={(e) => setPrecio(e.target.value)}
             disabled={cargando}
           />
-          <span className="form-ayuda">Valor en UF o pesos, según el criterio del aviso</span>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="moneda_prop">Moneda</label>
+          <select id="moneda_prop" value={moneda} onChange={(e) => setMoneda(e.target.value)} disabled={cargando}>
+            <option value="CLP">CLP</option>
+            <option value="UF">UF</option>
+          </select>
         </div>
 
         <div className="form-group form-group-full">
@@ -116,6 +151,21 @@ function FormularioPropiedad({ alGuardar, propiedadEditar, alCancelar }) {
             onChange={(e) => setDireccion(e.target.value)}
             disabled={cargando}
           />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="comuna_prop">Comuna</label>
+          <input id="comuna_prop" value={comuna} onChange={(e) => setComuna(e.target.value)} disabled={cargando} placeholder="Providencia" />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="dormitorios_prop">Dormitorios</label>
+          <input id="dormitorios_prop" type="number" min="0" max="20" value={dormitorios} onChange={(e) => setDormitorios(e.target.value)} disabled={cargando} />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="banos_prop">Baños</label>
+          <input id="banos_prop" type="number" min="0" max="20" value={banos} onChange={(e) => setBanos(e.target.value)} disabled={cargando} />
         </div>
 
         <div className="form-group">

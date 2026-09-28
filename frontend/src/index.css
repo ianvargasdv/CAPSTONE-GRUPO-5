@@ -1885,6 +1885,119 @@ textarea {
   }
 }
 
+/* ══════════════════════════════════════
+   MATCHING LEAD–PROPIEDAD
+══════════════════════════════════════ */
+
+.matching-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.matching-card {
+  padding: 0.875rem;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--superficie-alt);
+}
+
+.matching-cabecera,
+.matching-meta,
+.matching-acciones {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.matching-cabecera > div:first-child,
+.matching-puntaje {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.matching-cabecera strong {
+  font-size: 0.8125rem;
+  color: var(--texto);
+}
+
+.matching-cabecera span,
+.matching-meta,
+.matching-detalle small,
+.matching-detalle p {
+  font-size: 0.6875rem;
+  color: var(--texto-suave);
+}
+
+.matching-puntaje {
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.matching-puntaje > strong {
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.matching-meta {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  margin-top: 0.625rem;
+  padding-top: 0.625rem;
+  border-top: 1px solid var(--borde);
+}
+
+.matching-detalle ul {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0.75rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.matching-detalle li {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.matching-detalle li > span {
+  font-weight: 700;
+  color: var(--peligro);
+}
+
+.matching-detalle li.cumple > span {
+  color: var(--exito);
+}
+
+.matching-detalle li div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.matching-detalle li strong {
+  font-size: 0.75rem;
+}
+
+.matching-acciones {
+  justify-content: flex-end;
+  margin-top: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .matching-cabecera,
+  .matching-acciones {
+    align-items: stretch;
+  }
+
+  .matching-acciones {
+    flex-direction: column;
+  }
+}
+
 @media (max-width: 560px) {
   .agenda-resumen {
     grid-template-columns: 1fr;

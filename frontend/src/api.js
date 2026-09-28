@@ -23,6 +23,9 @@ const NOMBRES_CAMPOS = {
   precio: 'Precio',
   direccion: 'Dirección',
   tipo: 'Tipo',
+  dormitorios: 'Dormitorios',
+  banos: 'Baños',
+  comuna: 'Comuna',
   fecha_limite: 'Fecha límite',
   propiedad_id: 'Propiedad',
   nivel_interes: 'Nivel de interés',
@@ -230,6 +233,12 @@ export function eliminarPropiedad(id) {
   return pedir(`/propiedades/${id}`, {
     metodo: 'DELETE',
     mensajeError: 'No se pudo eliminar la propiedad',
+  });
+}
+
+export function obtenerMatching(leadId) {
+  return pedir(`/leads/${leadId}/matching`, {
+    mensajeError: 'No se pudieron calcular las propiedades compatibles',
   });
 }
 

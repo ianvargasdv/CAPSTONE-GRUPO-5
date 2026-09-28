@@ -52,7 +52,7 @@ probarse y demostrarse por separado antes de pasar al siguiente.
 
 ### M4. Agenda de visitas
 
-**Estado: implementado y migrado; pendiente de prueba visual del usuario y commit.**
+**Estado: completado y publicado.**
 
 - Visita asociada a lead, propiedad y ejecutivo.
 - Fecha, hora, confirmación, resultado y cancelación.
@@ -60,6 +60,8 @@ probarse y demostrarse por separado antes de pasar al siguiente.
 - Agenda diaria y semanal.
 
 ### M5. Matching lead–propiedad
+
+**Estado: completado y probado.**
 
 - Coincidencia por presupuesto, comuna, tipo y dormitorios.
 - Explicación de por qué una propiedad coincide o no.

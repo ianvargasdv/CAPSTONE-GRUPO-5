@@ -64,7 +64,8 @@ function TablaPropiedades({ propiedades, cargando, error, alEditar, alPedirElimi
     const coincideTexto =
       !termino ||
       prop.titulo.toLowerCase().includes(termino) ||
-      prop.direccion.toLowerCase().includes(termino);
+      prop.direccion.toLowerCase().includes(termino) ||
+      prop.comuna?.toLowerCase().includes(termino);
     const coincideTipo = filtroTipo === 'Todos' || prop.tipo === filtroTipo;
     const coincideEstado = filtroEstado === 'Todos' || prop.estado === filtroEstado;
     return coincideTexto && coincideTipo && coincideEstado;
@@ -78,7 +79,7 @@ function TablaPropiedades({ propiedades, cargando, error, alEditar, alPedirElimi
           <input
             type="search"
             className="search-input"
-            placeholder="Buscar por título o dirección"
+            placeholder="Buscar por título, dirección o comuna"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             aria-label="Buscar propiedades"
@@ -126,6 +127,7 @@ function TablaPropiedades({ propiedades, cargando, error, alEditar, alPedirElimi
               <tr>
                 <th>Propiedad</th>
                 <th>Tipo</th>
+                <th>Programa</th>
                 <th>Precio</th>
                 <th>Estado</th>
                 <th />
@@ -137,7 +139,7 @@ function TablaPropiedades({ propiedades, cargando, error, alEditar, alPedirElimi
                   <td>
                     <div className="celda-doble">
                       <span className="celda-principal">{prop.titulo}</span>
-                      <span className="celda-secundaria">{prop.direccion}</span>
+                      <span className="celda-secundaria">{prop.comuna || 'Comuna sin registrar'} · {prop.direccion}</span>
                     </div>
                   </td>
 
@@ -148,8 +150,15 @@ function TablaPropiedades({ propiedades, cargando, error, alEditar, alPedirElimi
                     </span>
                   </td>
 
+                  <td>
+                    <div className="celda-doble">
+                      <span className="celda-principal">{prop.tipo_operacion === 'Compra' ? 'Venta' : prop.tipo_operacion || 'Sin definir'}</span>
+                      <span className="celda-secundaria">{prop.dormitorios ?? '—'}D · {prop.banos ?? '—'}B</span>
+                    </div>
+                  </td>
+
                   <td className="col-numero">
-                    {prop.precio ? prop.precio.toLocaleString('es-CL') : '—'}
+                    {prop.precio ? `${prop.precio.toLocaleString('es-CL')} ${prop.moneda || ''}`.trim() : '—'}
                   </td>
 
                   <td>

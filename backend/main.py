@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 import auditoria
 import database
 import ia
+import matching
 import models
 import prioridad
 import schemas
@@ -376,13 +377,7 @@ def crear_propiedad(
     usuario: models.Usuario = Depends(seguridad.usuario_actual),
 ):
     """Registra una nueva propiedad en la base de datos."""
-    nueva_propiedad = models.Propiedad(
-        titulo=propiedad.titulo,
-        tipo=propiedad.tipo,
-        precio=propiedad.precio,
-        direccion=propiedad.direccion,
-        estado=propiedad.estado,
-    )
+    nueva_propiedad = models.Propiedad(**propiedad.model_dump())
     db.add(nueva_propiedad)
     db.flush()
 
@@ -464,6 +459,23 @@ def eliminar_propiedad(
     )
 
     db.commit()
+
+
+@router_privado.get(
+    "/leads/{lead_id}/matching",
+    response_model=List[schemas.MatchingPropiedadRespuesta],
+)
+def obtener_matching(lead_id: int, db: Session = Depends(database.obtener_db)):
+    """Ordena las propiedades disponibles según el perfil declarado por el lead."""
+    lead = db.query(models.Lead).filter(models.Lead.id == lead_id).first()
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead no encontrado")
+    propiedades = (
+        db.query(models.Propiedad)
+        .filter(models.Propiedad.estado == "Disponible")
+        .all()
+    )
+    return matching.ordenar_matches(lead, propiedades)
 
 
 # ══════════════════════════════════════════════════════════════
@@ -1351,10 +1363,18 @@ def crear_analisis(
     )
     _agregar_detalle_visitas(db, visitas)
 
+    propiedades_disponibles = (
+        db.query(models.Propiedad)
+        .filter(models.Propiedad.estado == "Disponible")
+        .all()
+    )
+    coincidencias = matching.ordenar_matches(lead, propiedades_disponibles)
+
     # La ficha interpola la fecha en un texto, así que el objeto date se escribe
     # igual que antes ("vence el 2026-09-20") sin tener que convertirlo a mano
     ficha = ia.construir_ficha(
-        lead, interacciones, intereses, propiedades_por_id, tareas, oportunidades, visitas
+        lead, interacciones, intereses, propiedades_por_id, tareas, oportunidades, visitas,
+        coincidencias,
     )
 
     try:

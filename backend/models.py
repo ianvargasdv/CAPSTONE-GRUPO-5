@@ -81,8 +81,13 @@ class Propiedad(Base):
     id = Column(Integer, primary_key=True, index=True)
     titulo = Column(String(150), nullable=False)
     tipo = Column(String(50), default="Departamento")
+    tipo_operacion = Column(String(20), nullable=True)
     precio = Column(Integer, nullable=False)
+    moneda = Column(String(10), nullable=True)
     direccion = Column(String(200), nullable=False)
+    comuna = Column(String(100), nullable=True)
+    dormitorios = Column(Integer, nullable=True)
+    banos = Column(Integer, nullable=True)
     estado = Column(String(50), default="Disponible")
     fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())
 

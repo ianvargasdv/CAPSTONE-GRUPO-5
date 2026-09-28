@@ -70,11 +70,11 @@ LEADS = [
 ]
 
 PROPIEDADES = [
-    {"titulo": "[DEMO] Departamento Plaza Ñuñoa", "tipo": "Departamento", "precio": 169_000_000, "direccion": "Sector Plaza Ñuñoa, Ñuñoa", "estado": "Disponible"},
-    {"titulo": "[DEMO] Departamento Parque Macul", "tipo": "Departamento", "precio": 154_000_000, "direccion": "Sector Parque Macul, Macul", "estado": "Disponible"},
-    {"titulo": "[DEMO] Casa Familiar La Reina", "tipo": "Casa", "precio": 259_000_000, "direccion": "Sector Príncipe de Gales, La Reina", "estado": "Disponible"},
-    {"titulo": "[DEMO] Departamento Metro San Miguel", "tipo": "Departamento", "precio": 112_000_000, "direccion": "Sector Metro San Miguel, San Miguel", "estado": "Reservada"},
-    {"titulo": "[DEMO] Departamento Barrio Italia", "tipo": "Departamento", "precio": 790_000, "direccion": "Sector Barrio Italia, Providencia", "estado": "Disponible"},
+    {"titulo": "[DEMO] Departamento Plaza Ñuñoa", "tipo": "Departamento", "tipo_operacion": "Compra", "precio": 169_000_000, "moneda": "CLP", "direccion": "Sector Plaza Ñuñoa, Ñuñoa", "comuna": "Ñuñoa", "dormitorios": 2, "banos": 2, "estado": "Disponible"},
+    {"titulo": "[DEMO] Departamento Parque Macul", "tipo": "Departamento", "tipo_operacion": "Compra", "precio": 154_000_000, "moneda": "CLP", "direccion": "Sector Parque Macul, Macul", "comuna": "Macul", "dormitorios": 2, "banos": 2, "estado": "Disponible"},
+    {"titulo": "[DEMO] Casa Familiar La Reina", "tipo": "Casa", "tipo_operacion": "Compra", "precio": 259_000_000, "moneda": "CLP", "direccion": "Sector Príncipe de Gales, La Reina", "comuna": "La Reina", "dormitorios": 3, "banos": 2, "estado": "Disponible"},
+    {"titulo": "[DEMO] Departamento Metro San Miguel", "tipo": "Departamento", "tipo_operacion": "Compra", "precio": 112_000_000, "moneda": "CLP", "direccion": "Sector Metro San Miguel, San Miguel", "comuna": "San Miguel", "dormitorios": 2, "banos": 1, "estado": "Reservada"},
+    {"titulo": "[DEMO] Departamento Barrio Italia", "tipo": "Departamento", "tipo_operacion": "Arriendo", "precio": 790_000, "moneda": "CLP", "direccion": "Sector Barrio Italia, Providencia", "comuna": "Providencia", "dormitorios": 1, "banos": 1, "estado": "Disponible"},
 ]
 
 
@@ -110,6 +110,11 @@ def cargar() -> tuple[int, int, int, int]:
                 db.add(propiedad)
                 db.flush()
                 nuevas_propiedades += 1
+            else:
+                # Mantiene actualizado el escenario creado por versiones anteriores
+                # del script, sin duplicarlo ni alterar propiedades que no son demo.
+                for campo, valor in datos.items():
+                    setattr(propiedad, campo, valor)
             propiedades[datos["titulo"]] = propiedad
 
         relaciones = [

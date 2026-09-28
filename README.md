@@ -28,6 +28,7 @@ backend/
   database.py        Conexión a PostgreSQL
   seguridad.py       Contraseñas, tokens, roles y autorización
   prioridad.py       Reglas de priorización de leads
+  matching.py        Reglas explicables de coincidencia lead–propiedad
   ia.py              Integración con el modelo de lenguaje
   auditoria.py       Registro de quién hizo qué y comparación de cambios
   crear_usuario.py   Script para dar de alta usuarios
@@ -38,6 +39,7 @@ backend/
   prueba_validaciones.py  Verifica reglas de entrada y casos límite
   prueba_oportunidades.py  Verifica el avance, cierre y reapertura del pipeline
   prueba_visitas.py  Verifica agenda, cruces de horario, estados y auditoría
+  prueba_matching.py  Verifica puntaje, cobertura, orden y datos incompletos
 
 frontend/src/
   App.jsx            Estado general y navegación
@@ -163,7 +165,8 @@ leads          id, nombre, email, telefono, estado, prioridad, ejecutivo_id,
                comunas_interes, tipo_propiedad_buscada, dormitorios_min,
                banos_min, plazo_decision, financiamiento, origen,
                proxima_accion, fecha_proxima_accion, es_demo, fecha_creacion
-propiedades    id, titulo, tipo, precio, direccion, estado, fecha_creacion
+propiedades    id, titulo, tipo, tipo_operacion, precio, moneda, direccion,
+               comuna, dormitorios, banos, estado, fecha_creacion
 oportunidades  id, lead_id, propiedad_id, ejecutivo_id, tipo_operacion, etapa,
                valor_estimado, moneda, probabilidad, fecha_cierre_estimada,
                fecha_cierre, motivo_cierre, notas, fechas de creación/actualización
@@ -241,6 +244,24 @@ una comience exactamente cuando termina la anterior. Una visita realizada exige
 registrar su resultado y una cancelada exige el motivo. Las canceladas y las
 inasistencias dejan libre el horario. Todas las creaciones, cambios y eliminaciones
 quedan registradas en auditoría.
+
+## Matching lead–propiedad
+
+La ficha del lead ordena las propiedades disponibles según seis criterios: operación,
+tipo de inmueble, comuna, presupuesto, dormitorios y baños. El resultado muestra dos
+valores distintos: el porcentaje de coincidencia entre lo que sí pudo compararse y
+la cobertura, que indica cuántos datos estaban disponibles. Así una coincidencia de
+100% con solo un criterio cargado no se presenta como una recomendación completa.
+
+Cada criterio muestra si se cumple y la razón concreta. La comparación de comunas
+ignora mayúsculas y tildes, pero el presupuesto solo se compara cuando ambas monedas
+son iguales; el sistema no inventa una tasa UF/CLP. Las propiedades reservadas o
+vendidas no se recomiendan. Desde el resultado se puede marcar directamente una
+propiedad como interés del lead.
+
+El ranking se calcula con reglas en `matching.py`, no con IA. El modelo de lenguaje
+recibe los tres mejores resultados ya calculados para poder mencionarlos en un
+resumen o recomendación, pero no altera el puntaje.
 
 ## Priorización de leads
 
@@ -358,6 +379,7 @@ python prueba_validaciones.py
 python prueba_datos_demo.py
 python prueba_oportunidades.py
 python prueba_visitas.py
+python prueba_matching.py
 ```
 
 El orden de los próximos módulos y su criterio de terminado están en
@@ -410,10 +432,11 @@ y en Windows `localhost` se resuelve primero a IPv6. Se corrige creando
 ## Alcance del proyecto actual (MVP) 
 
 Implementado: leads con perfil comercial 360, oportunidades y pipeline, agenda de
-visitas, propiedades, interacciones, tareas, propiedades de interés,
+visitas, matching explicable, propiedades, interacciones, tareas, propiedades de interés,
 autenticación con roles, priorización de leads, asistente con IA (resumen y
 recomendación), seguimiento del consumo del agente, registro de actividad y vista de
 inicio.
 
-Pendiente: matching, comunicaciones, documentos y las mejoras de producción
+Pendiente: catálogo inmobiliario ampliado, equipo, automatizaciones, reportería,
+comunicaciones, documentos y las mejoras de producción
 detalladas en el roadmap.

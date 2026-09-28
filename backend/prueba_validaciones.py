@@ -70,6 +70,13 @@ perfil_valido = schemas.LeadCrear(
 )
 revisar(perfil_valido.presupuesto_max == 150_000_000,
         "acepta un perfil comercial completo y coherente")
+propiedad_valida = schemas.PropiedadCrear(
+    titulo="Departamento Ñuñoa", tipo="Departamento", tipo_operacion="Compra",
+    precio=4500, moneda="UF", direccion="Dirección de prueba", comuna="Ñuñoa",
+    dormitorios=2, banos=2,
+)
+revisar(propiedad_valida.moneda == "UF" and propiedad_valida.dormitorios == 2,
+        "acepta una propiedad con datos suficientes para matching")
 
 
 print("\n2. Entradas inválidas y límites")
@@ -90,6 +97,18 @@ rechaza(lambda: schemas.PropiedadCrear(titulo="Casa", precio=100, direccion="San
         "rechaza tipos de propiedad desconocidos")
 rechaza(lambda: schemas.PropiedadCrear(titulo="X" * 201, precio=100, direccion="Santiago"),
         "respeta el largo máximo del título")
+rechaza(lambda: schemas.PropiedadCrear(
+    titulo="Casa", precio=100, direccion="Santiago", tipo_operacion="Permuta"
+), "rechaza operaciones inválidas en propiedades")
+rechaza(lambda: schemas.PropiedadCrear(
+    titulo="Casa", precio=100, direccion="Santiago", moneda="USD"
+), "rechaza monedas no soportadas en propiedades")
+rechaza(lambda: schemas.PropiedadCrear(
+    titulo="Casa", precio=100, direccion="Santiago", dormitorios=21
+), "limita los dormitorios registrados en propiedades")
+rechaza(lambda: schemas.PropiedadCrear(
+    titulo="Casa", precio=100, direccion="Santiago", banos=-1
+), "rechaza baños negativos en propiedades")
 rechaza(lambda: schemas.InteraccionCrear(tipo="Telegram"),
         "rechaza canales de interacción no soportados")
 rechaza(lambda: schemas.TareaCrear(titulo="Llamar", estado="Archivada"),

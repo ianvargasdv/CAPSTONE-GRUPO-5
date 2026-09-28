@@ -50,7 +50,10 @@ CAMPOS_COMPARABLES = {
         "tipo_propiedad_buscada", "dormitorios_min", "banos_min", "plazo_decision",
         "financiamiento", "origen", "proxima_accion", "fecha_proxima_accion", "es_demo",
     ),
-    PROPIEDAD: ("titulo", "tipo", "precio", "direccion", "estado"),
+    PROPIEDAD: (
+        "titulo", "tipo", "tipo_operacion", "precio", "moneda", "direccion",
+        "comuna", "dormitorios", "banos", "estado",
+    ),
     OPORTUNIDAD: (
         "lead_id", "propiedad_id", "tipo_operacion", "etapa", "valor_estimado",
         "moneda", "probabilidad", "fecha_cierre_estimada", "fecha_cierre",

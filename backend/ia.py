@@ -210,7 +210,8 @@ def _fecha_hora(valor) -> str:
 
 
 def construir_ficha(
-    lead, interacciones, intereses, propiedades_por_id, tareas=(), oportunidades=(), visitas=()
+    lead, interacciones, intereses, propiedades_por_id, tareas=(), oportunidades=(), visitas=(),
+    coincidencias=(),
 ) -> str:
     """
     Arma el texto que se le envía al modelo a partir de los registros del lead.
@@ -229,6 +230,7 @@ def construir_ficha(
         tareas                sus tareas sin completar
         oportunidades         sus negocios abiertos o cerrados en el pipeline
         visitas               sus visitas agendadas y sus resultados registrados
+        coincidencias         ranking calculado por reglas, no por el modelo
     """
     lineas = [
         "FICHA DEL PROSPECTO",
@@ -305,6 +307,33 @@ def construir_ficha(
             lineas.append(texto)
     else:
         lineas.append("- Ninguna registrada")
+
+    lineas.append("")
+    lineas.append("COINCIDENCIAS CALCULADAS CON EL CATÁLOGO")
+    if coincidencias:
+        for coincidencia in coincidencias[:3]:
+            propiedad = coincidencia["propiedad"]
+            puntaje = coincidencia["puntaje"]
+            texto = (
+                f"- {propiedad.titulo}: "
+                f"{puntaje if puntaje is not None else 'sin puntaje'}% de coincidencia, "
+                f"{coincidencia['cobertura']}% de cobertura de datos"
+            )
+            cumplidos = [
+                criterio["nombre"] for criterio in coincidencia["criterios"]
+                if criterio["coincide"]
+            ]
+            no_cumplidos = [
+                criterio["nombre"] for criterio in coincidencia["criterios"]
+                if not criterio["coincide"]
+            ]
+            if cumplidos:
+                texto += f". Coincide en: {', '.join(cumplidos)}"
+            if no_cumplidos:
+                texto += f". No coincide en: {', '.join(no_cumplidos)}"
+            lineas.append(texto)
+    else:
+        lineas.append("- Sin propiedades disponibles o sin datos comparables")
 
     lineas.append("")
     lineas.append("AGENDA Y RESULTADOS DE VISITAS")

@@ -27,6 +27,9 @@ try:
     assert segunda == (0, 0, 0, 0), segunda
     assert len(leads) == 5
     assert len(propiedades) == 5
+    assert all(propiedad.tipo_operacion and propiedad.moneda for propiedad in propiedades)
+    assert all(propiedad.comuna for propiedad in propiedades)
+    assert all(propiedad.dormitorios is not None and propiedad.banos is not None for propiedad in propiedades)
     assert all(lead.email.endswith("@example.test") for lead in leads)
     assert all(lead.presupuesto_min <= lead.presupuesto_max for lead in leads)
     assert db.query(models.Interes).count() == 5
@@ -43,4 +46,4 @@ finally:
     if os.path.exists(RUTA_BD):
         os.remove(RUTA_BD)
 
-print("Las 14 verificaciones de datos demo pasaron")
+print("Las 17 verificaciones de datos demo pasaron")

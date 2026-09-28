@@ -8,6 +8,7 @@ import {
   crearPropiedad,
   actualizarPropiedad,
   eliminarPropiedad,
+  obtenerMatching,
   obtenerOportunidades,
   crearOportunidad,
   actualizarOportunidad,
@@ -54,6 +55,7 @@ import FormularioOportunidad from './components/FormularioOportunidad';
 import FormularioVisita from './components/FormularioVisita';
 import FormularioInteraccion from './components/FormularioInteraccion';
 import PropiedadesInteres from './components/PropiedadesInteres';
+import MatchingPropiedades from './components/MatchingPropiedades';
 import HistorialInteracciones from './components/HistorialInteracciones';
 import AsistenteIA from './components/AsistenteIA';
 import ConsumoIA from './components/ConsumoIA';
@@ -184,6 +186,9 @@ function App() {
   const [intereses, setIntereses] = useState([]);
   const [cargandoIntereses, setCargandoIntereses] = useState(false);
   const [errorIntereses, setErrorIntereses] = useState(null);
+  const [matching, setMatching] = useState([]);
+  const [cargandoMatching, setCargandoMatching] = useState(false);
+  const [errorMatching, setErrorMatching] = useState(null);
   const [analisis, setAnalisis] = useState([]);
   const [cargandoAnalisis, setCargandoAnalisis] = useState(false);
   const [errorAnalisis, setErrorAnalisis] = useState(null);
@@ -297,6 +302,7 @@ function App() {
     setFichaLead(null);
     setInteracciones([]);
     setIntereses([]);
+    setMatching([]);
     setVista('inicio');
   };
 
@@ -384,9 +390,11 @@ function App() {
     setAnalisis([]);
     setCargandoInteracciones(true);
     setCargandoIntereses(true);
+    setCargandoMatching(true);
     setCargandoAnalisis(true);
     setErrorInteracciones(null);
     setErrorIntereses(null);
+    setErrorMatching(null);
     setErrorAnalisis(null);
 
     try {
@@ -406,6 +414,14 @@ function App() {
     }
 
     try {
+      setMatching(await obtenerMatching(lead.id));
+    } catch {
+      setErrorMatching('No se pudieron calcular las coincidencias del catálogo.');
+    } finally {
+      setCargandoMatching(false);
+    }
+
+    try {
       setAnalisis(await obtenerAnalisis(lead.id));
     } catch {
       setErrorAnalisis('No se pudieron cargar los resúmenes del lead.');
@@ -418,6 +434,7 @@ function App() {
     setFichaLead(null);
     setInteracciones([]);
     setIntereses([]);
+    setMatching([]);
     setAnalisis([]);
   };
 
@@ -1074,6 +1091,20 @@ function App() {
                 </p>
               </div>
             )}
+
+            <div className="ficha-seccion">
+              <div className="ficha-seccion-encabezado">
+                <span className="ficha-seccion-titulo">Propiedades recomendadas</span>
+                <span className="etiqueta info">Reglas verificables</span>
+              </div>
+              <MatchingPropiedades
+                resultados={matching}
+                cargando={cargandoMatching}
+                error={errorMatching}
+                intereses={intereses}
+                alAsociar={guardarInteres}
+              />
+            </div>
 
             <div className="ficha-seccion">
               <AsistenteIA
