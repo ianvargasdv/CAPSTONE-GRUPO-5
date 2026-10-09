@@ -70,10 +70,15 @@ probarse y demostrarse por separado antes de pasar al siguiente.
 
 ### M6. Catálogo inmobiliario completo
 
+**Estado: MVP implementado localmente; pendiente migración y demostración sobre PostgreSQL.**
+
 - Código interno, venta/arriendo, moneda y estado de publicación.
 - Superficie, dormitorios, baños, estacionamiento y bodega.
 - Gastos comunes, disponibilidad, características y fotografías.
 - Datos del propietario/captador con permisos apropiados.
+
+Las fotografías se registran por enlace y el captador como texto. No incluye
+almacenamiento de archivos ni asignación de cartera (M7).
 
 ### M7. Equipo y asignación de cartera
 

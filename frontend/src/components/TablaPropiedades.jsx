@@ -18,6 +18,8 @@ const TONO_ESTADO = {
   Disponible: 'exito',
   Reservada: 'alerta',
   Vendida: 'neutra',
+  Arrendada: 'neutra',
+  Retirada: 'neutra',
 };
 
 const ICONO_TIPO = {
@@ -108,6 +110,8 @@ function TablaPropiedades({ propiedades, cargando, error, alEditar, alPedirElimi
           <option value="Disponible">Disponible</option>
           <option value="Reservada">Reservada</option>
           <option value="Vendida">Vendida</option>
+          <option value="Arrendada">Arrendada</option>
+          <option value="Retirada">Retirada</option>
         </select>
 
         <span className="results-count">
@@ -140,6 +144,10 @@ function TablaPropiedades({ propiedades, cargando, error, alEditar, alPedirElimi
                     <div className="celda-doble">
                       <span className="celda-principal">{prop.titulo}</span>
                       <span className="celda-secundaria">{prop.comuna || 'Comuna sin registrar'} · {prop.direccion}</span>
+                      <details className="catalogo-detalle">
+                        <summary>Ver ficha y fotografías</summary>
+                        <FichaCatalogo propiedad={prop} />
+                      </details>
                     </div>
                   </td>
 
@@ -192,3 +200,29 @@ function TablaPropiedades({ propiedades, cargando, error, alEditar, alPedirElimi
 }
 
 export default TablaPropiedades;
+
+function FotoCatalogo({ url, titulo }) {
+  const [fallo, setFallo] = useState(false);
+  return fallo ? <span>Fotografía no disponible</span> : <img className="catalogo-foto" src={url} alt={titulo}
+    loading="lazy" referrerPolicy="no-referrer" onError={() => setFallo(true)} />;
+}
+
+function FichaCatalogo({ propiedad: p }) {
+  const fotos = p.fotografias || [];
+  const ordenadas = p.foto_principal ? [p.foto_principal, ...fotos.filter(url => url !== p.foto_principal)] : fotos;
+  return <div>
+    <dl>
+      {[['Código', p.codigo_interno], ['Superficie útil (m²)', p.superficie_util], ['Superficie total (m²)', p.superficie_total],
+        ['Estacionamientos', p.estacionamientos], ['Bodega', p.bodega == null ? null : p.bodega ? 'Sí' : 'No'],
+        ['Gastos comunes (CLP)', p.gastos_comunes], ['Disponibilidad desde', p.fecha_disponibilidad],
+        ['Descripción', p.descripcion], ['Características', p.caracteristicas]].map(([etiqueta, valor]) =>
+          <div key={etiqueta}><dt>{etiqueta}</dt><dd>{valor ?? 'Sin registrar'}</dd></div>)}
+      {(p.propietario_nombre || p.propietario_email || p.propietario_telefono || p.captador) && <>
+        <dt>Propietario (administración)</dt><dd>{p.propietario_nombre || 'Sin registrar'}</dd>
+        <dt>Contacto</dt><dd>{[p.propietario_email, p.propietario_telefono].filter(Boolean).join(' · ') || 'Sin registrar'}</dd>
+        <dt>Captador</dt><dd>{p.captador || 'Sin registrar'}</dd>
+      </>}
+    </dl>
+    {ordenadas.length ? <div className="catalogo-galeria">{ordenadas.map((url, i) => <FotoCatalogo key={url} url={url} titulo={`${p.titulo}, fotografía ${i + 1}`} />)}</div> : <p>Sin fotografías registradas</p>}
+  </div>;
+}

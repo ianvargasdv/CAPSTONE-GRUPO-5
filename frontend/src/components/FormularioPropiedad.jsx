@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import CamposCatalogo, { CAMPOS_NUMERICOS_CATALOGO, CAMPOS_PRIVADOS_CATALOGO } from './CamposCatalogo';
 
 /**
  * Formulario para crear o editar una propiedad. Se muestra dentro de un panel lateral.
@@ -8,7 +9,8 @@ import React, { useState, useEffect } from 'react';
  * - propiedadEditar: propiedad con datos precargados en modo edición (opcional)
  * - alCancelar: cierra el panel sin guardar
  */
-function FormularioPropiedad({ alGuardar, propiedadEditar, alCancelar }) {
+function FormularioPropiedad({ alGuardar, propiedadEditar, alCancelar, esAdmin = false }) {
+  const [catalogo, setCatalogo] = useState({});
   const [titulo, setTitulo] = useState('');
   const [tipo, setTipo] = useState('Departamento');
   const [tipoOperacion, setTipoOperacion] = useState('Compra');
@@ -25,6 +27,11 @@ function FormularioPropiedad({ alGuardar, propiedadEditar, alCancelar }) {
   const modoEdicion = Boolean(propiedadEditar);
 
   useEffect(() => {
+    setCatalogo({
+      ...(propiedadEditar || {}),
+      fotografiasTexto: (propiedadEditar?.fotografias || []).join('\n'),
+      bodega: propiedadEditar?.bodega == null ? '' : propiedadEditar.bodega ? 'si' : 'no',
+    });
     if (propiedadEditar) {
       setTitulo(propiedadEditar.titulo || '');
       setTipo(propiedadEditar.tipo || 'Departamento');
@@ -61,7 +68,19 @@ function FormularioPropiedad({ alGuardar, propiedadEditar, alCancelar }) {
     try {
       setCargando(true);
       setError(null);
+      const adicionales = {};
+      for (const nombre of ['codigo_interno', 'fecha_disponibilidad', 'descripcion', 'caracteristicas']) {
+        adicionales[nombre] = catalogo[nombre]?.trim() || null;
+      }
+      for (const nombre of CAMPOS_NUMERICOS_CATALOGO) {
+        adicionales[nombre] = catalogo[nombre] == null || catalogo[nombre] === '' ? null : Number(catalogo[nombre]);
+      }
+      adicionales.bodega = catalogo.bodega === '' || catalogo.bodega == null ? null : catalogo.bodega === 'si';
+      adicionales.fotografias = (catalogo.fotografiasTexto || '').split('\n').map(url => url.trim()).filter(Boolean);
+      adicionales.foto_principal = catalogo.foto_principal || null;
+      if (esAdmin) for (const nombre of CAMPOS_PRIVADOS_CATALOGO) adicionales[nombre] = catalogo[nombre]?.trim() || null;
       await alGuardar({
+        ...adicionales,
         titulo: titulo.trim(),
         tipo,
         tipo_operacion: tipoOperacion,
@@ -179,8 +198,12 @@ function FormularioPropiedad({ alGuardar, propiedadEditar, alCancelar }) {
             <option value="Disponible">Disponible</option>
             <option value="Reservada">Reservada</option>
             <option value="Vendida">Vendida</option>
+            <option value="Arrendada">Arrendada</option>
+            <option value="Retirada">Retirada</option>
           </select>
         </div>
+        <CamposCatalogo datos={catalogo} esAdmin={esAdmin} deshabilitado={cargando}
+          alCambiar={(nombre, valor) => setCatalogo(prev => ({ ...prev, [nombre]: valor }))} />
       </div>
 
       <div className="form-actions">

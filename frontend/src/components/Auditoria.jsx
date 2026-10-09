@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Icono from './Iconos';
 import { obtenerAuditoria, obtenerFiltrosAuditoria } from '../api';
 
@@ -80,6 +80,7 @@ function Auditoria() {
   const [opciones, setOpciones] = useState({ entidades: [], acciones: [], usuarios: [] });
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
+  const [detalleAbierto, setDetalleAbierto] = useState(null);
 
   // Las opciones de los selectores no cambian con los filtros, se piden una vez
   useEffect(() => {
@@ -111,6 +112,7 @@ function Auditoria() {
   }, [filtros, busquedaAplicada, pagina]);
 
   useEffect(() => {
+    setDetalleAbierto(null);
     cargar();
   }, [cargar]);
 
@@ -311,7 +313,11 @@ function Auditoria() {
                     </td>
                     <td className="celda-detalle">
                       {registro.detalle ? (
-                        <code>{registro.detalle}</code>
+                        <DetalleActividad
+                          registro={registro}
+                          abierto={detalleAbierto === registro.id}
+                          alAlternar={() => setDetalleAbierto(actual => actual === registro.id ? null : registro.id)}
+                        />
                       ) : (
                         <span className="texto-suave">—</span>
                       )}
@@ -347,8 +353,54 @@ function Auditoria() {
           )}
         </>
       )}
+      {detalleAbierto != null && registros.some(registro => registro.id === detalleAbierto) && (
+        <ModalDetalleActividad
+          registro={registros.find(registro => registro.id === detalleAbierto)}
+          alCerrar={() => setDetalleAbierto(null)}
+        />
+      )}
     </div>
   );
 }
 
 export default Auditoria;
+
+export function DetalleActividad({ registro, abierto, alAlternar }) {
+  if (registro.detalle.length <= 140) return <span>{registro.detalle}</span>;
+  return <div className="detalle-actividad-resumen">
+    <span className="detalle-actividad-preview">{registro.detalle}</span>
+    <button type="button" className="detalle-actividad-boton" onClick={alAlternar}
+      aria-haspopup="dialog" aria-controls={abierto ? `detalle-actividad-${registro.id}` : undefined}>
+      Ver detalle completo
+    </button>
+  </div>;
+}
+
+export function ModalDetalleActividad({ registro, alCerrar }) {
+  const ventana = useRef(null);
+  useEffect(() => {
+    // El diálogo nativo mantiene el foco dentro y lo devuelve al botón al cerrar.
+    const dialogo = ventana.current;
+    dialogo.showModal();
+    return () => dialogo.close();
+  }, []);
+
+  return <dialog ref={ventana} className="actividad-dialogo" id={`detalle-actividad-${registro.id}`}
+    aria-labelledby={`titulo-detalle-${registro.id}`} onCancel={alCerrar}
+    onClick={evento => {
+      if (evento.target !== evento.currentTarget) return;
+      const limites = evento.currentTarget.getBoundingClientRect();
+      if (evento.clientX < limites.left || evento.clientX > limites.right ||
+          evento.clientY < limites.top || evento.clientY > limites.bottom) alCerrar();
+    }}>
+    <div className="actividad-dialogo-encabezado">
+      <h2 id={`titulo-detalle-${registro.id}`}>Detalle de actividad</h2>
+      <button type="button" className="btn-secondary" onClick={alCerrar} autoFocus>Cerrar</button>
+    </div>
+    <div className="actividad-dialogo-cuerpo">
+      <strong>{registro.descripcion || 'Registro de actividad'}</strong>
+      <p className="texto-suave">{fechaHora(registro.fecha_creacion)} · {registro.usuario_email || 'Sin usuario'}</p>
+      <p className="actividad-dialogo-texto">{registro.detalle}</p>
+    </div>
+  </dialog>;
+}

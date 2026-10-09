@@ -106,6 +106,21 @@ CAMBIOS = [
     ("propiedades: comuna", "ALTER TABLE propiedades ADD COLUMN IF NOT EXISTS comuna VARCHAR(100)"),
     ("propiedades: dormitorios", "ALTER TABLE propiedades ADD COLUMN IF NOT EXISTS dormitorios INTEGER"),
     ("propiedades: baños", "ALTER TABLE propiedades ADD COLUMN IF NOT EXISTS banos INTEGER"),
+    ("propiedades: código", "ALTER TABLE propiedades ADD COLUMN IF NOT EXISTS codigo_interno VARCHAR(100)"),
+    ("propiedades: superficie útil", "ALTER TABLE propiedades ADD COLUMN IF NOT EXISTS superficie_util DOUBLE PRECISION"),
+    ("propiedades: superficie total", "ALTER TABLE propiedades ADD COLUMN IF NOT EXISTS superficie_total DOUBLE PRECISION"),
+    ("propiedades: estacionamientos", "ALTER TABLE propiedades ADD COLUMN IF NOT EXISTS estacionamientos INTEGER"),
+    ("propiedades: bodega", "ALTER TABLE propiedades ADD COLUMN IF NOT EXISTS bodega BOOLEAN"),
+    ("propiedades: gastos comunes", "ALTER TABLE propiedades ADD COLUMN IF NOT EXISTS gastos_comunes BIGINT"),
+    ("propiedades: disponibilidad", "ALTER TABLE propiedades ADD COLUMN IF NOT EXISTS fecha_disponibilidad DATE"),
+    ("propiedades: descripción", "ALTER TABLE propiedades ADD COLUMN IF NOT EXISTS descripcion TEXT"),
+    ("propiedades: características", "ALTER TABLE propiedades ADD COLUMN IF NOT EXISTS caracteristicas TEXT"),
+    ("propiedades: fotografías", "ALTER TABLE propiedades ADD COLUMN IF NOT EXISTS fotografias JSON NOT NULL DEFAULT '[]'"),
+    ("propiedades: fotografía principal", "ALTER TABLE propiedades ADD COLUMN IF NOT EXISTS foto_principal VARCHAR(2048)"),
+    ("propiedades: propietario", "ALTER TABLE propiedades ADD COLUMN IF NOT EXISTS propietario_nombre VARCHAR(100)"),
+    ("propiedades: correo propietario", "ALTER TABLE propiedades ADD COLUMN IF NOT EXISTS propietario_email VARCHAR(150)"),
+    ("propiedades: teléfono propietario", "ALTER TABLE propiedades ADD COLUMN IF NOT EXISTS propietario_telefono VARCHAR(20)"),
+    ("propiedades: captador", "ALTER TABLE propiedades ADD COLUMN IF NOT EXISTS captador VARCHAR(100)"),
 ]
 
 

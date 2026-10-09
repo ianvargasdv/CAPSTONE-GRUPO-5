@@ -53,6 +53,10 @@ CAMPOS_COMPARABLES = {
     PROPIEDAD: (
         "titulo", "tipo", "tipo_operacion", "precio", "moneda", "direccion",
         "comuna", "dormitorios", "banos", "estado",
+        "codigo_interno", "superficie_util", "superficie_total", "estacionamientos",
+        "bodega", "gastos_comunes", "fecha_disponibilidad", "descripcion",
+        "caracteristicas", "fotografias", "foto_principal", "propietario_nombre",
+        "propietario_email", "propietario_telefono", "captador",
     ),
     OPORTUNIDAD: (
         "lead_id", "propiedad_id", "tipo_operacion", "etapa", "valor_estimado",

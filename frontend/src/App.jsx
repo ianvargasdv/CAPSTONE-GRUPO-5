@@ -769,7 +769,7 @@ function App() {
           )}
         </header>
 
-        <main className="cuerpo-pagina">
+        <main className={`cuerpo-pagina${vista === 'auditoria' ? ' cuerpo-pagina-amplio' : ''}`}>
           {vista === 'inicio' && (
             <Dashboard
               leads={leads}
@@ -889,6 +889,7 @@ function App() {
 
         {panelForm?.entidad === 'propiedad' && (
           <FormularioPropiedad
+            esAdmin={usuario.rol === 'admin'}
             alGuardar={guardarPropiedad}
             propiedadEditar={panelForm.registro}
             alCancelar={cerrarPanelForm}

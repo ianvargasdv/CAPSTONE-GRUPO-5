@@ -1,11 +1,13 @@
 from sqlalchemy import (
     Boolean,
+    BigInteger,
     Column,
     Date,
     DateTime,
     Float,
     ForeignKey,
     Integer,
+    JSON,
     String,
     Text,
     UniqueConstraint,
@@ -89,6 +91,21 @@ class Propiedad(Base):
     dormitorios = Column(Integer, nullable=True)
     banos = Column(Integer, nullable=True)
     estado = Column(String(50), default="Disponible")
+    codigo_interno = Column(String(100), nullable=True)
+    superficie_util = Column(Float, nullable=True)
+    superficie_total = Column(Float, nullable=True)
+    estacionamientos = Column(Integer, nullable=True)
+    bodega = Column(Boolean, nullable=True)
+    gastos_comunes = Column(BigInteger, nullable=True)
+    fecha_disponibilidad = Column(Date, nullable=True)
+    descripcion = Column(Text, nullable=True)
+    caracteristicas = Column(Text, nullable=True)
+    fotografias = Column(JSON, nullable=False, default=list)
+    foto_principal = Column(String(2048), nullable=True)
+    propietario_nombre = Column(String(100), nullable=True)
+    propietario_email = Column(String(150), nullable=True)
+    propietario_telefono = Column(String(20), nullable=True)
+    captador = Column(String(100), nullable=True)
     fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())
 
 

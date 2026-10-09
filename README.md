@@ -40,6 +40,7 @@ backend/
   prueba_oportunidades.py  Verifica el avance, cierre y reapertura del pipeline
   prueba_visitas.py  Verifica agenda, cruces de horario, estados y auditoría
   prueba_matching.py  Verifica puntaje, cobertura, orden y datos incompletos
+  prueba_catalogo.py  Verifica ficha, fotografías, estados, permisos y auditoría
 
 frontend/src/
   App.jsx            Estado general y navegación
@@ -380,6 +381,7 @@ python prueba_datos_demo.py
 python prueba_oportunidades.py
 python prueba_visitas.py
 python prueba_matching.py
+python prueba_catalogo.py
 ```
 
 El orden de los próximos módulos y su criterio de terminado están en
@@ -432,11 +434,24 @@ y en Windows `localhost` se resuelve primero a IPv6. Se corrige creando
 ## Alcance del proyecto actual (MVP) 
 
 Implementado: leads con perfil comercial 360, oportunidades y pipeline, agenda de
-visitas, matching explicable, propiedades, interacciones, tareas, propiedades de interés,
+visitas, matching explicable, catálogo ampliado de propiedades, interacciones, tareas, propiedades de interés,
 autenticación con roles, priorización de leads, asistente con IA (resumen y
 recomendación), seguimiento del consumo del agente, registro de actividad y vista de
 inicio.
 
-Pendiente: catálogo inmobiliario ampliado, equipo, automatizaciones, reportería,
+El catálogo permite registrar código interno, superficies, estacionamientos, bodega,
+gastos comunes en CLP, disponibilidad, descripción y características. Admite hasta
+20 fotografías por enlaces HTTP/HTTPS y una principal; no sube archivos ni comprueba
+que los enlaces externos sigan disponibles. Si una imagen falla se muestra un aviso.
+El captador se registra como texto, sin crear usuarios ni asignaciones de cartera.
+Solo administración puede consultar y editar los datos del propietario y captador;
+los ejecutivos pueden gestionar el resto de la ficha. Solo las propiedades en estado
+Disponible aparecen en el matching. Los cambios quedan auditados.
+
+Antes de usar estos campos sobre una base PostgreSQL existente, ejecutar
+`python migrar.py` desde `backend`, con la conexión configurada. Las pruebas del
+catálogo usan SQLite temporal: no aplican esa migración sobre Supabase.
+
+Pendiente: equipo, automatizaciones, reportería,
 comunicaciones, documentos y las mejoras de producción
 detalladas en el roadmap.

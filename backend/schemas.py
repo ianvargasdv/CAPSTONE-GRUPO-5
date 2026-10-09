@@ -1,7 +1,7 @@
 import re
 from typing import Annotated, List, Literal, Optional
 
-from pydantic import BaseModel, Field, StringConstraints, field_validator, model_validator
+from pydantic import BaseModel, Field, HttpUrl, StringConstraints, field_validator, model_validator
 from datetime import date, datetime
 
 
@@ -11,7 +11,7 @@ from datetime import date, datetime
 EstadoLead = Literal["Nuevo", "Contactado", "Calificado", "Cerrado"]
 Prioridad = Literal["Alta", "Media", "Baja"]
 TipoPropiedad = Literal["Departamento", "Casa", "Terreno", "Oficina"]
-EstadoPropiedad = Literal["Disponible", "Reservada", "Vendida"]
+EstadoPropiedad = Literal["Disponible", "Reservada", "Vendida", "Arrendada", "Retirada"]
 TipoInteraccion = Literal["Llamada", "Email", "Visita", "WhatsApp"]
 EstadoTarea = Literal["Pendiente", "En Progreso", "Completada"]
 NivelInteres = Literal["Alto", "Medio", "Bajo"]
@@ -154,7 +154,53 @@ class LeadRespuesta(LeadBase):
         from_attributes = True
 
 
-class PropiedadBase(BaseModel):
+class DatosCatalogo(BaseModel):
+    codigo_interno: Optional[Nombre] = None
+    superficie_util: Optional[float] = Field(default=None, ge=0, allow_inf_nan=False)
+    superficie_total: Optional[float] = Field(default=None, ge=0, allow_inf_nan=False)
+    estacionamientos: Optional[int] = Field(default=None, ge=0, le=100)
+    bodega: Optional[bool] = None
+    gastos_comunes: Optional[int] = Field(default=None, ge=0, le=999_999_999_999)
+    fecha_disponibilidad: Optional[date] = None
+    descripcion: Optional[TextoLargo] = None
+    caracteristicas: Optional[TextoLargo] = None
+    fotografias: List[str] = Field(default_factory=list, max_length=20)
+    foto_principal: Optional[str] = Field(default=None, max_length=2048)
+    propietario_nombre: Optional[Nombre] = None
+    propietario_email: Optional[Correo] = None
+    propietario_telefono: Optional[Telefono] = None
+    captador: Optional[Nombre] = None
+
+    @field_validator("fotografias")
+    @classmethod
+    def validar_fotografias(cls, valores):
+        urls = []
+        for valor in valores:
+            if len(valor) > 2048:
+                raise ValueError("El enlace de fotografía es demasiado largo")
+            url = str(HttpUrl(valor))
+            if url in urls:
+                raise ValueError("No repitas enlaces de fotografías")
+            urls.append(url)
+        return urls
+
+    @field_validator("foto_principal")
+    @classmethod
+    def validar_foto_principal(cls, valor):
+        return str(HttpUrl(valor)) if valor is not None else None
+
+    @field_validator("propietario_email")
+    @classmethod
+    def validar_email_propietario(cls, valor):
+        return _validar_correo(valor) if valor is not None else None
+
+    @field_validator("propietario_telefono")
+    @classmethod
+    def validar_telefono_propietario(cls, valor):
+        return _validar_telefono(valor)
+
+
+class PropiedadBase(DatosCatalogo):
     titulo: TextoCorto
     tipo: TipoPropiedad = "Departamento"
     tipo_operacion: Optional[TipoOperacion] = "Compra"
@@ -166,13 +212,22 @@ class PropiedadBase(BaseModel):
     banos: Optional[int] = Field(default=None, ge=0, le=20)
     estado: EstadoPropiedad = "Disponible"
 
+    @model_validator(mode="after")
+    def validar_ficha(self):
+        if self.superficie_util is not None and self.superficie_total is not None:
+            if self.superficie_util > self.superficie_total:
+                raise ValueError("La superficie útil no puede superar la total")
+        if self.foto_principal is not None and self.foto_principal not in self.fotografias:
+            raise ValueError("La fotografía principal debe pertenecer a la galería")
+        return self
+
 
 class PropiedadCrear(PropiedadBase):
     """Esquema utilizado para registrar una nueva propiedad."""
     pass
 
 
-class PropiedadActualizar(BaseModel):
+class PropiedadActualizar(DatosCatalogo):
     """
     Esquema para actualizar una propiedad existente.
     Todos los campos son opcionales para permitir actualizaciones parciales.

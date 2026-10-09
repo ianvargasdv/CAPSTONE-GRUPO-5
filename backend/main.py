@@ -364,10 +364,32 @@ def eliminar_lead(
 
 
 @router_privado.get("/propiedades", response_model=List[schemas.PropiedadRespuesta])
-def listar_propiedades(db: Session = Depends(database.obtener_db)):
+def listar_propiedades(
+    db: Session = Depends(database.obtener_db),
+    usuario: models.Usuario = Depends(seguridad.usuario_actual),
+):
     """Obtiene el catálogo de todas las propiedades registradas."""
     propiedades = db.query(models.Propiedad).all()
-    return propiedades
+    return [_respuesta_propiedad(propiedad, usuario) for propiedad in propiedades]
+
+
+CAMPOS_PRIVADOS_PROPIEDAD = (
+    "propietario_nombre", "propietario_email", "propietario_telefono", "captador",
+)
+
+
+def _respuesta_propiedad(propiedad, usuario):
+    # Serializar una copia evita borrar datos del ORM al ocultarlos por permisos.
+    respuesta = schemas.PropiedadRespuesta.model_validate(propiedad)
+    if getattr(usuario, "rol", None) != seguridad.ROL_ADMIN:
+        respuesta = respuesta.model_copy(update={campo: None for campo in CAMPOS_PRIVADOS_PROPIEDAD})
+    return respuesta
+
+
+def _validar_campos_privados_propiedad(campos, usuario):
+    if getattr(usuario, "rol", None) != seguridad.ROL_ADMIN:
+        if any(campo in campos for campo in CAMPOS_PRIVADOS_PROPIEDAD):
+            raise HTTPException(status_code=403, detail="Solo administración puede modificar propietario y captador")
 
 
 @router_privado.post("/propiedades", response_model=schemas.PropiedadRespuesta, status_code=status.HTTP_201_CREATED)
@@ -377,6 +399,7 @@ def crear_propiedad(
     usuario: models.Usuario = Depends(seguridad.usuario_actual),
 ):
     """Registra una nueva propiedad en la base de datos."""
+    _validar_campos_privados_propiedad(propiedad.model_dump(exclude_unset=True), usuario)
     nueva_propiedad = models.Propiedad(**propiedad.model_dump())
     db.add(nueva_propiedad)
     db.flush()
@@ -392,7 +415,7 @@ def crear_propiedad(
 
     db.commit()
     db.refresh(nueva_propiedad)
-    return nueva_propiedad
+    return _respuesta_propiedad(nueva_propiedad, usuario)
 
 
 @router_privado.put("/propiedades/{propiedad_id}", response_model=schemas.PropiedadRespuesta)
@@ -411,9 +434,19 @@ def actualizar_propiedad(
     if not propiedad:
         raise HTTPException(status_code=404, detail="Propiedad no encontrada")
 
+    campos = datos.model_dump(exclude_unset=True)
+    _validar_campos_privados_propiedad(campos, usuario)
+    # Validar la ficha completa también en una actualización parcial: los campos
+    # omitidos conservan su valor y deben seguir siendo coherentes con los nuevos.
+    actuales = schemas.PropiedadRespuesta.model_validate(propiedad).model_dump()
+    try:
+        schemas.PropiedadCrear.model_validate({**actuales, **campos})
+    except ValueError:
+        raise HTTPException(status_code=422, detail="Revisa los campos obligatorios, las superficies y la fotografía principal")
+
     antes = auditoria.instantanea(propiedad, auditoria.PROPIEDAD)
 
-    for campo, valor in datos.model_dump(exclude_unset=True).items():
+    for campo, valor in campos.items():
         setattr(propiedad, campo, valor)
 
     auditoria.registrar(
@@ -428,7 +461,7 @@ def actualizar_propiedad(
 
     db.commit()
     db.refresh(propiedad)
-    return propiedad
+    return _respuesta_propiedad(propiedad, usuario)
 
 
 @router_privado.delete("/propiedades/{propiedad_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -465,7 +498,11 @@ def eliminar_propiedad(
     "/leads/{lead_id}/matching",
     response_model=List[schemas.MatchingPropiedadRespuesta],
 )
-def obtener_matching(lead_id: int, db: Session = Depends(database.obtener_db)):
+def obtener_matching(
+    lead_id: int,
+    db: Session = Depends(database.obtener_db),
+    usuario: models.Usuario = Depends(seguridad.usuario_actual),
+):
     """Ordena las propiedades disponibles según el perfil declarado por el lead."""
     lead = db.query(models.Lead).filter(models.Lead.id == lead_id).first()
     if not lead:
@@ -475,7 +512,10 @@ def obtener_matching(lead_id: int, db: Session = Depends(database.obtener_db)):
         .filter(models.Propiedad.estado == "Disponible")
         .all()
     )
-    return matching.ordenar_matches(lead, propiedades)
+    resultados = matching.ordenar_matches(lead, propiedades)
+    for resultado in resultados:
+        resultado["propiedad"] = _respuesta_propiedad(resultado["propiedad"], usuario)
+    return resultados
 
 
 # ══════════════════════════════════════════════════════════════
