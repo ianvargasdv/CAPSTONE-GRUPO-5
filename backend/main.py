@@ -218,6 +218,80 @@ def listar_leads(db: Session = Depends(database.obtener_db)):
     return leads
 
 
+def _registrar_asignacion(db, lead, anterior, nuevo, autor):
+    db.add(models.AsignacionLead(
+        lead_id=lead.id, lead_nombre=lead.nombre,
+        anterior_id=anterior.id if anterior else None,
+        anterior_nombre=anterior.nombre if anterior else None,
+        nuevo_id=nuevo.id, nuevo_nombre=nuevo.nombre,
+        autor_id=autor.id, autor_nombre=autor.nombre,
+    ))
+
+
+@router_privado.get("/ejecutivos", response_model=List[schemas.UsuarioAsignable])
+def listar_ejecutivos(
+    db: Session = Depends(database.obtener_db),
+    usuario: models.Usuario = Depends(seguridad.solo_admin),
+):
+    # Administración también puede trabajar leads, como ya ocurre al crearlos.
+    return db.query(models.Usuario).filter(
+        models.Usuario.activo.is_(True), models.Usuario.rol.in_(["admin", "ejecutivo"])
+    ).order_by(models.Usuario.nombre, models.Usuario.id).all()
+
+
+@router_privado.get("/leads/{lead_id}/asignaciones", response_model=schemas.AsignacionesPagina)
+def listar_asignaciones(
+    lead_id: int,
+    pagina: int = Query(1, ge=1),
+    por_pagina: int = Query(20, ge=1, le=100),
+    db: Session = Depends(database.obtener_db),
+):
+    if not db.query(models.Lead.id).filter(models.Lead.id == lead_id).first():
+        raise HTTPException(status_code=404, detail="Lead no encontrado")
+    consulta = db.query(models.AsignacionLead).filter(models.AsignacionLead.lead_id == lead_id)
+    total = consulta.count()
+    items = consulta.order_by(models.AsignacionLead.id.desc()).offset((pagina - 1) * por_pagina).limit(por_pagina).all()
+    return {"items": items, "total": total, "pagina": pagina, "por_pagina": por_pagina}
+
+
+@router_privado.put("/leads/{lead_id}/asignacion", response_model=schemas.LeadRespuesta)
+def asignar_lead(
+    lead_id: int,
+    datos: schemas.LeadAsignar,
+    db: Session = Depends(database.obtener_db),
+    usuario: models.Usuario = Depends(seguridad.solo_admin),
+):
+    # Serializa los cambios del mismo lead en PostgreSQL y detecta fichas antiguas.
+    lead = db.query(models.Lead).filter(models.Lead.id == lead_id).with_for_update().first()
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead no encontrado")
+    if lead.ejecutivo_id != datos.ejecutivo_anterior_id:
+        raise HTTPException(status_code=409, detail="El responsable cambió. Actualiza la ficha antes de reasignar.")
+    nuevo = db.query(models.Usuario).filter(
+        models.Usuario.id == datos.ejecutivo_id,
+        models.Usuario.activo.is_(True),
+        models.Usuario.rol.in_(["admin", "ejecutivo"]),
+    ).first()
+    if not nuevo:
+        raise HTTPException(status_code=422, detail="Selecciona un usuario activo como responsable")
+    if lead.ejecutivo_id != nuevo.id:
+        anterior = db.get(models.Usuario, lead.ejecutivo_id) if lead.ejecutivo_id is not None else None
+        previo = anterior.nombre if anterior else "Sin asignar"
+        _registrar_asignacion(db, lead, anterior, nuevo, usuario)
+        lead.ejecutivo_id = nuevo.id
+        auditoria.registrar(
+            db, usuario, auditoria.ACTUALIZAR, auditoria.LEAD, lead.id,
+            f"Cambió el responsable del lead {lead.nombre}",
+            f"ejecutivo: {previo} -> {nuevo.nombre}",
+        )
+    db.commit()
+    db.refresh(lead)
+    interacciones, intereses = _actividad_de_leads(db, [lead.id])
+    _agregar_prioridad(lead, interacciones, intereses, datetime.now(timezone.utc))
+    _agregar_ejecutivos(db, [lead])
+    return lead
+
+
 @router_privado.post("/leads", response_model=schemas.LeadRespuesta, status_code=status.HTTP_201_CREATED)
 def crear_lead(
     lead: schemas.LeadCrear,
@@ -241,6 +315,7 @@ def crear_lead(
     db.add(nuevo_lead)
     db.flush()
 
+    _registrar_asignacion(db, nuevo_lead, None, usuario, usuario)
     auditoria.registrar(
         db,
         usuario,

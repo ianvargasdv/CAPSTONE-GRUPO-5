@@ -43,6 +43,8 @@ const NOMBRES_CAMPOS = {
   proxima_accion: 'Próxima acción',
   fecha_proxima_accion: 'Fecha de próxima acción',
   lead_id: 'Lead',
+  ejecutivo_id: 'Responsable',
+  ejecutivo_anterior_id: 'Responsable anterior',
   etapa: 'Etapa',
   valor_estimado: 'Valor estimado',
   probabilidad: 'Probabilidad',
@@ -204,6 +206,24 @@ export function eliminarLead(id) {
   return pedir(`/leads/${id}`, {
     metodo: 'DELETE',
     mensajeError: 'No se pudo eliminar el lead',
+  });
+}
+
+export function obtenerEjecutivos() {
+  return pedir('/ejecutivos', { mensajeError: 'No se pudieron cargar los responsables disponibles' });
+}
+
+export function asignarLead(id, ejecutivoId, anteriorId) {
+  return pedir(`/leads/${id}/asignacion`, {
+    metodo: 'PUT',
+    cuerpo: { ejecutivo_id: ejecutivoId, ejecutivo_anterior_id: anteriorId ?? null },
+    mensajeError: 'No se pudo cambiar el responsable',
+  });
+}
+
+export function obtenerAsignaciones(id, pagina = 1) {
+  return pedir(`/leads/${id}/asignaciones?pagina=${pagina}&por_pagina=10`, {
+    mensajeError: 'No se pudo cargar el historial de responsables',
   });
 }
 

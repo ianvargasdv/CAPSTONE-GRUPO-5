@@ -82,9 +82,16 @@ almacenamiento de archivos ni asignación de cartera (M7).
 
 ### M7. Equipo y asignación de cartera
 
-- Leads, tareas y oportunidades asignados a un ejecutivo.
+**Estado: SCRUM-30 y SCRUM-31 implementadas localmente; migración y comprobaciones funcionales manuales confirmadas por Bryan el 15/10/2026. Pendiente guardar cambios y actualizar Jira con autorización.**
+
+Implementado: reasignación de leads por administración e historial paginado con
+responsable anterior, nuevo responsable, autor y fecha. La API rechaza usuarios
+inactivos, modificaciones sin permisos y cambios desde una ficha desactualizada.
+Esto no completa todo M7. Se mantienen pendientes:
+
+- Reasignación coordinada de tareas y oportunidades junto con el lead.
 - Vista personal y vista de equipo para administradores.
-- Reasignación auditada y usuarios activables/desactivables.
+- Gestión de activación/desactivación de usuarios desde la interfaz.
 
 ### M8. Automatizaciones y notificaciones
 

@@ -128,6 +128,39 @@ class LeadActualizar(BaseModel):
     _telefono_valido = field_validator("telefono")(_validar_telefono)
 
 
+class LeadAsignar(BaseModel):
+    model_config = {"extra": "forbid"}
+    ejecutivo_id: int = Field(gt=0, strict=True)
+    # También se exige cuando no hay responsable, para detectar una ficha desactualizada.
+    ejecutivo_anterior_id: Optional[int] = Field(..., gt=0, strict=True)
+
+
+class UsuarioAsignable(BaseModel):
+    id: int
+    nombre: str
+    rol: str
+    model_config = {"from_attributes": True}
+
+
+class AsignacionRespuesta(BaseModel):
+    id: int
+    anterior_id: Optional[int]
+    anterior_nombre: Optional[str]
+    nuevo_id: Optional[int]
+    nuevo_nombre: str
+    autor_id: Optional[int]
+    autor_nombre: str
+    fecha_creacion: datetime
+    model_config = {"from_attributes": True}
+
+
+class AsignacionesPagina(BaseModel):
+    items: List[AsignacionRespuesta]
+    total: int
+    pagina: int
+    por_pagina: int
+
+
 class LeadRespuesta(LeadBase):
     """
     Esquema de respuesta de un lead.

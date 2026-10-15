@@ -74,6 +74,22 @@ class Lead(Base):
     fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())
 
 
+class AsignacionLead(Base):
+    """Movimientos de responsable. Los nombres conservan el contexto histórico."""
+    __tablename__ = "asignaciones_lead"
+
+    id = Column(Integer, primary_key=True)
+    lead_id = Column(Integer, ForeignKey("leads.id", ondelete="SET NULL"), nullable=True, index=True)
+    lead_nombre = Column(String(100), nullable=False)
+    anterior_id = Column(Integer, ForeignKey("usuarios.id", ondelete="SET NULL"), nullable=True)
+    anterior_nombre = Column(String(100), nullable=True)
+    nuevo_id = Column(Integer, ForeignKey("usuarios.id", ondelete="SET NULL"), nullable=True)
+    nuevo_nombre = Column(String(100), nullable=False)
+    autor_id = Column(Integer, ForeignKey("usuarios.id", ondelete="SET NULL"), nullable=True)
+    autor_nombre = Column(String(100), nullable=False)
+    fecha_creacion = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
 class Propiedad(Base):
     """
     Modelo ORM que representa una propiedad o inmueble en el sistema CRM.

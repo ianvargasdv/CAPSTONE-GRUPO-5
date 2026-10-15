@@ -245,6 +245,14 @@ revisar(
 main.eliminar_propiedad(propiedad_id=propiedad.id, db=db, usuario=admin)
 revisar(hay(auditoria.ELIMINAR, auditoria.PROPIEDAD), "eliminar_propiedad registra")
 
+cantidad_antes_asignar = len(registros())
+main.asignar_lead(
+    lead_id=lead.id,
+    datos=schemas.LeadAsignar(ejecutivo_id=admin.id, ejecutivo_anterior_id=lead.ejecutivo_id),
+    db=db, usuario=admin,
+)
+revisar(len(registros()) == cantidad_antes_asignar + 1, "asignar_lead registra el cambio de responsable")
+
 main.eliminar_lead(lead_id=lead.id, db=db, usuario=admin)
 revisar(hay(auditoria.ELIMINAR, auditoria.LEAD), "eliminar_lead registra")
 
@@ -273,7 +281,7 @@ esperados = {
 obtenidos = {(r.accion, r.entidad) for r in registros()}
 revisar(
     esperados.issubset(obtenidos),
-    f"los 19 endpoints de escritura están cubiertos (faltan: {esperados - obtenidos})",
+    f"las combinaciones de acción y entidad están cubiertas (faltan: {esperados - obtenidos})",
 )
 
 # Todo registro debe decir quién actuó, aunque el usuario se borre después

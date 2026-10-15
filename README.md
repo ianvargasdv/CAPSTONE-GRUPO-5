@@ -41,6 +41,7 @@ backend/
   prueba_visitas.py  Verifica agenda, cruces de horario, estados y auditoría
   prueba_matching.py  Verifica puntaje, cobertura, orden y datos incompletos
   prueba_catalogo.py  Verifica ficha, fotografías, estados, permisos y auditoría
+  prueba_asignaciones.py  Verifica responsables, historial, permisos y conflictos
 
 frontend/src/
   App.jsx            Estado general y navegación
@@ -212,9 +213,19 @@ presupuesto y moneda, comunas, tipo de propiedad, dormitorios, baños, plazo,
 financiamiento, origen y próxima acción. Los campos son opcionales porque un lead
 puede entrar con información mínima y completarse durante las conversaciones.
 
-Al crear un lead queda asignado automáticamente al ejecutivo que lo registró. La
-reasignación manual se reserva para el módulo de gestión de equipo, para mantener
-esta primera versión simple y auditable.
+Al crear un lead queda asignado automáticamente al usuario que lo registró.
+Desde la ficha, administración puede cambiar el responsable por otro usuario
+activo (ejecutivo o administrador). El listado y la ficha muestran el responsable
+actual; ambos roles pueden consultar el historial de responsables.
+
+Cada cambio conserva responsable anterior, nuevo responsable, autor y fecha en
+`asignaciones_lead`, además del registro general de actividad. Guardar el mismo
+responsable no genera otro movimiento. Si otra sesión cambió la asignación, la API
+devuelve un conflicto y pide actualizar la ficha antes de volver a guardar.
+Los leads anteriores no reciben movimientos ni fechas reconstruidas.
+
+Para incorporar la tabla en una base existente, ejecutar `python migrar.py` desde
+`backend` antes de utilizar esta versión. La migración no rellena historial antiguo.
 
 ## Oportunidades y pipeline
 
@@ -382,10 +393,13 @@ python prueba_oportunidades.py
 python prueba_visitas.py
 python prueba_matching.py
 python prueba_catalogo.py
+python prueba_asignaciones.py
 ```
 
 El orden de los próximos módulos y su criterio de terminado están en
 [`ROADMAP.md`](ROADMAP.md).
+El avance verificado y los documentos que deben acompañar cada integración están
+en [`SEGUIMIENTO_DESARROLLO.md`](SEGUIMIENTO_DESARROLLO.md).
 
 No hay forma de borrar ni editar entradas del registro desde la API. Es a propósito:
 un historial que se puede alterar no sirve como historial.
@@ -403,11 +417,12 @@ un historial que se puede alterar no sirve como historial.
   después de traer cambios que agreguen columnas a una tabla existente.
 - CORS está limitado a `localhost:3000`. Al desplegar hay que agregar el dominio en
   `backend/main.py`.
-- Los leads quedan asignados a quien los crea, pero todavía no existe reasignación
-  ni una vista que filtre la cartera por ejecutivo; eso corresponde al módulo M7.
+- La reasignación de leads no reasigna sus tareas, visitas ni oportunidades.
+  No hay todavía una vista de cartera por ejecutivo ni gestión de cuentas desde
+  la interfaz; esas partes del módulo M7 siguen pendientes.
 - No hay cambio de contraseña desde la interfaz.
-- Solo el registro de actividad está paginado. Los demás listados traen todo, porque
-  su tamaño lo acota la operación del negocio; el de actividad crece con cada acción.
+- El registro de actividad y el historial de responsables están paginados. Los demás
+  listados traen todo, porque su tamaño lo acota la operación del negocio.
 - Los filtros de fecha del registro de actividad toman días completos en UTC, que es
   la zona en que se guardan las fechas. Con horario chileno el corte puede caer unas
   horas antes de la medianoche local.

@@ -2556,3 +2556,12 @@ textarea {
     justify-content: space-between;
   }
 }
+/* El historial se desplaza dentro de la ficha, sin ensanchar el panel. */
+.asignacion-formulario { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 12px 0; }
+.asignacion-formulario select { max-width: 100%; min-width: 180px; flex: 1; }
+.asignaciones-detalle { margin-top: 16px; }
+.asignaciones-detalle summary { cursor: pointer; padding: 8px 0; }
+.asignaciones-lista { max-height: 260px; overflow: auto; overflow-wrap: anywhere; }
+.asignacion-movimiento { padding: 12px 0; border-bottom: 1px solid var(--borde, #e5e7eb); }
+.asignacion-movimiento .celda-secundaria { display: block; margin-top: 4px; }
+.asignacion-paginacion { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 12px; }

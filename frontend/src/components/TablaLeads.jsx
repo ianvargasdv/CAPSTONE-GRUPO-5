@@ -172,6 +172,7 @@ function TablaLeads({
                           {lead.nombre}
                         </button>
                         <span className="celda-secundaria">{lead.email}</span>
+                        <span className="celda-secundaria">Responsable: {lead.ejecutivo_nombre || 'Sin asignar'}</span>
                         {lead.tipo_operacion && (
                           <span className="celda-secundaria">
                             {lead.tipo_operacion} · {lead.tipo_propiedad_buscada || 'Propiedad sin definir'}

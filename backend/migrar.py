@@ -121,6 +121,22 @@ CAMBIOS = [
     ("propiedades: correo propietario", "ALTER TABLE propiedades ADD COLUMN IF NOT EXISTS propietario_email VARCHAR(150)"),
     ("propiedades: teléfono propietario", "ALTER TABLE propiedades ADD COLUMN IF NOT EXISTS propietario_telefono VARCHAR(20)"),
     ("propiedades: captador", "ALTER TABLE propiedades ADD COLUMN IF NOT EXISTS captador VARCHAR(100)"),
+    (
+        "asignaciones_lead: historial de responsables",
+        """CREATE TABLE IF NOT EXISTS asignaciones_lead (
+            id SERIAL PRIMARY KEY,
+            lead_id INTEGER REFERENCES leads(id) ON DELETE SET NULL,
+            lead_nombre VARCHAR(100) NOT NULL,
+            anterior_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+            anterior_nombre VARCHAR(100),
+            nuevo_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+            nuevo_nombre VARCHAR(100) NOT NULL,
+            autor_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+            autor_nombre VARCHAR(100) NOT NULL,
+            fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )""",
+    ),
+    ("asignaciones_lead: índice por lead", "CREATE INDEX IF NOT EXISTS ix_asignaciones_lead_lead_id ON asignaciones_lead (lead_id)"),
 ]
 
 

@@ -60,6 +60,7 @@ import HistorialInteracciones from './components/HistorialInteracciones';
 import AsistenteIA from './components/AsistenteIA';
 import ConsumoIA from './components/ConsumoIA';
 import Auditoria from './components/Auditoria';
+import AsignacionLead from './components/AsignacionLead';
 
 /** Configuración de cada vista: título de la barra superior y su acción principal. */
 const VISTAS = {
@@ -993,6 +994,16 @@ function App() {
                 </button>
               </div>
             </div>
+
+            <AsignacionLead
+              key={fichaLead.id}
+              lead={fichaLead}
+              esAdmin={usuario.rol === 'admin'}
+              alActualizar={(actualizado) => {
+                setFichaLead(actualizado);
+                setLeads((actuales) => ordenarPorPrioridad(actuales.map((lead) => lead.id === actualizado.id ? actualizado : lead)));
+              }}
+            />
 
             <div className="ficha-seccion">
               <div className="ficha-seccion-encabezado">

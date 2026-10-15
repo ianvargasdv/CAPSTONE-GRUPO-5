@@ -4,6 +4,8 @@ import asyncio
 import json
 import tempfile
 import unittest
+import atexit
+from urllib.parse import urlsplit
 from types import SimpleNamespace
 
 temporal = tempfile.TemporaryDirectory(prefix="crm_catalogo_")
@@ -15,12 +17,15 @@ import main
 import models
 import seguridad
 
+atexit.register(database.engine.dispose)
+
 
 class ClientePruebas:
     """Ejecuta la API ASGI en memoria, sin servidor ni dependencias de pruebas extra."""
 
-    def solicitar(self, metodo, ruta, datos=None):
+    def solicitar(self, metodo, ruta, datos=None, cabeceras=None):
         async def ejecutar():
+            destino = urlsplit(ruta)
             cuerpo = json.dumps(datos).encode() if datos is not None else b""
             enviado = False
             mensajes = []
@@ -37,9 +42,9 @@ class ClientePruebas:
 
             await main.app({
                 "type": "http", "asgi": {"version": "3.0"}, "http_version": "1.1",
-                "method": metodo, "scheme": "http", "path": ruta, "raw_path": ruta.encode(),
-                "query_string": b"", "root_path": "", "server": ("pruebas", 80),
-                "client": ("127.0.0.1", 1), "headers": [(b"content-type", b"application/json")],
+                "method": metodo, "scheme": "http", "path": destino.path, "raw_path": destino.path.encode(),
+                "query_string": destino.query.encode(), "root_path": "", "server": ("pruebas", 80),
+                "client": ("127.0.0.1", 1), "headers": [(b"content-type", b"application/json")] + (cabeceras or []),
             }, recibir, enviar)
             inicio = next(m for m in mensajes if m["type"] == "http.response.start")
             contenido = b"".join(m.get("body", b"") for m in mensajes if m["type"] == "http.response.body")
