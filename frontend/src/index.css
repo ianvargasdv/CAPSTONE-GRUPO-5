@@ -1896,3 +1896,140 @@ textarea {
     justify-content: space-between;
   }
 }
+
+/* ══════════════════════════════════════
+   ASIGNACIÓN DE EJECUTIVO
+══════════════════════════════════════ */
+
+/* Fila que agrupa el selector y el botón de confirmar */
+.asignacion-selector {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.asignacion-select {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ══════════════════════════════════════
+   HISTORIAL DE ASIGNACIONES
+══════════════════════════════════════ */
+
+.historial-asignaciones {
+  margin-top: 0.875rem;
+}
+
+/* Lista ordenada sin numeración: el orden viene de la línea de tiempo visual */
+.historial-lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Cada entrada ocupa dos columnas: la línea de tiempo a la izquierda y el contenido */
+.historial-entrada {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: 0 0.625rem;
+  min-height: 48px;
+}
+
+/* ── Línea de tiempo ── */
+.historial-linea-tiempo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 3px;
+}
+
+.historial-punto {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--borde-fuerte);
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+/* El primer punto (más reciente) se destaca */
+.historial-punto--actual {
+  background-color: var(--primario);
+  width: 12px;
+  height: 12px;
+}
+
+/* Línea vertical que conecta los puntos entre sí */
+.historial-conector {
+  flex: 1;
+  width: 1px;
+  background-color: var(--borde);
+  margin: 2px 0;
+  min-height: 16px;
+}
+
+/* ── Contenido de cada entrada ── */
+.historial-contenido {
+  padding-bottom: 1rem;
+}
+
+.historial-encabezado {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.historial-fecha {
+  font-size: 0.6875rem;
+  color: var(--texto-suave);
+  font-variant-numeric: tabular-nums;
+  margin-left: auto;
+}
+
+/* Fila con el nombre anterior → nuevo */
+.historial-cambio {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.125rem;
+}
+
+.historial-nombre {
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.historial-nombre--anterior {
+  color: var(--texto-suave);
+  text-decoration: line-through;
+  font-weight: 400;
+}
+
+.historial-nombre--nuevo {
+  color: var(--texto);
+}
+
+.historial-flecha {
+  color: var(--texto-suave);
+  flex-shrink: 0;
+}
+
+.historial-autor {
+  font-size: 0.6875rem;
+  color: var(--texto-suave);
+}
+
+@media (max-width: 480px) {
+  .asignacion-selector {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .asignacion-selector .btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
+}

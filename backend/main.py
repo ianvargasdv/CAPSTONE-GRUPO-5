@@ -178,6 +178,38 @@ def _agregar_prioridad(lead, por_interacciones, por_intereses, ahora):
     return lead
 
 
+def _adjuntar_ejecutivos(leads, db: Session):
+    """
+    Carga los ejecutivos de una lista de leads en una sola consulta.
+
+    LeadRespuesta incluye el objeto EjecutivoResumen (id, nombre, email). SQLAlchemy
+    no tiene relationship configurado en Lead, así que no puede hacer lazy loading:
+    hay que resolver la carga explícitamente. Una sola consulta para todos los leads
+    en lugar de N consultas individuales.
+
+    Mutación sobre el atributo `ejecutivo` que Pydantic lee con from_attributes.
+    SQLAlchemy ignora el campo porque no es una columna mapeada.
+    """
+    ids_ejecutivo = {lead.ejecutivo_id for lead in leads if lead.ejecutivo_id is not None}
+
+    if not ids_ejecutivo:
+        for lead in leads:
+            lead.ejecutivo = None
+        return leads
+
+    usuarios_por_id = {
+        u.id: u
+        for u in db.query(models.Usuario)
+        .filter(models.Usuario.id.in_(ids_ejecutivo))
+        .all()
+    }
+
+    for lead in leads:
+        lead.ejecutivo = usuarios_por_id.get(lead.ejecutivo_id)
+
+    return leads
+
+
 @router_privado.get("/leads", response_model=List[schemas.LeadRespuesta])
 def listar_leads(db: Session = Depends(database.obtener_db)):
     """
@@ -191,6 +223,7 @@ def listar_leads(db: Session = Depends(database.obtener_db)):
     for lead in leads:
         _agregar_prioridad(lead, por_interacciones, por_intereses, ahora)
 
+    _adjuntar_ejecutivos(leads, db)
     leads.sort(key=lambda lead: lead.puntaje, reverse=True)
     return leads
 
@@ -232,6 +265,7 @@ def crear_lead(
 
     # Un lead recién creado no tiene actividad, así que no hace falta consultarla
     _agregar_prioridad(nuevo_lead, {}, {}, datetime.now(timezone.utc))
+    _adjuntar_ejecutivos([nuevo_lead], db)
     return nuevo_lead
 
 
@@ -275,6 +309,7 @@ def actualizar_lead(
     # Cambiar el estado o la prioridad altera el puntaje, así que se recalcula
     por_interacciones, por_intereses = _actividad_de_leads(db, [lead.id])
     _agregar_prioridad(lead, por_interacciones, por_intereses, datetime.now(timezone.utc))
+    _adjuntar_ejecutivos([lead], db)
     return lead
 
 
@@ -310,6 +345,149 @@ def eliminar_lead(
     )
 
     db.commit()
+
+
+# ══════════════════════════════════════════════════════════════
+# Asignación de leads a ejecutivos
+# ══════════════════════════════════════════════════════════════
+
+
+@router_privado.get("/ejecutivos", response_model=List[schemas.EjecutivoResumen])
+def listar_ejecutivos(db: Session = Depends(database.obtener_db)):
+    """
+    Devuelve los usuarios activos que pueden recibir leads.
+
+    No hay un rol exclusivo para "ejecutivo de ventas": cualquier usuario activo
+    puede ser responsable de un lead. El selector de asignación usa esta lista.
+    Si en el futuro se quiere restringir por rol, el cambio es en este endpoint.
+    """
+    return (
+        db.query(models.Usuario)
+        .filter(models.Usuario.activo == True)
+        .order_by(models.Usuario.nombre)
+        .all()
+    )
+
+
+@router_privado.put(
+    "/leads/{lead_id}/asignacion",
+    response_model=schemas.LeadRespuesta,
+)
+def asignar_lead(
+    lead_id: int,
+    datos: schemas.AsignacionCrear,
+    db: Session = Depends(database.obtener_db),
+    usuario: models.Usuario = Depends(seguridad.usuario_actual),
+):
+    """
+    Asigna o reasigna el ejecutivo responsable de un lead.
+
+    Si ejecutivo_id es nulo, quita la asignación actual sin borrar el historial.
+    Si el lead ya tiene ejecutivo asignado, lo trata como reasignación y conserva
+    la entrada anterior en el historial.
+
+    La actualización de leads.ejecutivo_id y la creación del registro en
+    historial_asignaciones forman una sola transacción: o se guardan las dos
+    cosas o no se guarda ninguna.
+    """
+    lead = db.query(models.Lead).filter(models.Lead.id == lead_id).first()
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead no encontrado")
+
+    # Validar que el ejecutivo nuevo exista y esté activo
+    ejecutivo_nuevo = None
+    if datos.ejecutivo_id is not None:
+        ejecutivo_nuevo = (
+            db.query(models.Usuario)
+            .filter(
+                models.Usuario.id == datos.ejecutivo_id,
+                models.Usuario.activo == True,
+            )
+            .first()
+        )
+        if not ejecutivo_nuevo:
+            raise HTTPException(
+                status_code=404,
+                detail="Ejecutivo no encontrado o no está activo",
+            )
+
+    # Cargar el ejecutivo anterior para guardar su nombre en el historial
+    ejecutivo_anterior = None
+    if lead.ejecutivo_id is not None:
+        ejecutivo_anterior = (
+            db.query(models.Usuario)
+            .filter(models.Usuario.id == lead.ejecutivo_id)
+            .first()
+        )
+
+    # Registrar en el historial antes de modificar el lead, para que
+    # el historial refleje el estado anterior al cambio
+    entrada_historial = models.HistorialAsignacion(
+        lead_id=lead.id,
+        ejecutivo_anterior_id=lead.ejecutivo_id,
+        ejecutivo_anterior_nombre=ejecutivo_anterior.nombre if ejecutivo_anterior else None,
+        ejecutivo_nuevo_id=datos.ejecutivo_id,
+        ejecutivo_nuevo_nombre=ejecutivo_nuevo.nombre if ejecutivo_nuevo else None,
+        realizado_por_id=usuario.id,
+        realizado_por_email=usuario.email,
+    )
+    db.add(entrada_historial)
+
+    # Descripción para el registro de auditoría
+    if ejecutivo_nuevo:
+        descripcion = f"Asignó {lead.nombre} a {ejecutivo_nuevo.nombre}"
+        if ejecutivo_anterior:
+            descripcion = f"Reasignó {lead.nombre} de {ejecutivo_anterior.nombre} a {ejecutivo_nuevo.nombre}"
+    else:
+        descripcion = f"Quitó la asignación de {lead.nombre}"
+
+    # Actualizar la asignación actual
+    lead.ejecutivo_id = datos.ejecutivo_id
+
+    auditoria.registrar(
+        db,
+        usuario,
+        auditoria.ACTUALIZAR,
+        auditoria.LEAD,
+        lead.id,
+        descripcion,
+        f"ejecutivo: {ejecutivo_anterior.nombre if ejecutivo_anterior else 'sin asignar'} -> {ejecutivo_nuevo.nombre if ejecutivo_nuevo else 'sin asignar'}",
+    )
+
+    db.commit()
+    db.refresh(lead)
+
+    por_interacciones, por_intereses = _actividad_de_leads(db, [lead.id])
+    _agregar_prioridad(lead, por_interacciones, por_intereses, datetime.now(timezone.utc))
+    _adjuntar_ejecutivos([lead], db)
+    return lead
+
+
+@router_privado.get(
+    "/leads/{lead_id}/historial-asignaciones",
+    response_model=List[schemas.HistorialAsignacionRespuesta],
+)
+def historial_asignaciones(
+    lead_id: int,
+    db: Session = Depends(database.obtener_db),
+):
+    """
+    Devuelve el historial de asignaciones de un lead, del más reciente al más antiguo.
+
+    Cada entrada muestra quién tenía el lead, quién lo recibió, cuándo cambió
+    y quién hizo el cambio. Los nombres están guardados junto a los ids: si un
+    ejecutivo se da de baja el historial sigue siendo legible.
+    """
+    lead = db.query(models.Lead).filter(models.Lead.id == lead_id).first()
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead no encontrado")
+
+    return (
+        db.query(models.HistorialAsignacion)
+        .filter(models.HistorialAsignacion.lead_id == lead_id)
+        .order_by(models.HistorialAsignacion.fecha_creacion.desc())
+        .all()
+    )
 
 
 # ══════════════════════════════════════════════════════════════

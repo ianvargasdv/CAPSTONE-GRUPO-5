@@ -36,8 +36,9 @@ TAREA = "tarea"
 INTERACCION = "interaccion"
 INTERES = "interes"
 ANALISIS = "analisis"
+ASIGNACION = "asignacion"
 
-ENTIDADES = (LEAD, PROPIEDAD, TAREA, INTERACCION, INTERES, ANALISIS)
+ENTIDADES = (LEAD, PROPIEDAD, TAREA, INTERACCION, INTERES, ANALISIS, ASIGNACION)
 
 # Campos que se comparan al actualizar, por entidad. Se listan explícitamente para
 # no registrar columnas internas ni los campos calculados que se agregan al objeto.
@@ -45,6 +46,7 @@ CAMPOS_COMPARABLES = {
     LEAD: ("nombre", "email", "telefono", "estado", "prioridad"),
     PROPIEDAD: ("titulo", "tipo", "precio", "direccion", "estado"),
     TAREA: ("titulo", "descripcion", "estado", "prioridad", "fecha_limite", "lead_id"),
+    # Las asignaciones no se actualizan, se crean: no hay campos que comparar
 }
 
 

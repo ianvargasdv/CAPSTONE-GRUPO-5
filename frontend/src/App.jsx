@@ -21,6 +21,9 @@ import {
   obtenerAnalisis,
   generarAnalisis,
   obtenerConsumoIA,
+  obtenerEjecutivos,
+  asignarLead,
+  obtenerHistorialAsignaciones,
   iniciarSesion,
   obtenerPerfil,
   obtenerToken,
@@ -46,6 +49,7 @@ import HistorialInteracciones from './components/HistorialInteracciones';
 import AsistenteIA from './components/AsistenteIA';
 import ConsumoIA from './components/ConsumoIA';
 import Auditoria from './components/Auditoria';
+import AsignacionLead from './components/AsignacionLead';
 
 /** Configuración de cada vista: título de la barra superior y su acción principal. */
 const VISTAS = {
@@ -147,6 +151,14 @@ function App() {
   // Si el backend no tiene proveedor de IA configurado, la ficha no ofrece generar
   const [iaConfigurada, setIaConfigurada] = useState(false);
 
+  // --- Ejecutivos disponibles: se cargan una vez al iniciar sesión ---
+  const [ejecutivos, setEjecutivos] = useState([]);
+
+  // --- Historial de asignaciones de la ficha abierta ---
+  const [historialAsignaciones, setHistorialAsignaciones] = useState([]);
+  const [cargandoHistorialAsig, setCargandoHistorialAsig] = useState(false);
+  const [errorHistorialAsig, setErrorHistorialAsig] = useState(null);
+
   // --- Consumo del agente, solo para admin ---
   const [consumo, setConsumo] = useState(null);
   const [cargandoConsumo, setCargandoConsumo] = useState(false);
@@ -204,6 +216,12 @@ function App() {
     obtenerEstadoIA()
       .then((estado) => setIaConfigurada(estado.configurada))
       .catch(() => setIaConfigurada(false));
+
+    // Los ejecutivos no cambian con frecuencia: se cargan una vez y se reutilizan
+    // en el selector de asignación de cada ficha.
+    obtenerEjecutivos()
+      .then(setEjecutivos)
+      .catch(() => setEjecutivos([]));
   }, [usuario]);
 
   // ══════════ Sesión ══════════
@@ -223,6 +241,8 @@ function App() {
     setFichaLead(null);
     setInteracciones([]);
     setIntereses([]);
+    setHistorialAsignaciones([]);
+    setEjecutivos([]);
     setVista('inicio');
   };
 
@@ -308,12 +328,15 @@ function App() {
     setInteracciones([]);
     setIntereses([]);
     setAnalisis([]);
+    setHistorialAsignaciones([]);
     setCargandoInteracciones(true);
     setCargandoIntereses(true);
     setCargandoAnalisis(true);
+    setCargandoHistorialAsig(true);
     setErrorInteracciones(null);
     setErrorIntereses(null);
     setErrorAnalisis(null);
+    setErrorHistorialAsig(null);
 
     try {
       setInteracciones(await obtenerInteracciones(lead.id));
@@ -338,6 +361,14 @@ function App() {
     } finally {
       setCargandoAnalisis(false);
     }
+
+    try {
+      setHistorialAsignaciones(await obtenerHistorialAsignaciones(lead.id));
+    } catch {
+      setErrorHistorialAsig('No se pudo cargar el historial de asignaciones.');
+    } finally {
+      setCargandoHistorialAsig(false);
+    }
   };
 
   const cerrarFicha = () => {
@@ -345,6 +376,7 @@ function App() {
     setInteracciones([]);
     setIntereses([]);
     setAnalisis([]);
+    setHistorialAsignaciones([]);
   };
 
   /**
@@ -361,6 +393,35 @@ function App() {
   const editarDesdeFicha = (lead) => {
     cerrarFicha();
     abrirEditar('lead', lead);
+  };
+
+  // ══════════ Asignación de ejecutivo ══════════
+
+  /**
+   * Asigna o quita el ejecutivo responsable de un lead.
+   *
+   * Actualiza el lead en el array global y en la ficha abierta para que la
+   * interfaz refleje el cambio sin necesidad de recargar. También agrega la
+   * nueva entrada al historial local para que el componente lo muestre de
+   * inmediato sin necesidad de una segunda petición.
+   */
+  const guardarAsignacion = async (ejecutivoId) => {
+    const leadActualizado = await asignarLead(fichaLead.id, ejecutivoId);
+
+    // Sincronizar el array de leads
+    setLeads((prev) =>
+      prev.map((l) => (l.id === leadActualizado.id ? leadActualizado : l))
+    );
+
+    // Actualizar la ficha abierta para que el selector refleje el nuevo estado
+    setFichaLead(leadActualizado);
+
+    // Refrescar el historial desde el servidor para que la lista esté actualizada
+    try {
+      setHistorialAsignaciones(await obtenerHistorialAsignaciones(fichaLead.id));
+    } catch {
+      // No crítico: la asignación ya se guardó, solo falla la vista del historial
+    }
   };
 
   // ══════════ Leads ══════════
@@ -755,6 +816,18 @@ function App() {
               </div>
 
               <div className="ficha-dato">
+                <span className="ficha-dato-label">Responsable</span>
+                <span className="ficha-dato-valor">
+                  <Icono nombre="usuarios" tamano={13} />
+                  <span>
+                    {fichaLead.ejecutivo
+                      ? fichaLead.ejecutivo.nombre
+                      : <span className="texto-suave">Sin asignar</span>}
+                  </span>
+                </span>
+              </div>
+
+              <div className="ficha-dato">
                 <span className="ficha-dato-label">Acciones</span>
                 <button className="btn-secondary" onClick={() => editarDesdeFicha(fichaLead)}>
                   <Icono nombre="editar" tamano={13} />
@@ -794,6 +867,17 @@ function App() {
                 </p>
               </div>
             )}
+
+            <div className="ficha-seccion">
+              <AsignacionLead
+                lead={fichaLead}
+                ejecutivos={ejecutivos}
+                historial={historialAsignaciones}
+                cargandoHistorial={cargandoHistorialAsig}
+                errorHistorial={errorHistorialAsig}
+                alAsignar={guardarAsignacion}
+              />
+            </div>
 
             <div className="ficha-seccion">
               <AsistenteIA

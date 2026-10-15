@@ -41,6 +41,32 @@ CAMBIOS = [
         "usuarios: rol de acceso (admin o ejecutivo)",
         "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS rol VARCHAR(20) NOT NULL DEFAULT 'ejecutivo'",
     ),
+    (
+        "leads: ejecutivo responsable del lead",
+        "ALTER TABLE leads ADD COLUMN IF NOT EXISTS ejecutivo_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL",
+    ),
+    (
+        "leads: índice en ejecutivo_id para búsquedas por responsable",
+        "CREATE INDEX IF NOT EXISTS ix_leads_ejecutivo_id ON leads(ejecutivo_id)",
+    ),
+    (
+        "historial_asignaciones: registro persistente de cada cambio de ejecutivo",
+        """CREATE TABLE IF NOT EXISTS historial_asignaciones (
+            id SERIAL PRIMARY KEY,
+            lead_id INTEGER NOT NULL REFERENCES leads(id) ON DELETE CASCADE,
+            ejecutivo_anterior_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+            ejecutivo_anterior_nombre VARCHAR(100),
+            ejecutivo_nuevo_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+            ejecutivo_nuevo_nombre VARCHAR(100),
+            realizado_por_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+            realizado_por_email VARCHAR(150),
+            fecha_creacion TIMESTAMPTZ DEFAULT now()
+        )""",
+    ),
+    (
+        "historial_asignaciones: índice en lead_id para consultas por lead",
+        "CREATE INDEX IF NOT EXISTS ix_historial_asignaciones_lead_id ON historial_asignaciones(lead_id)",
+    ),
 ]
 
 

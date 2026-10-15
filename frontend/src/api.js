@@ -310,3 +310,39 @@ export function obtenerFiltrosAuditoria() {
     mensajeError: 'No se pudieron cargar los filtros del registro',
   });
 }
+
+/* ══════════════════ Asignación de leads ══════════════════ */
+
+/**
+ * Lista los usuarios activos que pueden recibir leads.
+ * Se usa para poblar el selector de asignación.
+ */
+export function obtenerEjecutivos() {
+  return pedir('/ejecutivos', {
+    mensajeError: 'No se pudo cargar la lista de ejecutivos',
+  });
+}
+
+/**
+ * Asigna o reasigna el ejecutivo responsable de un lead.
+ *
+ * ejecutivo_id nulo quita la asignación actual sin borrar el historial.
+ * El backend valida que el ejecutivo exista y esté activo.
+ */
+export function asignarLead(leadId, ejecutivoId) {
+  return pedir(`/leads/${leadId}/asignacion`, {
+    metodo: 'PUT',
+    cuerpo: { ejecutivo_id: ejecutivoId ?? null },
+    mensajeError: 'No se pudo guardar la asignación',
+  });
+}
+
+/**
+ * Historial de asignaciones de un lead, del más reciente al más antiguo.
+ * Cada entrada muestra el ejecutivo anterior, el nuevo y quién hizo el cambio.
+ */
+export function obtenerHistorialAsignaciones(leadId) {
+  return pedir(`/leads/${leadId}/historial-asignaciones`, {
+    mensajeError: 'No se pudo cargar el historial de asignaciones',
+  });
+}

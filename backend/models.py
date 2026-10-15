@@ -42,6 +42,10 @@ class Usuario(Base):
 class Lead(Base):
     """
     Modelo ORM que representa un Lead o prospecto de cliente en el sistema CRM.
+
+    ejecutivo_id es nullable a propósito: un lead puede ingresar al sistema antes de
+    que se le asigne un responsable. ON DELETE SET NULL garantiza que si el ejecutivo
+    se da de baja el lead no se pierda, solo queda sin asignar.
     """
     __tablename__ = "leads"
 
@@ -51,6 +55,12 @@ class Lead(Base):
     telefono = Column(String(20), nullable=True)
     estado = Column(String(50), default="Nuevo")
     prioridad = Column(String(50), default="Media")
+    ejecutivo_id = Column(
+        Integer,
+        ForeignKey("usuarios.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -182,5 +192,58 @@ class Auditoria(Base):
     descripcion = Column(String(250), nullable=True)
     # Detalle de los campos que cambiaron, en el caso de las actualizaciones
     detalle = Column(Text, nullable=True)
+
+    fecha_creacion = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+
+
+class HistorialAsignacion(Base):
+    """
+    Registro inmutable de cada cambio de ejecutivo en un lead.
+
+    Por qué es una tabla separada y no parte de Auditoria
+    -------------------------------------------------------
+    Auditoría registra acciones genéricas con un texto libre. El historial de
+    asignaciones es una entidad de negocio: tiene estructura propia (ejecutivo
+    anterior, ejecutivo nuevo) y se consulta por lead para mostrar quién lo tuvo a
+    cargo. Mezclar ambas cosas haría que recuperar el historial requiera parsear
+    texto libre, lo que es frágil y poco fiable.
+
+    Los ids de ejecutivo quedan en nulo si el usuario se da de baja, para no
+    perder el historial. El nombre se guarda desnormalizado por la misma razón que
+    en Auditoria: si el usuario se borra, el registro tiene que seguir diciendo quién
+    estaba asignado.
+    """
+    __tablename__ = "historial_asignaciones"
+
+    id = Column(Integer, primary_key=True, index=True)
+    lead_id = Column(
+        Integer,
+        ForeignKey("leads.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    # El ejecutivo anterior queda en nulo en la primera asignación
+    ejecutivo_anterior_id = Column(
+        Integer,
+        ForeignKey("usuarios.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    ejecutivo_anterior_nombre = Column(String(100), nullable=True)
+
+    ejecutivo_nuevo_id = Column(
+        Integer,
+        ForeignKey("usuarios.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    ejecutivo_nuevo_nombre = Column(String(100), nullable=True)
+
+    # Quién realizó el cambio (puede ser otro ejecutivo o un admin)
+    realizado_por_id = Column(
+        Integer,
+        ForeignKey("usuarios.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    realizado_por_email = Column(String(150), nullable=True)
 
     fecha_creacion = Column(DateTime(timezone=True), server_default=func.now(), index=True)

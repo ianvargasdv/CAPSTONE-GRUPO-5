@@ -28,6 +28,21 @@ class LeadActualizar(BaseModel):
     prioridad: Optional[str] = None
 
 
+class EjecutivoResumen(BaseModel):
+    """
+    Datos mínimos de un ejecutivo para mostrarlo en la ficha de un lead.
+
+    Solo nombre y correo: no hay que exponer el hash de la contraseña ni el rol
+    de cada persona al consultar la cartera.
+    """
+    id: int
+    nombre: str
+    email: str
+
+    class Config:
+        from_attributes = True
+
+
 class LeadRespuesta(LeadBase):
     """
     Esquema de respuesta de un lead.
@@ -38,6 +53,10 @@ class LeadRespuesta(LeadBase):
     """
     id: int
     fecha_creacion: Optional[datetime] = None
+
+    # Ejecutivo responsable. Nulo si el lead aún no tiene asignado.
+    ejecutivo_id: Optional[int] = None
+    ejecutivo: Optional[EjecutivoResumen] = None
 
     # Calculados, no almacenados
     puntaje: Optional[int] = None
@@ -354,3 +373,40 @@ class AuditoriaFiltros(BaseModel):
     entidades: List[str] = []
     acciones: List[str] = []
     usuarios: List[str] = []
+
+
+class AsignacionCrear(BaseModel):
+    """
+    Petición para asignar o reasignar un lead a un ejecutivo.
+
+    ejecutivo_id nulo es válido: significa quitar la asignación actual y dejar el
+    lead sin responsable. Se distingue de no enviar el campo porque model_dump
+    con exclude_unset reconocería cuándo no se mandó.
+    """
+    ejecutivo_id: Optional[int] = None
+
+
+class HistorialAsignacionRespuesta(BaseModel):
+    """
+    Una entrada del historial de asignaciones de un lead.
+
+    Los nombres se guardan desnormalizados (además del id) para que el registro
+    siga siendo legible aunque el ejecutivo se haya dado de baja.
+    """
+    id: int
+    lead_id: int
+
+    ejecutivo_anterior_id: Optional[int] = None
+    ejecutivo_anterior_nombre: Optional[str] = None
+
+    ejecutivo_nuevo_id: Optional[int] = None
+    ejecutivo_nuevo_nombre: Optional[str] = None
+
+    # Quién hizo el cambio
+    realizado_por_id: Optional[int] = None
+    realizado_por_email: Optional[str] = None
+
+    fecha_creacion: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
