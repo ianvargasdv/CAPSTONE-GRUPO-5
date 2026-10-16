@@ -16,11 +16,18 @@ El borrador se puede editar y copiar desde la ficha. La edición es temporal; no
 guarda como contacto. Las preguntas se muestran para que el ejecutivo decida cómo
 completar el perfil. No se necesita una migración adicional para estos dos tipos.
 
-Las 16 pruebas nuevas usan un proveedor simulado y una base temporal. Las cuatro
-generaciones reales intentadas no produjeron respuestas. Una consulta posterior,
-sin generación, devolvió HTTP 401 con código `invalid_api_key`. Hay que corregir la
-clave configurada en el backend y volver a validar el contenido con datos ficticios.
-La compilación y las pruebas locales no sustituyen esa evaluación.
+Las 16 pruebas nuevas usan un proveedor simulado y una base temporal. La primera
+validación real falló por una credencial rechazada (`401 invalid_api_key`). Tras
+reemplazarla, la consulta del modelo respondió 200 y se obtuvieron las cuatro
+respuestas esperadas: borrador y preguntas para dos perfiles ficticios, uno completo
+y otro incompleto. Se revisaron los textos contra sus entradas; no se observaron
+propiedades, visitas ni preferencias inventadas en esta muestra. El perfil completo
+no recibió preguntas adicionales sobre datos que ya tenía.
+
+La muestra no cubre todos los casos ni demuestra ausencia de errores futuros.
+Los borradores aún pueden usar expresiones internas del CRM y deben revisarse antes
+de compartirlos con un cliente. Estas pruebas no escribieron en Supabase ni enviaron
+mensajes. El registro reproducible está en `backend/evidencias/validacion_asistente_20261015.json`.
 
 WhatsApp no está integrado. Como siguiente etapa se propone conectar una cuenta y
 número de Meta mediante Cloud API, recibir eventos verificados y mantener revisión

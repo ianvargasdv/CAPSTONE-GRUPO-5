@@ -15,12 +15,15 @@ probarse y demostrarse por separado antes de pasar al siguiente.
 
 ### Ampliación del asistente · 15/10/2026
 
-**Estado: implementada localmente; pendiente de validación con el proveedor.**
+**Estado: implementada y verificada con una muestra del proveedor real.**
 
 - Borrador de seguimiento editable y copiable, sin envío automático.
 - Preguntas para completar los datos comerciales faltantes, sin modificar el lead.
 - Dieciséis pruebas simuladas aprobadas y frontend compilado.
-- Bloqueo externo comprobado: la consulta del modelo devuelve `401 invalid_api_key`.
+- Credencial rechazada en el primer intento; resuelto tras reemplazarla localmente.
+- Cuatro respuestas reales revisadas, con dos perfiles ficticios: borrador y preguntas
+  para cada uno. Sin escrituras comerciales ni envío de mensajes. La muestra es
+  inicial y no sustituye la revisión humana o una evaluación más amplia.
 - Las nuevas historias SCRUM-32 y SCRUM-33 no se incorporan retrospectivamente a los
   cuatro sprints cerrados. No tienen estimación acordada ni sprint asignado.
 - WhatsApp queda como propuesta; requiere cuenta, número, credenciales, recepción

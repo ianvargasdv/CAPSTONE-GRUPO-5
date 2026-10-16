@@ -2,6 +2,31 @@
 
 Actualizado: 15/10/2026. Este archivo es un control de trabajo, no un acta de reunión.
 
+## Validación real del asistente · 15/10/2026, 23:32 (Chile)
+
+El usuario reemplazó la clave local. Se consultó la disponibilidad del modelo con
+resultado HTTP 200 y se hicieron cuatro generaciones autorizadas con datos ficticios,
+sin escribir en Supabase ni enviar mensajes. Se conservan los resultados completos
+en `backend/evidencias/validacion_asistente_20261015.json`.
+
+Revisión de la muestra:
+
+- Perfil incompleto, borrador: pidió aclarar la búsqueda, sin ofrecer propiedades.
+- Perfil incompleto, preguntas: tres preguntas sobre datos comerciales ausentes.
+- Perfil completo, borrador: mantuvo comuna, tipo de propiedad, presupuesto,
+  dormitorios, baños y plazo registrados; no confirmó una visita ni una oferta.
+- Perfil completo, preguntas: reconoció que los datos básicos estaban completos,
+  sin fabricar preguntas adicionales.
+
+El bloqueo de credenciales queda resuelto para esta ejecución. El costo calculado
+con los precios configurados fue US$0,0005874; no es un comprobante de facturación.
+No se probaron en esta muestra clientes cerrados, notas maliciosas o contradicciones
+entre campos y contactos. Tampoco se evaluó WhatsApp. Los borradores contienen algunas
+expresiones internas del CRM: el ejecutivo debe revisarlos antes de compartirlos.
+
+Esta actualización supera el bloqueo descrito en el registro anterior sin borrar
+el antecedente. Los informes Word y el Excel aún necesitan incorporar este avance.
+
 ## Ampliación del asistente · 15/10/2026
 
 Se incorporaron dos opciones a la ficha: preparar un borrador de seguimiento y

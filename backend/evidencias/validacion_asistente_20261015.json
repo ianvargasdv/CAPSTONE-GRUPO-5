@@ -1,0 +1,76 @@
+{
+  "fecha_utc": "2026-10-16T02:32:09.854250+00:00",
+  "datos": "ficticios",
+  "llamadas_intentadas": 4,
+  "gasto_maximo_estimado_con_precios_configurados_usd": 0.0033616,
+  "resultados": [
+    {
+      "caso": "perfil_incompleto",
+      "tipo": "mensaje",
+      "entrada": "FICHA DEL PROSPECTO\nNombre: Persona de demostración\nEstado en el embudo: Contactado\nPrioridad asignada: Media\nEjecutivo responsable: Ejecutivo de prueba\nFecha de ingreso: 15-10-2026\n\nPERFIL DE BÚSQUEDA DECLARADO\nOperación: sin definir\nTipo de propiedad: sin definir\nComunas: sin definir\nPresupuesto: sin mínimo a sin máximo moneda sin definir\nDormitorios mínimos: sin definir\nBaños mínimos: sin definir\nPlazo de decisión: sin definir\nFinanciamiento: sin definir\nOrigen del lead: sin definir\nPróxima acción registrada: ninguna\nFecha de próxima acción: sin fecha\n\nPROPIEDADES DE INTERÉS\n- Ninguna registrada\n\nOPORTUNIDADES COMERCIALES\n- Ninguna registrada\n\nCOINCIDENCIAS CALCULADAS CON EL CATÁLOGO\n- Sin propiedades disponibles o sin datos comparables\n\nAGENDA Y RESULTADOS DE VISITAS\n- Ninguna registrada\n\nHISTORIAL DE CONTACTO\n- Sin contactos registrados\n\nTAREAS PENDIENTES\n- Ninguna",
+      "resultado": {
+        "texto": "Hola, Persona de demostración. Para orientarte, ¿qué tipo de operación y propiedad estás buscando, en qué comunas y dentro de qué presupuesto? La ficha no registra preferencias, propiedades de interés ni contactos previos, así que agradeceríamos que nos compartieras esos datos para continuar.",
+        "modelo": "gpt-6-luna",
+        "tokens_entrada": 569,
+        "tokens_salida": 61,
+        "costo_estimado_usd": 0.0000874
+      },
+      "estado": "respuesta_recibida"
+    },
+    {
+      "caso": "perfil_incompleto",
+      "tipo": "preguntas",
+      "entrada": "FICHA DEL PROSPECTO\nNombre: Persona de demostración\nEstado en el embudo: Contactado\nPrioridad asignada: Media\nEjecutivo responsable: Ejecutivo de prueba\nFecha de ingreso: 15-10-2026\n\nPERFIL DE BÚSQUEDA DECLARADO\nOperación: sin definir\nTipo de propiedad: sin definir\nComunas: sin definir\nPresupuesto: sin mínimo a sin máximo moneda sin definir\nDormitorios mínimos: sin definir\nBaños mínimos: sin definir\nPlazo de decisión: sin definir\nFinanciamiento: sin definir\nOrigen del lead: sin definir\nPróxima acción registrada: ninguna\nFecha de próxima acción: sin fecha\n\nPROPIEDADES DE INTERÉS\n- Ninguna registrada\n\nOPORTUNIDADES COMERCIALES\n- Ninguna registrada\n\nCOINCIDENCIAS CALCULADAS CON EL CATÁLOGO\n- Sin propiedades disponibles o sin datos comparables\n\nAGENDA Y RESULTADOS DE VISITAS\n- Ninguna registrada\n\nHISTORIAL DE CONTACTO\n- Sin contactos registrados\n\nTAREAS PENDIENTES\n- Ninguna",
+      "resultado": {
+        "texto": "La ficha tiene poca información comercial. ¿Qué operación, tipo de propiedad y comunas busca? ¿Qué rango de presupuesto considera y en qué moneda? ¿Cuántos dormitorios y baños necesita, y cuál es su plazo de búsqueda?",
+        "modelo": "gpt-6-luna",
+        "tokens_entrada": 534,
+        "tokens_salida": 145,
+        "costo_estimado_usd": 0.0001259
+      },
+      "estado": "respuesta_recibida"
+    },
+    {
+      "caso": "perfil_completo",
+      "tipo": "mensaje",
+      "entrada": "FICHA DEL PROSPECTO\nNombre: Persona de demostración\nEstado en el embudo: Contactado\nPrioridad asignada: Media\nEjecutivo responsable: Ejecutivo de prueba\nFecha de ingreso: 15-10-2026\n\nPERFIL DE BÚSQUEDA DECLARADO\nOperación: Compra\nTipo de propiedad: Departamento\nComunas: Macul\nPresupuesto: 100000000 a 150000000 CLP\nDormitorios mínimos: 2\nBaños mínimos: 1\nPlazo de decisión: 3-6 meses\nFinanciamiento: sin definir\nOrigen del lead: sin definir\nPróxima acción registrada: ninguna\nFecha de próxima acción: sin fecha\n\nPROPIEDADES DE INTERÉS\n- Ninguna registrada\n\nOPORTUNIDADES COMERCIALES\n- Ninguna registrada\n\nCOINCIDENCIAS CALCULADAS CON EL CATÁLOGO\n- Sin propiedades disponibles o sin datos comparables\n\nAGENDA Y RESULTADOS DE VISITAS\n- Ninguna registrada\n\nHISTORIAL DE CONTACTO\n- Sin contactos registrados\n\nTAREAS PENDIENTES\n- Ninguna",
+      "resultado": {
+        "texto": "Hola, Persona de demostración. Tengo registrada tu búsqueda de compra de un departamento en Macul, con al menos 2 dormitorios y 1 baño, un presupuesto de $100.000.000 a $150.000.000 y un plazo de decisión de 3 a 6 meses. Por ahora no hay propiedades de interés ni coincidencias disponibles o comparables registradas; ¿siguen vigentes esos criterios y tienes definido el financiamiento?",
+        "modelo": "gpt-6-luna",
+        "tokens_entrada": 573,
+        "tokens_salida": 416,
+        "costo_estimado_usd": 0.0002653
+      },
+      "estado": "respuesta_recibida"
+    },
+    {
+      "caso": "perfil_completo",
+      "tipo": "preguntas",
+      "entrada": "FICHA DEL PROSPECTO\nNombre: Persona de demostración\nEstado en el embudo: Contactado\nPrioridad asignada: Media\nEjecutivo responsable: Ejecutivo de prueba\nFecha de ingreso: 15-10-2026\n\nPERFIL DE BÚSQUEDA DECLARADO\nOperación: Compra\nTipo de propiedad: Departamento\nComunas: Macul\nPresupuesto: 100000000 a 150000000 CLP\nDormitorios mínimos: 2\nBaños mínimos: 1\nPlazo de decisión: 3-6 meses\nFinanciamiento: sin definir\nOrigen del lead: sin definir\nPróxima acción registrada: ninguna\nFecha de próxima acción: sin fecha\n\nPROPIEDADES DE INTERÉS\n- Ninguna registrada\n\nOPORTUNIDADES COMERCIALES\n- Ninguna registrada\n\nCOINCIDENCIAS CALCULADAS CON EL CATÁLOGO\n- Sin propiedades disponibles o sin datos comparables\n\nAGENDA Y RESULTADOS DE VISITAS\n- Ninguna registrada\n\nHISTORIAL DE CONTACTO\n- Sin contactos registrados\n\nTAREAS PENDIENTES\n- Ninguna",
+      "resultado": {
+        "texto": "La información básica de búsqueda está completa: operación, tipo de propiedad, comuna, presupuesto y moneda, dormitorios, baños y plazo de decisión. No hay preguntas pendientes sobre esos datos.",
+        "modelo": "gpt-6-luna",
+        "tokens_entrada": 538,
+        "tokens_salida": 110,
+        "costo_estimado_usd": 0.0001088
+      },
+      "estado": "respuesta_recibida"
+    }
+  ],
+  "fecha_local": "2026-10-15 23:32 America/Santiago",
+  "revision": {
+    "tipo": "Revisión manual de una muestra inicial",
+    "casos_revisados": 4,
+    "resultado": "Las cuatro respuestas se ajustan a los datos ficticios de entrada; no se observaron ofertas o visitas inventadas. El perfil completo no recibió preguntas adicionales sobre datos básicos.",
+    "limites": [
+      "No cubre clientes cerrados, notas maliciosas o datos contradictorios.",
+      "Los borradores requieren revisión: pueden incluir expresiones internas del CRM.",
+      "No prueba envío de mensajes ni conexión de WhatsApp.",
+      "Prueba directa del proveedor; la persistencia y los permisos se comprobaron por separado con proveedor simulado."
+    ],
+    "escrituras_en_crm": false,
+    "mensajes_enviados": 0,
+    "costo_estimado_total_usd": 0.0005874,
+    "facturacion_verificada": false
+  }
+}
