@@ -95,7 +95,7 @@ function costoUSD(valor) {
   });
 }
 
-function AsistenteIA({ analisis = [], cargando, error, iaConfigurada, alGenerar }) {
+function AsistenteIA({ analisis = [], cargando, error, iaConfigurada, alGenerar, alPrepararTarea, preparandoTarea = false, leadCerrado = false }) {
   // Evita generar dos análisis al mismo tiempo desde esta ficha.
   const [generandoTipo, setGenerandoTipo] = useState(null);
   const [errorPorTipo, setErrorPorTipo] = useState({});
@@ -220,6 +220,14 @@ function AsistenteIA({ analisis = [], cargando, error, iaConfigurada, alGenerar 
                     <BorradorMensaje key={ultimo.id} texto={ultimo.salida} />
                   ) : (
                     <p className="resumen-texto">{ultimo.salida}</p>
+                  )}
+
+                  {tipo === 'recomendacion' && alPrepararTarea && (
+                    <div className="asistente-borrador-acciones">
+                      <button className="btn-secondary" disabled={leadCerrado || preparandoTarea || generandoTipo !== null}
+                        onClick={() => alPrepararTarea(ultimo)}>{preparandoTarea ? 'Comprobando tareas...' : 'Revisar y preparar tarea'}</button>
+                      <span>{leadCerrado ? 'El lead está cerrado.' : 'Abre un formulario; no crea nada hasta que confirmes.'}</span>
+                    </div>
                   )}
 
                   <div className="resumen-pie">

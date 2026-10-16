@@ -1,6 +1,114 @@
 # Seguimiento del desarrollo
 
-Actualizado: 15/10/2026. Este archivo es un control de trabajo, no un acta de reunión.
+Actualizado: 16/10/2026. Este archivo es un control de trabajo, no un acta de reunión.
+
+## Calidad del asistente y escenario ficticio · 16/10/2026
+
+Se añadió fecha de referencia UTC al contexto y moneda/estado al describir
+propiedades de interés. Se corrigió la instrucción de preguntas: debe tener en
+cuenta requisitos pendientes en notas y tareas aunque los campos básicos estén
+completos. Se reforzó el manejo de contradicciones, visitas pasadas y redacción
+de borradores para el cliente. No se afirma que las instrucciones garanticen
+eliminar errores o inyecciones de texto.
+
+Con autorización para ocho llamadas y un máximo estimado de US$0,10 se obtuvieron
+ocho respuestas del proveedor con fichas artificiales. Se revisaron requisitos de
+terreno/estacionamientos, perfil sin pendientes, búsqueda contradictoria, visita
+programada pasada, cliente cerrado sin permiso de contacto, orden maliciosa en
+notas, propiedad reservada en UF y tarea pendiente vencida. En esta muestra se
+respetaron los criterios. Se observó que el resumen también señaló una visita
+anterior al ingreso del lead, sin inventar que se había realizado. La muestra es
+una ejecución por caso, no una evaluación estadística ni garantía de cero errores.
+Costo según configuración: US$0,00154; facturación del proveedor no verificada.
+No se enviaron datos reales del CRM ni se guardaron esos análisis en Supabase.
+Registro completo: `backend/evidencias/evaluacion_calidad_20261016.json`.
+
+Se aplicó el escenario ficticio con 24 clientes, 18 propiedades, 24 intereses,
+18 interacciones, 22 tareas, 18 oportunidades y 6 visitas nuevos. Los nombres no
+contienen Demo; se conserva la marca interna de prueba y la descripción ficticia
+de propiedades. No hay teléfonos de personas reales ni fotos ajenas. Se compararon
+huellas de los registros previos y quedaron intactos; la segunda ejecución agregó
+cero registros en todas las categorías. Totales verificados: 30 leads, 25 propiedades,
+26 tareas, 30 intereses, 25 interacciones, 23 oportunidades y 11 visitas. La carga
+dejó auditoría sin atribuir contactos ficticios a una persona del equipo.
+Comprobación agregada: `backend/evidencias/escenario_pruebas_20261016.json`.
+
+Pruebas sin proveedor: asistente 21, validaciones 33, escenario anterior 17,
+escenario nuevo 5, catálogo 8, auditoría 62, asignaciones 13, consolidación 12,
+oportunidades 15, visitas 15 y matching 13: 214 comprobaciones aprobadas. El frontend
+aprobó sus 10 pruebas del flujo de tareas y compiló: 224 comprobaciones técnicas en
+total. Los tests de instrucciones verifican el código, no la calidad del modelo;
+las ocho respuestas reales se revisaron por separado.
+
+Pendiente para la fase de documentación: actualizar Jira, Daily, impedimentos,
+Product Backlog e historias, informes 2.4/2.6, Release y evidencias de prueba con
+estas ampliaciones y resultados. Las capturas y actividades del escenario ficticio
+no se deben presentar como clientes, contactos o ventas reales. No modificar los
+burndowns ni las actas de sprints ya cerrados para incluir este desarrollo posterior.
+No se creó un sprint nuevo ni se inventaron puntos, reuniones u opiniones de Amaro.
+Estos cambios siguen locales: no hay commit, push ni despliegue en este avance.
+
+## Seguimiento a partir de una recomendación · 15/10/2026
+
+Mejora posterior: se añadió Abrir tarea existente junto a cada pendiente mostrado.
+El usuario observó que la recomendación de su lead pedía avanzar una tarea ya creada.
+El botón abre esa tarea en modo edición sin crear otra, conserva sus datos y mantiene
+la propuesta de IA separada como referencia. Guardar utiliza la actualización normal.
+No se afirma que el sistema detecte automáticamente similitud entre tareas.
+
+Verificación de esta mejora: 10 pruebas del preparador aprobadas (incluyen tres
+nuevas sobre selección y conservación de tareas existentes) y compilación correcta.
+En SQLite temporal se abrió el pendiente original, se editó su descripción y se
+guardó: siguió existiendo una tarea y Actividad registró Modificación de Tarea #1,
+no Creación. No se llamó al proveedor ni se modificaron registros en Supabase.
+
+Se implementó el paso desde una recomendación guardada a un formulario de tarea.
+La propuesta se mantiene como texto editable, con referencia al análisis de origen;
+no se interpreta como una orden ejecutable. El formulario consulta y muestra las
+tareas pendientes antes de que el usuario confirme. Si falla la consulta, no abre
+un formulario con una lista engañosamente vacía. El lead queda vinculado y no se
+puede cambiar desde ese borrador. No prepara tareas para leads cerrados.
+
+Cancelar no guarda; Crear tarea usa el endpoint y la auditoría existentes. El
+formulario bloquea envíos simultáneos mientras guarda. No hay nueva tabla, migración,
+dependencia, envío de mensajes o llamada adicional a IA en este paso. La prioridad
+inicial es la habitual Media y la fecha queda vacía para que decida el ejecutivo.
+La consulta de pendientes no garantiza evitar duplicados entre distintos usuarios.
+
+Verificación local: 7 pruebas del preparador (casos válidos, otro lead, tipo inválido,
+texto vacío, lead cerrado, límites y conservación de los datos); 16 pruebas del
+asistente, 62 de auditoría y 33 de validaciones aprobadas. Frontend compilado.
+Prueba visual con base SQLite temporal, cuenta ficticia y recomendación simulada:
+había una tarea inicial; cancelar mantuvo una; confirmar creó una segunda tarea con
+el título editado, lead correcto y descripción de origen; Actividad mostró un único
+registro de creación. No se utilizó Supabase ni se hicieron llamadas pagadas.
+
+Pendiente: prueba del equipo en el CRM habitual. No se creó todavía una historia
+nueva ni se modificaron los sprints cerrados; el usuario pidió registrar en Jira
+y actualizar los archivos después de terminar este avance.
+
+### Archivos que deben recoger las ampliaciones
+
+- Jira: registrar la tarea asistida y sus criterios; añadir las comprobaciones que
+  el usuario compartió para borrador y preguntas. Mantener responsables reales.
+- Product Backlog e historias de usuario: incorporar la tarea asistida y actualizar
+  el estado de las dos funciones anteriores sin inventar puntos ni sprint.
+- Daily: registrar desarrollo y pruebas efectivamente realizados por Bryan, sin
+  atribuir reuniones ni trabajo no confirmado a Amaro.
+- Impedimentos: cerrar el rechazo de la clave por la validación real; no anotar los
+  cortes del servidor temporal como si fueran un fallo de la aplicación productiva.
+- Informes 2.4 y 2.6: actualizar funcionalidades, pruebas, resultados y límites;
+  distinguir muestra real de IA y pruebas técnicas simuladas.
+- Release y evidencias del sistema: añadir el flujo confirmado y sus capturas reales
+  cuando el equipo lo pruebe. Las capturas de SQLite son pruebas simuladas.
+- User Story Map e Impact Mapping: revisar si necesitan ampliar la parte de
+  seguimiento y apoyo al ejecutivo; no cambiar sus objetivos sin necesidad.
+- Scrumboard y Sprint Planning: actualizar sólo al planificar trabajo nuevo. No
+  incorporar retrospectivamente las ampliaciones a sprints cerrados.
+- Burndowns y revisiones de sprints cerrados: conservar el registro histórico.
+- Gantt: revisar sólo si cambia el calendario; no alterar duraciones sin acuerdo.
+- Retrospectivas: agregar aprendizajes cuando se revisen; no inventar opiniones ni
+  una reunión. La definición original del proyecto permanece como antecedente.
 
 ## Validación real del asistente · 15/10/2026, 23:32 (Chile)
 

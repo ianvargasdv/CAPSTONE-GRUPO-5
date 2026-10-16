@@ -4,6 +4,44 @@ Sistema de gestión para ejecutivos inmobiliarios: prospectos (leads), catálogo
 propiedades, historial de contacto, tareas de seguimiento y propiedades de interés
 de cada lead.
 
+## Comprobación del asistente · 16/10/2026
+
+Se amplió el contexto con fecha de referencia, moneda y estado de las propiedades
+de interés. Las preguntas consideran también requisitos expresamente pendientes
+en notas o tareas, no sólo los campos básicos del perfil. Se reforzaron las
+instrucciones para fechas pasadas, contradicciones y texto malicioso en notas.
+
+Se revisaron ocho respuestas reales con fichas ficticias: requisitos adicionales,
+perfil completo, contradicciones, visita pasada, no contacto, instrucción maliciosa,
+UF con propiedad reservada y tarea vencida existente. En esta muestra se respetaron
+los criterios de cada caso; no es una garantía de exactitud futura. Los resultados
+y límites están en `backend/evidencias/evaluacion_calidad_20261016.json`.
+
+### Escenario ficticio con nombres naturales
+
+`backend/cargar_escenario_pruebas.py` añade 24 clientes y 18 propiedades con actividad
+vinculada. No añade “Demo” a sus nombres o títulos. Los clientes conservan
+`es_demo=true` (la interfaz muestra “Datos de prueba”); las propiedades tienen código
+`PRUEBA-CRM-*` y descripción que identifica el escenario ficticio. Los correos usan
+`example.test`, los teléfonos quedan vacíos y no se incluyen fotografías de inmuebles
+reales. Los precios y ubicaciones son inventados, no ofertas ni referencias de mercado.
+
+```powershell
+cd backend
+.\venv\Scripts\python.exe cargar_escenario_pruebas.py
+# Sólo muestra el alcance. Para aplicarlo sobre la base configurada:
+.\venv\Scripts\python.exe cargar_escenario_pruebas.py --aplicar
+```
+
+La carga del 16/10/2026 ya está aplicada y verificada. Una segunda ejecución añadió
+cero registros. Conserva los registros existentes y sus ediciones, y deja una
+auditoría identificada como carga ficticia, no como actividad real del equipo.
+Se ejecuta en una transacción y revierte si detecta colisiones de sus claves.
+No ejecutar dos cargas en paralelo. No necesita una nueva migración.
+
+Pruebas sin costo, desde `backend`: `python prueba_escenario_pruebas.py` y
+`python prueba_asistente.py`. No ejecutan generaciones reales.
+
 Incluye un asistente de IA para resumir el historial, recomendar la siguiente
 acción, preparar un borrador de seguimiento y sugerir preguntas sobre datos
 comerciales faltantes. Los textos requieren revisión humana: el asistente no envía
@@ -28,6 +66,28 @@ La muestra no cubre todos los casos ni demuestra ausencia de errores futuros.
 Los borradores aún pueden usar expresiones internas del CRM y deben revisarse antes
 de compartirlos con un cliente. Estas pruebas no escribieron en Supabase ni enviaron
 mensajes. El registro reproducible está en `backend/evidencias/validacion_asistente_20261015.json`.
+
+### Convertir una recomendación en seguimiento
+
+En la ficha del lead, abre **Siguiente acción recomendada** y pulsa **Revisar y
+preparar tarea** sobre un análisis existente. Se consultan las tareas actuales y se
+abre el formulario con el lead vinculado y el texto de origen en la descripción.
+Si otra tarea ya cubre la acción, pulsa **Abrir tarea existente** junto a ese pendiente:
+se abre en modo edición con sus datos originales, sin crear otra ni sustituir su
+descripción. La propuesta de IA queda desplegable como referencia. Sólo se modifica
+la tarea al confirmar **Guardar cambios**. Si se necesita una tarea diferente,
+edita la propuesta nueva y confirma **Crear tarea**.
+Cancelar no guarda nada. La fecha queda vacía y la prioridad parte de Media, como
+en cualquier tarea nueva: no se extraen compromisos ni fechas del texto del modelo.
+
+La creación usa el registro de auditoría habitual. No envía mensajes, no agenda
+visitas, no permite cambiar a otro lead desde ese borrador y no prepara tareas para
+leads cerrados. La lista de pendientes es una comprobación al abrir, no un bloqueo
+de duplicados entre usuarios concurrentes. Preparar una recomendación ya guardada
+no consume IA; **Generar de nuevo** sí llama al proveedor.
+
+Pruebas locales del preparador: `node --test src/tareaDesdeIA.test.js` desde
+`frontend`. No requiere instalar dependencias adicionales ni migrar la base.
 
 WhatsApp no está integrado. Como siguiente etapa se propone conectar una cuenta y
 número de Meta mediante Cloud API, recibir eventos verificados y mantener revisión

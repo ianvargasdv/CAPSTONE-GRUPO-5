@@ -13,6 +13,19 @@ probarse y demostrarse por separado antes de pasar al siguiente.
 
 ## Módulos
 
+### Calidad y datos de prueba · 16/10/2026
+
+**Estado: código local probado; escenario ficticio aplicado y verificado en la base.**
+
+- Preguntas que contemplan requisitos pendientes en notas o tareas.
+- Contexto con fecha de referencia, moneda y estado de propiedades de interés.
+- Ocho respuestas reales revisadas contra criterios concretos, con límites registrados.
+- Escenario nuevo: 24 clientes y 18 propiedades, sin Demo en nombres/títulos pero
+  identificados como ficticios; conserva datos existentes y no duplica al repetir.
+- 224 comprobaciones técnicas aprobadas y frontend compilado.
+- Resultados en `backend/evidencias/`; no equivale a garantía de ausencia de errores.
+- Pendiente registrar las ampliaciones en Jira y actualizar los documentos de entrega.
+
 ### Ampliación del asistente · 15/10/2026
 
 **Estado: implementada y verificada con una muestra del proveedor real.**
@@ -28,6 +41,19 @@ probarse y demostrarse por separado antes de pasar al siguiente.
   cuatro sprints cerrados. No tienen estimación acordada ni sprint asignado.
 - WhatsApp queda como propuesta; requiere cuenta, número, credenciales, recepción
   verificada de eventos y validación del flujo antes de poder considerarlo integrado.
+
+### Seguimiento desde una recomendación · 15/10/2026
+
+**Estado: implementado y comprobado en entorno temporal; pendiente de prueba del equipo en el CRM habitual.**
+
+- Usa una recomendación existente sin una nueva generación de IA.
+- Consulta tareas pendientes antes de abrir el formulario; no continúa si falla la consulta.
+- El usuario revisa, edita y guarda mediante la creación normal de tareas y auditoría.
+- No asigna una fecha supuesta ni ejecuta contactos. Cancelar no crea registros.
+- Siete pruebas del preparador, 111 comprobaciones existentes y compilación aprobadas.
+- Revisión visual con SQLite y recomendación simulada: cancelación sin creación,
+  guardado de una tarea editada, vínculo al lead y un registro de creación en Actividad.
+- Falta documentarlo en Jira y en los archivos de entrega después de la prueba del equipo.
 
 ### M0. Entorno reproducible
 

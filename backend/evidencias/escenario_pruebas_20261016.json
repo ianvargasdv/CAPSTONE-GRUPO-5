@@ -1,0 +1,32 @@
+{
+  "nuevos": {
+    "leads": 24,
+    "propiedades": 18,
+    "intereses": 24,
+    "interacciones": 18,
+    "tareas": 22,
+    "oportunidades": 18,
+    "visitas": 6
+  },
+  "conteos_finales": {
+    "leads": 30,
+    "propiedades": 25,
+    "tareas": 26,
+    "intereses": 30,
+    "interacciones": 25,
+    "oportunidades": 23,
+    "visitas": 11
+  },
+  "registros_previos_intactos": true,
+  "segunda_ejecucion": {
+    "leads": 0,
+    "propiedades": 0,
+    "intereses": 0,
+    "interacciones": 0,
+    "tareas": 0,
+    "oportunidades": 0,
+    "visitas": 0
+  },
+  "fecha_local": "2026-10-16 America/Santiago",
+  "datos": "Ficticios con nombres naturales; los registros anteriores no fueron renombrados ni borrados."
+}

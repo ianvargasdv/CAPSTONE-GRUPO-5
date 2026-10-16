@@ -61,6 +61,7 @@ import AsistenteIA from './components/AsistenteIA';
 import ConsumoIA from './components/ConsumoIA';
 import Auditoria from './components/Auditoria';
 import AsignacionLead from './components/AsignacionLead';
+import { prepararTareaDesdeIA, pendientesDelLead, seleccionarTareaPendiente } from './tareaDesdeIA';
 
 /** Configuración de cada vista: título de la barra superior y su acción principal. */
 const VISTAS = {
@@ -129,6 +130,8 @@ const TEXTOS_ELIMINAR = {
 };
 
 function App() {
+  const solicitudTareaIA = useRef(0);
+  const [preparandoTareaIA, setPreparandoTareaIA] = useState(false);
   const [vista, setVista] = useState('inicio');
   const [toast, setToast] = useState(null);
   const temporizadorToast = useRef(null);
@@ -286,6 +289,7 @@ function App() {
 
   /** Descarta los datos en memoria para que no queden a la vista del próximo usuario. */
   const limpiarDatos = () => {
+    solicitudTareaIA.current += 1;
     setLeads([]);
     setPropiedades([]);
     setTareas([]);
@@ -355,6 +359,19 @@ function App() {
   const abrirCrear = (entidad) => setPanelForm({ entidad, registro: null });
   const abrirEditar = (entidad, registro) => setPanelForm({ entidad, registro });
   const cerrarPanelForm = () => setPanelForm(null);
+
+  const abrirPendienteDesdeIA = (tareaId) => {
+    if (!panelForm?.borradorIA) return;
+    try {
+      const registro = seleccionarTareaPendiente(
+        tareas, panelForm.borradorIA.lead_id, tareaId
+      );
+      setPanelForm({ entidad: 'tarea', registro,
+        contextoIA: panelForm.borradorIA.descripcion });
+    } catch (err) {
+      mostrarToast(err.message);
+    }
+  };
 
   // ══════════ Consumo del agente ══════════
 
@@ -432,6 +449,7 @@ function App() {
   };
 
   const cerrarFicha = () => {
+    solicitudTareaIA.current += 1;
     setFichaLead(null);
     setInteracciones([]);
     setIntereses([]);
@@ -447,6 +465,27 @@ function App() {
   const generarAnalisisDeLead = async (tipo) => {
     const nuevo = await generarAnalisis(fichaLead.id, tipo);
     setAnalisis((prev) => [nuevo, ...prev]);
+  };
+
+  const prepararSeguimientoIA = async (recomendacion) => {
+    const solicitud = ++solicitudTareaIA.current;
+    const lead = fichaLead;
+    try {
+      setPreparandoTareaIA(true);
+      const borradorIA = prepararTareaDesdeIA(lead, recomendacion);
+      // Si no se pueden comprobar las tareas actuales, no se oculta el problema
+      // mostrando una lista vacía que pueda llevar a duplicar trabajo.
+      const actuales = await obtenerTareas();
+      if (solicitud !== solicitudTareaIA.current) return;
+      setTareas(actuales);
+      cerrarFicha();
+      setPanelForm({ entidad: 'tarea', registro: null, borradorIA,
+        tareasRelacionadas: pendientesDelLead(actuales, lead.id) });
+    } catch (err) {
+      if (solicitud === solicitudTareaIA.current) mostrarToast(err.message || 'No se pudo preparar la tarea.');
+    } finally {
+      setPreparandoTareaIA(false);
+    }
   };
 
   /** Desde la ficha se cierra el panel y se abre el de edición, para no apilar paneles. */
@@ -903,6 +942,10 @@ function App() {
             tareaEditar={panelForm.registro}
             alCancelar={cerrarPanelForm}
             leads={leads}
+            borradorIA={panelForm.borradorIA}
+            tareasRelacionadas={panelForm.tareasRelacionadas}
+            alAbrirPendiente={abrirPendienteDesdeIA}
+            contextoIA={panelForm.contextoIA}
           />
         )}
 
@@ -1008,7 +1051,7 @@ function App() {
             <div className="ficha-seccion">
               <div className="ficha-seccion-encabezado">
                 <span className="ficha-seccion-titulo">Perfil de búsqueda</span>
-                {fichaLead.es_demo && <span className="etiqueta info">Datos demo</span>}
+                {fichaLead.es_demo && <span className="etiqueta info">Datos de prueba</span>}
               </div>
               <div className="ficha-resumen sin-borde ficha-perfil">
                 <div className="ficha-dato"><span className="ficha-dato-label">Operación</span><span className="ficha-dato-valor">{fichaLead.tipo_operacion || 'Sin definir'}</span></div>
@@ -1125,6 +1168,9 @@ function App() {
                 error={errorAnalisis}
                 iaConfigurada={iaConfigurada}
                 alGenerar={generarAnalisisDeLead}
+                alPrepararTarea={prepararSeguimientoIA}
+                preparandoTarea={preparandoTareaIA}
+                leadCerrado={fichaLead.estado === 'Cerrado'}
               />
             </div>
 

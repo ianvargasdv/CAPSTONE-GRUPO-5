@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 /**
  * Formulario para crear o editar una tarea. Se muestra dentro de un panel lateral.
@@ -9,7 +9,8 @@ import React, { useState, useEffect } from 'react';
  * - alCancelar: cierra el panel sin guardar
  * - leads: lista de leads disponibles para vincular
  */
-function FormularioTarea({ alGuardar, tareaEditar, alCancelar, leads = [] }) {
+function FormularioTarea({ alGuardar, tareaEditar, alCancelar, leads = [], borradorIA, tareasRelacionadas = [], alAbrirPendiente, contextoIA }) {
+  const envioEnCurso = useRef(false);
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [estado, setEstado] = useState('Pendiente');
@@ -22,13 +23,14 @@ function FormularioTarea({ alGuardar, tareaEditar, alCancelar, leads = [] }) {
   const modoEdicion = Boolean(tareaEditar);
 
   useEffect(() => {
-    if (tareaEditar) {
-      setTitulo(tareaEditar.titulo || '');
-      setDescripcion(tareaEditar.descripcion || '');
-      setEstado(tareaEditar.estado || 'Pendiente');
-      setPrioridad(tareaEditar.prioridad || 'Media');
-      setFechaLimite(tareaEditar.fecha_limite || '');
-      setLeadId(tareaEditar.lead_id ? String(tareaEditar.lead_id) : '');
+    const inicial = tareaEditar || borradorIA;
+    if (inicial) {
+      setTitulo(inicial.titulo || '');
+      setDescripcion(inicial.descripcion || '');
+      setEstado(inicial.estado || 'Pendiente');
+      setPrioridad(inicial.prioridad || 'Media');
+      setFechaLimite(inicial.fecha_limite || '');
+      setLeadId(inicial.lead_id ? String(inicial.lead_id) : '');
     } else {
       setTitulo('');
       setDescripcion('');
@@ -38,16 +40,18 @@ function FormularioTarea({ alGuardar, tareaEditar, alCancelar, leads = [] }) {
       setLeadId('');
     }
     setError(null);
-  }, [tareaEditar]);
+  }, [tareaEditar, borradorIA]);
 
   const manejarEnvio = async (e) => {
     e.preventDefault();
+    if (envioEnCurso.current) return;
     if (!titulo.trim()) {
       setError('El título de la tarea es obligatorio');
       return;
     }
 
     try {
+      envioEnCurso.current = true;
       setCargando(true);
       setError(null);
       await alGuardar({
@@ -61,6 +65,7 @@ function FormularioTarea({ alGuardar, tareaEditar, alCancelar, leads = [] }) {
     } catch (err) {
       setError(err.message || 'No se pudo guardar la tarea');
     } finally {
+      envioEnCurso.current = false;
       setCargando(false);
     }
   };
@@ -69,12 +74,42 @@ function FormularioTarea({ alGuardar, tareaEditar, alCancelar, leads = [] }) {
     <form className="form-lead" onSubmit={manejarEnvio}>
       {error && <div className="alert-error">{error}</div>}
 
+      {contextoIA && (
+        <div className="panel">
+          <p>Estás editando una tarea existente. Sus datos se conservan; sólo cambiarán si editas y pulsas Guardar cambios.</p>
+          <details>
+            <summary>Ver la propuesta de IA como referencia</summary>
+            <p className="resumen-texto">{contextoIA}</p>
+          </details>
+        </div>
+      )}
+
+      {borradorIA && (
+        <div className="panel">
+          <p>Revisa la propuesta de IA. Elige el título, la prioridad y, si corresponde, una fecha.
+            Guardar crea una tarea; no contacta al cliente ni agenda una visita.</p>
+          <p>Si la recomendación corresponde a una de estas tareas, ábrela en vez de crear otra:</p>
+          {tareasRelacionadas.length ? (
+            <ul>{tareasRelacionadas.map((tarea) => (
+              <li key={tarea.id}>
+                {tarea.titulo} · {tarea.estado}{tarea.fecha_limite ? ` · ${tarea.fecha_limite}` : ''}{' '}
+                {alAbrirPendiente && <button type="button" className="btn-secondary"
+                  disabled={cargando} onClick={() => alAbrirPendiente(tarea.id)}
+                  aria-label={`Abrir tarea existente: ${tarea.titulo}`}>Abrir tarea existente</button>}
+              </li>
+            ))}</ul>
+          ) : <p>No hay tareas pendientes registradas al abrir este formulario.</p>}
+        </div>
+      )}
+
       <div className="form-grid">
         <div className="form-group form-group-full">
-          <label htmlFor="titulo-tarea">Título</label>
+          <label htmlFor="titulo-tarea">Título *</label>
           <input
             id="titulo-tarea"
             type="text"
+            required
+            maxLength={200}
             placeholder="Llamar para agendar visita"
             value={titulo}
             onChange={(e) => setTitulo(e.target.value)}
@@ -128,7 +163,7 @@ function FormularioTarea({ alGuardar, tareaEditar, alCancelar, leads = [] }) {
             id="lead-tarea"
             value={leadId}
             onChange={(e) => setLeadId(e.target.value)}
-            disabled={cargando}
+            disabled={cargando || Boolean(borradorIA)}
           >
             <option value="">Ninguno</option>
             {leads.map((lead) => (
@@ -149,6 +184,7 @@ function FormularioTarea({ alGuardar, tareaEditar, alCancelar, leads = [] }) {
             onChange={(e) => setDescripcion(e.target.value)}
             disabled={cargando}
             rows={3}
+            maxLength={5000}
           />
         </div>
       </div>

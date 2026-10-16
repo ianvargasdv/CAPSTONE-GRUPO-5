@@ -2,6 +2,8 @@
 import io
 import json
 import unittest
+from datetime import datetime, timezone
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from prueba_catalogo import ClientePruebas
@@ -123,6 +125,36 @@ class TransporteIATest(unittest.TestCase):
         self.assertIn('hasta tres preguntas',ia.INSTRUCCIONES_PREGUNTAS)
         self.assertIn('No pidas RUT',ia.INSTRUCCIONES_PREGUNTAS)
         self.assertIn('sin fabricar preguntas adicionales',ia.INSTRUCCIONES_PREGUNTAS)
+
+    def test_preguntas_consideran_requisitos_explicitos_en_notas_y_tareas(self):
+        for regla in ['requisitos explícitamente pendientes', 'estacionamientos', 'terreno', 'No supongas']:
+            self.assertIn(regla,ia.INSTRUCCIONES_PREGUNTAS)
+
+    def test_prompt_distingue_fechas_pasadas_y_datos_contradictorios(self):
+        for instrucciones in ia.INSTRUCCIONES_POR_TIPO.values():
+            self.assertIn('fecha de referencia',instrucciones)
+            self.assertIn('se contradicen',instrucciones)
+
+    def test_borrador_no_expone_jerga_interna_y_conserva_moneda(self):
+        self.assertIn('sin mencionar la ficha',ia.INSTRUCCIONES_MENSAJE)
+        self.assertIn('CLP o UF',ia.INSTRUCCIONES_MENSAJE)
+
+    def test_ficha_incluye_fecha_moneda_estado_y_no_datos_privados(self):
+        lead=SimpleNamespace(nombre='Cliente ficticio',estado='Contactado',prioridad='Media',fecha_creacion=datetime(2026,1,1,tzinfo=timezone.utc))
+        propiedad=SimpleNamespace(titulo='Casa ficticia',tipo='Casa',direccion='Sector referencial',precio=7000,moneda='UF',estado='Reservada',
+            propietario_email='no-exponer@example.test',propietario_telefono='privado-no-exponer')
+        interes=SimpleNamespace(propiedad_id=1,nivel_interes='Alto',notas='Falta confirmar estacionamiento')
+        ficha=ia.construir_ficha(lead,[],[interes],{1:propiedad})
+        self.assertIn('Fecha de referencia (UTC):',ficha)
+        self.assertIn('7000 UF',ficha)
+        self.assertIn('estado Reservada',ficha)
+        self.assertNotIn('no-exponer',ficha)
+
+    def test_ficha_no_inventa_moneda_cuando_falta(self):
+        lead=SimpleNamespace(nombre='Cliente ficticio',estado='Nuevo',prioridad='Media',fecha_creacion=datetime(2026,1,1))
+        propiedad=SimpleNamespace(titulo='Casa ficticia',tipo='Casa',direccion='Sector',precio=7000)
+        interes=SimpleNamespace(propiedad_id=1,nivel_interes='Alto',notas=None)
+        self.assertIn('moneda sin registrar',ia.construir_ficha(lead,[],[interes],{1:propiedad}))
 
     def test_tipo_desconocido_no_sale_a_la_red(self):
         with patch.object(ia,'esta_configurada',return_value=True), patch.object(ia.urllib.request,'urlopen') as red:
