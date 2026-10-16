@@ -1391,7 +1391,7 @@ def listar_analisis(lead_id: int, db: Session = Depends(database.obtener_db)):
     return (
         db.query(models.AnalisisIA)
         .filter(models.AnalisisIA.lead_id == lead_id)
-        .order_by(models.AnalisisIA.fecha_creacion.desc())
+        .order_by(models.AnalisisIA.fecha_creacion.desc(), models.AnalisisIA.id.desc())
         .all()
     )
 
@@ -1403,16 +1403,16 @@ def listar_analisis(lead_id: int, db: Session = Depends(database.obtener_db)):
 )
 def crear_analisis(
     lead_id: int,
-    tipo: Literal["resumen", "recomendacion"] = "resumen",
+    tipo: Literal["resumen", "recomendacion", "mensaje", "preguntas"] = "resumen",
     db: Session = Depends(database.obtener_db),
     usuario: models.Usuario = Depends(seguridad.usuario_actual),
 ):
     """
     Genera un análisis del lead con el modelo de lenguaje y lo guarda.
 
-    El tipo define qué se pide: "resumen" describe la situación del prospecto y
-    "recomendacion" propone la siguiente acción. Ambos parten de la misma ficha.
-    FastAPI valida el valor contra los dos permitidos.
+    El tipo define si se pide un resumen, una próxima acción, un borrador de
+    seguimiento o preguntas para completar el perfil. FastAPI valida los tipos.
+    Generar un borrador no envía mensajes ni modifica datos comerciales.
 
     Reúne los datos del lead, su prioridad calculada, sus propiedades de interés, su
     historial de contacto y sus tareas pendientes, arma con eso un texto y se lo

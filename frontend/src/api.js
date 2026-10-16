@@ -395,8 +395,7 @@ export function obtenerAnalisis(leadId) {
 /**
  * Pide al backend que genere un análisis del lead con el modelo de lenguaje.
  *
- * El tipo puede ser "resumen", que describe la situación del prospecto, o
- * "recomendacion", que propone la siguiente acción.
+ * Tipos: resumen, recomendacion, mensaje y preguntas. No envía mensajes al cliente.
  *
  * Puede tardar varios segundos: el backend espera la respuesta del proveedor.
  */

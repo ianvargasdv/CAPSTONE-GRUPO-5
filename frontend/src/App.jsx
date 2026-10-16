@@ -425,7 +425,7 @@ function App() {
     try {
       setAnalisis(await obtenerAnalisis(lead.id));
     } catch {
-      setErrorAnalisis('No se pudieron cargar los resúmenes del lead.');
+      setErrorAnalisis('No se pudieron cargar los análisis del lead.');
     } finally {
       setCargandoAnalisis(false);
     }
@@ -441,7 +441,7 @@ function App() {
 
   /**
    * Pide un análisis nuevo al backend y lo pone al principio de la lista.
-   * El tipo puede ser "resumen" o "recomendacion".
+   * El tipo identifica una de las funciones del asistente.
    * Los errores se propagan para que los muestre el componente del asistente.
    */
   const generarAnalisisDeLead = async (tipo) => {

@@ -2,6 +2,43 @@
 
 Actualizado: 15/10/2026. Este archivo es un control de trabajo, no un acta de reunión.
 
+## Ampliación del asistente · 15/10/2026
+
+Se incorporaron dos opciones a la ficha: preparar un borrador de seguimiento y
+sugerir preguntas sobre información comercial faltante. Se mantienen el resumen y
+la recomendación. El borrador se edita de forma temporal y se copia; no hay envío
+de mensajes, registro de contacto ni actualización automática del perfil.
+
+Las 16 pruebas nuevas verificaron los cuatro tipos, autenticación, entradas
+inválidas, persistencia del análisis, consumo simulado y manejo de errores. Se
+ejecutan sin Supabase ni llamadas externas. Las pruebas existentes se ejecutaron en
+procesos separados porque algunos scripts crean sus propios datos al importarse;
+ejecutarlos todos en el mismo proceso mezclaba las bases temporales.
+
+Resultado de la ejecución aislada: asistente (16), asignaciones (13), catálogo (8),
+auditoría (62), validaciones (33), matching (13), consolidación (12), oportunidades
+(15) y visitas (15): 187 comprobaciones aprobadas. También compiló el frontend.
+Se revisó en el navegador un prospecto ficticio con proveedor simulado: selección
+de funciones, edición temporal conservada al alternar opciones y copia del mensaje.
+Esta revisión visual no es evidencia de una respuesta real del modelo.
+
+Se intentaron cuatro generaciones reales con perfiles ficticios; las cuatro
+fallaron. Una consulta posterior del modelo, sin generar texto, devolvió HTTP 401
+con código `invalid_api_key`. No se evaluó la calidad de respuestas ni se hicieron
+más generaciones. El consumo facturado no se confirmó en el panel del proveedor.
+
+Impedimento abierto: credencial del proveedor rechazada. Próximo paso: sustituirla
+localmente por una clave válida y comprobar las dos funciones con datos ficticios,
+con autorización para el gasto. Nunca se debe pegar la clave en documentos o Jira.
+
+SCRUM-32 y SCRUM-33 registran este trabajo fuera de los cuatro sprints cerrados.
+No se inventaron puntos, reuniones, aceptación del compañero ni fechas de sprint.
+WhatsApp sólo se plantea como siguiente integración, no está conectado.
+
+Los informes 2.4 y 2.6 y el Excel entregados en el avance anterior reflejan ese
+corte anterior: todavía no incluyen esta ampliación ni su bloqueo de credenciales.
+No se reemplazaron archivos en Drive ni documentos que el usuario dejó para subir.
+
 ## Actualización del historial anterior · 15/10/2026
 
 Se confirmó directamente en Supabase que había tres movimientos en

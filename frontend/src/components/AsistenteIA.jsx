@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import Icono from './Iconos';
 
 /**
- * Sección de la ficha con los dos análisis que produce el modelo de lenguaje:
- * un resumen de la situación del prospecto y una recomendación de la siguiente
- * acción a tomar.
+ * Análisis del lead y borradores revisables. No se envían mensajes ni se
+ * modifican los datos del lead desde este componente.
  *
  * Tres cosas deliberadas en el diseño:
  *
@@ -36,7 +35,45 @@ const TEXTOS = {
     vacio: 'Propone qué hacer con este prospecto, considerando sus tareas pendientes.',
     boton: 'Generar recomendación',
   },
+  mensaje: {
+    titulo: 'Borrador de seguimiento',
+    vacio: 'Prepara un mensaje con el contexto del cliente. Revísalo antes de usarlo.',
+    boton: 'Preparar mensaje',
+  },
+  preguntas: {
+    titulo: 'Preguntas para completar el perfil',
+    vacio: 'Sugiere qué preguntar según la información comercial que falta.',
+    boton: 'Preparar preguntas',
+  },
 };
+
+function BorradorMensaje({ texto }) {
+  const [borrador, setBorrador] = useState(texto);
+  const [aviso, setAviso] = useState('');
+
+  const copiar = async () => {
+    try {
+      await navigator.clipboard.writeText(borrador);
+      setAviso('Texto copiado. No se ha enviado ningún mensaje.');
+    } catch {
+      setAviso('No se pudo copiar. Selecciona el texto y cópialo manualmente.');
+    }
+  };
+
+  return (
+    <div className="asistente-borrador">
+      <label htmlFor="borrador-seguimiento">Revisar y editar el mensaje</label>
+      <textarea id="borrador-seguimiento" className="form-textarea" rows={5}
+        maxLength={4000} value={borrador}
+        onChange={(e) => { setBorrador(e.target.value); setAviso(''); }} />
+      <div className="asistente-borrador-acciones">
+        <button className="btn-secondary" disabled={!borrador.trim()} onClick={copiar}>Copiar mensaje</button>
+        <span>Edición temporal. No envía ni registra un contacto.</span>
+      </div>
+      {aviso && <p role="status" className="resumen-anteriores">{aviso}</p>}
+    </div>
+  );
+}
 
 function fechaLarga(iso) {
   return new Date(iso).toLocaleString('es-CL', {
@@ -59,9 +96,10 @@ function costoUSD(valor) {
 }
 
 function AsistenteIA({ analisis = [], cargando, error, iaConfigurada, alGenerar }) {
-  // Guarda qué tipo se está generando, para deshabilitar solo ese botón
+  // Evita generar dos análisis al mismo tiempo desde esta ficha.
   const [generandoTipo, setGenerandoTipo] = useState(null);
   const [errorPorTipo, setErrorPorTipo] = useState({});
+  const [tipoActivo, setTipoActivo] = useState('resumen');
 
   const manejarGenerar = async (tipo) => {
     try {
@@ -85,7 +123,7 @@ function AsistenteIA({ analisis = [], cargando, error, iaConfigurada, alGenerar 
         <div className="state-message empty">
           <span className="vacio-titulo">Servicio de IA sin configurar</span>
           <span className="vacio-detalle">
-            Para generar resúmenes y recomendaciones hay que completar IA_BASE_URL e
+            Para usar el asistente hay que completar IA_BASE_URL e
             IA_MODELO en el archivo .env del backend. El resto del sistema funciona
             igual sin esto.
           </span>
@@ -125,8 +163,14 @@ function AsistenteIA({ analisis = [], cargando, error, iaConfigurada, alGenerar 
         <span className="ficha-seccion-titulo">Asistente</span>
       </div>
 
+      <div className="asistente-opciones" role="group" aria-label="Funciones del asistente">
+        {Object.entries(TEXTOS).map(([tipo, textos]) => (
+          <button key={tipo} className="btn-secondary" aria-pressed={tipoActivo === tipo}
+            disabled={generandoTipo !== null} onClick={() => setTipoActivo(tipo)}>{textos.titulo}</button>
+        ))}
+      </div>
       <div className="asistente-bloques">
-        {['resumen', 'recomendacion'].map((tipo) => {
+        {Object.keys(TEXTOS).map((tipo) => {
           // El backend devuelve los análisis del más reciente al más antiguo,
           // así que el primero de cada tipo es el vigente
           const ultimo = analisis.find((a) => a.tipo === tipo);
@@ -136,7 +180,7 @@ function AsistenteIA({ analisis = [], cargando, error, iaConfigurada, alGenerar 
           const textos = TEXTOS[tipo];
 
           return (
-            <div key={tipo} className="asistente-bloque">
+            <div key={tipo} className="asistente-bloque" hidden={tipoActivo !== tipo}>
               <div className="asistente-encabezado">
                 <span className="asistente-titulo">{textos.titulo}</span>
                 <button
@@ -172,7 +216,11 @@ function AsistenteIA({ analisis = [], cargando, error, iaConfigurada, alGenerar 
                 <div className="asistente-vacio">{textos.vacio}</div>
               ) : (
                 <div className="bloque-resumen">
-                  <p className="resumen-texto">{ultimo.salida}</p>
+                  {tipo === 'mensaje' ? (
+                    <BorradorMensaje key={ultimo.id} texto={ultimo.salida} />
+                  ) : (
+                    <p className="resumen-texto">{ultimo.salida}</p>
+                  )}
 
                   <div className="resumen-pie">
                     <span className="resumen-origen">
@@ -187,13 +235,13 @@ function AsistenteIA({ analisis = [], cargando, error, iaConfigurada, alGenerar 
 
                   {/* Consumo de la llamada. Queda en nulo en los análisis generados
                       antes de que se empezara a registrar. */}
-                  {(ultimo.tokens_entrada !== null || ultimo.tokens_salida !== null) && (
+                  {(ultimo.tokens_entrada != null || ultimo.tokens_salida != null) && (
                     <div className="resumen-consumo">
                       <span>
                         {ultimo.tokens_entrada ?? 0} tokens enviados ·{' '}
                         {ultimo.tokens_salida ?? 0} recibidos
                       </span>
-                      {ultimo.costo_estimado_usd !== null && (
+                      {ultimo.costo_estimado_usd != null && (
                         <span className="consumo-costo">
                           {costoUSD(ultimo.costo_estimado_usd)} estimados
                         </span>

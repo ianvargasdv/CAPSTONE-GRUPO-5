@@ -13,6 +13,19 @@ probarse y demostrarse por separado antes de pasar al siguiente.
 
 ## Módulos
 
+### Ampliación del asistente · 15/10/2026
+
+**Estado: implementada localmente; pendiente de validación con el proveedor.**
+
+- Borrador de seguimiento editable y copiable, sin envío automático.
+- Preguntas para completar los datos comerciales faltantes, sin modificar el lead.
+- Dieciséis pruebas simuladas aprobadas y frontend compilado.
+- Bloqueo externo comprobado: la consulta del modelo devuelve `401 invalid_api_key`.
+- Las nuevas historias SCRUM-32 y SCRUM-33 no se incorporan retrospectivamente a los
+  cuatro sprints cerrados. No tienen estimación acordada ni sprint asignado.
+- WhatsApp queda como propuesta; requiere cuenta, número, credenciales, recepción
+  verificada de eventos y validación del flujo antes de poder considerarlo integrado.
+
 ### M0. Entorno reproducible
 
 **Estado: completado.**

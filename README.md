@@ -4,9 +4,28 @@ Sistema de gestión para ejecutivos inmobiliarios: prospectos (leads), catálogo
 propiedades, historial de contacto, tareas de seguimiento y propiedades de interés
 de cada lead.
 
-Incluye un agente de IA que resume el historial de un lead y recomienda la siguiente
-acción, priorización automática de la cartera y un registro de auditoría de todo lo
-que se modifica.
+Incluye un asistente de IA para resumir el historial, recomendar la siguiente
+acción, preparar un borrador de seguimiento y sugerir preguntas sobre datos
+comerciales faltantes. Los textos requieren revisión humana: el asistente no envía
+mensajes ni actualiza la ficha del cliente. También incluye priorización por reglas
+y un registro de auditoría.
+
+### Validación de las nuevas funciones de IA · 15/10/2026
+
+El borrador se puede editar y copiar desde la ficha. La edición es temporal; no se
+guarda como contacto. Las preguntas se muestran para que el ejecutivo decida cómo
+completar el perfil. No se necesita una migración adicional para estos dos tipos.
+
+Las 16 pruebas nuevas usan un proveedor simulado y una base temporal. Las cuatro
+generaciones reales intentadas no produjeron respuestas. Una consulta posterior,
+sin generación, devolvió HTTP 401 con código `invalid_api_key`. Hay que corregir la
+clave configurada en el backend y volver a validar el contenido con datos ficticios.
+La compilación y las pruebas locales no sustituyen esa evaluación.
+
+WhatsApp no está integrado. Como siguiente etapa se propone conectar una cuenta y
+número de Meta mediante Cloud API, recibir eventos verificados y mantener revisión
+humana del envío. Requiere configuración y pruebas propias; no forma parte de lo
+validado aquí. Referencia técnica: [ejemplos oficiales de Meta](https://github.com/fbsamples/whatsapp-api-examples).
 
 ## Stack
 
@@ -44,6 +63,7 @@ backend/
   prueba_asignaciones.py  Verifica responsables, historial, permisos y conflictos
   consolidar_asignaciones.py  Importa movimientos anteriores sin borrar su origen
   prueba_consolidacion.py  Verifica fechas, datos ausentes e importación sin duplicados
+  prueba_asistente.py  Verifica los cuatro tipos, permisos y fallos sin consumir IA
 
 frontend/src/
   App.jsx            Estado general y navegación

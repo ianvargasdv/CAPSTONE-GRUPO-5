@@ -2322,7 +2322,7 @@ textarea {
 }
 
 /* ══════════════════════════════════════
-   ASISTENTE: RESUMEN Y RECOMENDACIÓN
+   ASISTENTE DEL LEAD
 ══════════════════════════════════════ */
 
 .asistente-bloques {
@@ -2331,11 +2331,40 @@ textarea {
   gap: 1.125rem;
 }
 
+.asistente-opciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-bottom: 0.875rem;
+}
+
+.asistente-opciones button[aria-pressed="true"] {
+  background: var(--superficie-alt);
+  border-color: var(--texto-medio);
+  font-weight: 600;
+}
+
+.asistente-borrador {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.asistente-borrador label, .asistente-borrador-acciones span {
+  font-size: 0.75rem;
+  color: var(--texto-medio);
+}
+
+.asistente-borrador textarea { width: 100%; resize: vertical; }
+.asistente-borrador-acciones { display: flex; align-items: center; flex-wrap: wrap; gap: 0.75rem; }
+
 .asistente-bloque {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
+
+.asistente-bloque[hidden] { display: none; }
 
 .asistente-encabezado {
   display: flex;
@@ -2350,7 +2379,7 @@ textarea {
   color: var(--texto);
 }
 
-/* Estado vacío compacto: hay dos bloques y no conviene que ocupen media pantalla */
+/* Una función visible por vez evita alargar la ficha del cliente. */
 .asistente-vacio {
   padding: 0.75rem 1rem;
   background-color: var(--superficie-alt);
