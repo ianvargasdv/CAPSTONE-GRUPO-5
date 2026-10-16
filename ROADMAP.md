@@ -13,6 +13,18 @@ probarse y demostrarse por separado antes de pasar al siguiente.
 
 ## Módulos
 
+### Presentación y UX · 16/10/2026
+
+**Estado: implementado y verificado en los flujos principales; normalización aplicada.**
+
+- Nombres naturales sin los marcadores heredados, manteniendo el origen ficticio.
+- Filtros comerciales y de tareas vencidas, búsqueda sin tildes y limpieza de filtros.
+- Formularios con campos obligatorios, detalles opcionales plegables y navegación por teclado.
+- Acciones de fila visibles y tablas con desplazamiento interno en móvil.
+- Revisión como administrador y ejecutivo en una base temporal, sin cambiar permisos.
+- 235 comprobaciones técnicas aprobadas y compilación correcta.
+- No implica una revisión exhaustiva de todos los dispositivos o una puesta en producción.
+
 ### Calidad y datos de prueba · 16/10/2026
 
 **Estado: código local probado; escenario ficticio aplicado y verificado en la base.**

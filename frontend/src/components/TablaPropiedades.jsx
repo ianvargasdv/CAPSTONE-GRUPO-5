@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Icono from './Iconos';
+import { filtrarCatalogo } from '../presentacion';
 
 /**
  * Listado del catálogo de propiedades con búsqueda y filtros por tipo y estado.
@@ -33,6 +34,7 @@ function TablaPropiedades({ propiedades, cargando, error, alEditar, alPedirElimi
   const [busqueda, setBusqueda] = useState('');
   const [filtroTipo, setFiltroTipo] = useState('Todos');
   const [filtroEstado, setFiltroEstado] = useState('Todos');
+  const [filtroOperacion, setFiltroOperacion] = useState('Todas');
 
   if (cargando) {
     return <div className="state-message">Cargando catálogo...</div>;
@@ -61,17 +63,9 @@ function TablaPropiedades({ propiedades, cargando, error, alEditar, alPedirElimi
     );
   }
 
-  const filtradas = propiedades.filter((prop) => {
-    const termino = busqueda.toLowerCase().trim();
-    const coincideTexto =
-      !termino ||
-      prop.titulo.toLowerCase().includes(termino) ||
-      prop.direccion.toLowerCase().includes(termino) ||
-      prop.comuna?.toLowerCase().includes(termino);
-    const coincideTipo = filtroTipo === 'Todos' || prop.tipo === filtroTipo;
-    const coincideEstado = filtroEstado === 'Todos' || prop.estado === filtroEstado;
-    return coincideTexto && coincideTipo && coincideEstado;
-  });
+  const filtradas = filtrarCatalogo(propiedades, {busqueda,tipo:filtroTipo,estado:filtroEstado,operacion:filtroOperacion});
+  const limpiarFiltros = () => { setBusqueda(''); setFiltroTipo('Todos'); setFiltroEstado('Todos'); setFiltroOperacion('Todas'); };
+  const hayFiltros = busqueda || filtroTipo !== 'Todos' || filtroEstado !== 'Todos' || filtroOperacion !== 'Todas';
 
   return (
     <>
@@ -81,7 +75,7 @@ function TablaPropiedades({ propiedades, cargando, error, alEditar, alPedirElimi
           <input
             type="search"
             className="search-input"
-            placeholder="Buscar por título, dirección o comuna"
+            placeholder="Título, comuna, dirección o código"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             aria-label="Buscar propiedades"
@@ -91,6 +85,7 @@ function TablaPropiedades({ propiedades, cargando, error, alEditar, alPedirElimi
         <select
           className="filter-select"
           value={filtroTipo}
+          aria-label="Filtrar propiedades por tipo"
           onChange={(e) => setFiltroTipo(e.target.value)}
         >
           <option value="Todos">Todos los tipos</option>
@@ -104,6 +99,7 @@ function TablaPropiedades({ propiedades, cargando, error, alEditar, alPedirElimi
         <select
           className="filter-select"
           value={filtroEstado}
+          aria-label="Filtrar propiedades por estado"
           onChange={(e) => setFiltroEstado(e.target.value)}
         >
           <option value="Todos">Todos los estados</option>
@@ -114,7 +110,14 @@ function TablaPropiedades({ propiedades, cargando, error, alEditar, alPedirElimi
           <option value="Retirada">Retirada</option>
         </select>
 
-        <span className="results-count">
+        <select className="filter-select" value={filtroOperacion}
+          aria-label="Filtrar propiedades por operación" onChange={(e) => setFiltroOperacion(e.target.value)}>
+          <option value="Todas">Venta y arriendo</option>
+          <option value="Compra">Venta</option>
+          <option value="Arriendo">Arriendo</option>
+        </select>
+        {hayFiltros && <button className="btn-secondary" onClick={limpiarFiltros}>Limpiar filtros</button>}
+        <span className="results-count" role="status">
           {filtradas.length} de {propiedades.length}
         </span>
       </div>
@@ -125,13 +128,13 @@ function TablaPropiedades({ propiedades, cargando, error, alEditar, alPedirElimi
           <span className="vacio-detalle">Ajusta la búsqueda o los filtros aplicados.</span>
         </div>
       ) : (
-        <div className="table-wrapper">
+        <div className="table-wrapper" tabIndex={0} role="region" aria-label="Catálogo de propiedades; desplazamiento horizontal disponible">
           <table className="leads-table">
             <thead>
               <tr>
                 <th>Propiedad</th>
                 <th>Tipo</th>
-                <th>Programa</th>
+                <th>Operación y distribución</th>
                 <th>Precio</th>
                 <th>Estado</th>
                 <th />
@@ -145,7 +148,7 @@ function TablaPropiedades({ propiedades, cargando, error, alEditar, alPedirElimi
                       <span className="celda-principal">{prop.titulo}</span>
                       <span className="celda-secundaria">{prop.comuna || 'Comuna sin registrar'} · {prop.direccion}</span>
                       <details className="catalogo-detalle">
-                        <summary>Ver ficha y fotografías</summary>
+                        <summary>Ver ficha del inmueble</summary>
                         <FichaCatalogo propiedad={prop} />
                       </details>
                     </div>

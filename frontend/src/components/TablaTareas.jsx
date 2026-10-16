@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Icono from './Iconos';
+import { coincideBusqueda, tareaVencida } from '../presentacion';
 
 /**
  * Listado de tareas con filtros por estado y prioridad.
@@ -35,6 +36,7 @@ function TablaTareas({
   const [filtroEstado, setFiltroEstado] = useState('Todos');
   const [filtroPrioridad, setFiltroPrioridad] = useState('Todas');
   const [completandoId, setCompletandoId] = useState(null);
+  const [soloVencidas, setSoloVencidas] = useState(false);
 
   const nombrePorLead = leads.reduce((acc, lead) => {
     acc[lead.id] = lead.nombre;
@@ -68,21 +70,11 @@ function TablaTareas({
     );
   }
 
-  const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
-
-  /** Una tarea está vencida si tiene fecha límite pasada y no está completada. */
-  const estaVencida = (tarea) => {
-    if (!tarea.fecha_limite || tarea.estado === 'Completada') return false;
-    return new Date(tarea.fecha_limite + 'T00:00:00') < hoy;
-  };
-
   const filtradas = tareas.filter((tarea) => {
-    const termino = busqueda.toLowerCase().trim();
-    const coincideTexto = !termino || tarea.titulo.toLowerCase().includes(termino);
+    const coincideTexto = coincideBusqueda(busqueda,tarea.titulo,tarea.descripcion,nombrePorLead[tarea.lead_id]);
     const coincideEstado = filtroEstado === 'Todos' || tarea.estado === filtroEstado;
     const coincidePrioridad = filtroPrioridad === 'Todas' || tarea.prioridad === filtroPrioridad;
-    return coincideTexto && coincideEstado && coincidePrioridad;
+    return coincideTexto && coincideEstado && coincidePrioridad && (!soloVencidas || tareaVencida(tarea));
   });
 
   const manejarCompletar = (tarea) => {
@@ -98,7 +90,7 @@ function TablaTareas({
           <input
             type="search"
             className="search-input"
-            placeholder="Buscar tarea"
+            placeholder="Tarea, descripción o cliente"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             aria-label="Buscar tareas"
@@ -108,6 +100,7 @@ function TablaTareas({
         <select
           className="filter-select"
           value={filtroEstado}
+          aria-label="Filtrar tareas por estado"
           onChange={(e) => setFiltroEstado(e.target.value)}
         >
           <option value="Todos">Todos los estados</option>
@@ -119,6 +112,7 @@ function TablaTareas({
         <select
           className="filter-select"
           value={filtroPrioridad}
+          aria-label="Filtrar tareas por prioridad"
           onChange={(e) => setFiltroPrioridad(e.target.value)}
         >
           <option value="Todas">Todas las prioridades</option>
@@ -127,7 +121,11 @@ function TablaTareas({
           <option value="Baja">Baja</option>
         </select>
 
-        <span className="results-count">
+        <label className="filtro-casilla"><input type="checkbox" checked={soloVencidas}
+          onChange={(e) => setSoloVencidas(e.target.checked)} /> Sólo vencidas</label>
+        {(busqueda || filtroEstado !== 'Todos' || filtroPrioridad !== 'Todas' || soloVencidas) &&
+          <button className="btn-secondary" onClick={() => {setBusqueda('');setFiltroEstado('Todos');setFiltroPrioridad('Todas');setSoloVencidas(false);}}>Limpiar filtros</button>}
+        <span className="results-count" role="status">
           {filtradas.length} de {tareas.length}
         </span>
       </div>
@@ -138,7 +136,7 @@ function TablaTareas({
           <span className="vacio-detalle">Ajusta la búsqueda o los filtros aplicados.</span>
         </div>
       ) : (
-        <div className="table-wrapper">
+        <div className="table-wrapper" tabIndex={0} role="region" aria-label="Lista de tareas; desplazamiento horizontal disponible">
           <table className="leads-table">
             <thead>
               <tr>
@@ -152,7 +150,7 @@ function TablaTareas({
             </thead>
             <tbody>
               {filtradas.map((tarea) => {
-                const vencida = estaVencida(tarea);
+                const vencida = tareaVencida(tarea);
                 const completada = tarea.estado === 'Completada';
 
                 return (
@@ -166,7 +164,7 @@ function TablaTareas({
                           {tarea.titulo}
                         </span>
                         {tarea.descripcion && (
-                          <span className="celda-secundaria">{tarea.descripcion}</span>
+                          <details className="tarea-descripcion"><summary>Ver detalle</summary><p>{tarea.descripcion}</p></details>
                         )}
                       </div>
                     </td>
@@ -189,6 +187,7 @@ function TablaTareas({
                         vencida ? (
                           <span className="etiqueta peligro">
                             <Icono nombre="alerta" tamano={11} />
+                            Vencida ·{' '}
                             {new Date(tarea.fecha_limite + 'T00:00:00').toLocaleDateString('es-CL')}
                           </span>
                         ) : (

@@ -80,6 +80,9 @@ function Sidebar({ vistaActiva, alCambiarVista, contadores, usuario, alCerrarSes
                   key={item.id}
                   className={`nav-item ${vistaActiva === item.id ? 'activo' : ''}`}
                   onClick={() => alCambiarVista(item.id)}
+                  aria-current={vistaActiva === item.id ? 'page' : undefined}
+                  aria-label={item.etiqueta}
+                  title={item.etiqueta}
                 >
                   <Icono nombre={item.icono} />
                   <span className="nav-item-etiqueta">{item.etiqueta}</span>
@@ -114,7 +117,7 @@ function Sidebar({ vistaActiva, alCambiarVista, contadores, usuario, alCerrarSes
         <div className="estado-conexion">
           <span className="punto-estado" />
           <Icono nombre="baseDatos" tamano={12} />
-          <span>Supabase conectado</span>
+          <span>Sesión iniciada</span>
         </div>
       </div>
     </aside>

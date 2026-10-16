@@ -65,17 +65,18 @@ function FormularioLead({ alGuardar, leadEditar, alCancelar }) {
 
   return (
     <form className="form-lead" onSubmit={manejarEnvio}>
+      <p className="form-ayuda">Los campos con * son obligatorios. Completa el perfil de búsqueda a medida que conozcas al cliente.</p>
       {error && <div className="alert-error">{error}</div>}
 
       <p className="form-seccion-titulo">Datos de contacto</p>
       <div className="form-grid">
         <div className="form-group form-group-full">
-          <label htmlFor="nombre">Nombre completo</label>
-          <input id="nombre" value={datos.nombre} onChange={cambiar('nombre')} disabled={cargando} autoFocus placeholder="Camila Soto" />
+          <label htmlFor="nombre">Nombre completo *</label>
+          <input id="nombre" required minLength={2} maxLength={100} autoComplete="name" value={datos.nombre} onChange={cambiar('nombre')} disabled={cargando} autoFocus placeholder="Camila Soto" />
         </div>
         <div className="form-group">
-          <label htmlFor="email">Correo</label>
-          <input id="email" type="email" value={datos.email} onChange={cambiar('email')} disabled={cargando} placeholder="camila@ejemplo.cl" />
+          <label htmlFor="email">Correo *</label>
+          <input id="email" required maxLength={150} autoComplete="email" type="email" value={datos.email} onChange={cambiar('email')} disabled={cargando} placeholder="cliente@example.test" />
         </div>
         <div className="form-group">
           <label htmlFor="telefono">Teléfono</label>
@@ -146,7 +147,8 @@ function FormularioLead({ alGuardar, leadEditar, alCancelar }) {
           <label htmlFor="origen">Origen</label>
           <select id="origen" value={datos.origen || ''} onChange={cambiar('origen')} disabled={cargando}>
             <option value="">Sin definir</option>
-            {['Referido', 'Portal inmobiliario', 'Redes sociales', 'Sitio web', 'Llamada', 'Otro', 'Demo capstone'].map((valor) => <option key={valor}>{valor}</option>)}
+            {['Referido', 'Portal inmobiliario', 'Redes sociales', 'Sitio web', 'Llamada', 'Otro', 'Escenario de prueba'].map((valor) => <option key={valor}>{valor}</option>)}
+            {datos.origen === 'Demo capstone' && <option value="Demo capstone">Escenario de prueba</option>}
           </select>
         </div>
       </div>

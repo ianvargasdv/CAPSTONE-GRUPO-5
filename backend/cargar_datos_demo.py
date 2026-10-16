@@ -14,6 +14,8 @@ from datetime import date, datetime, timedelta, timezone
 
 import database
 import models
+from normalizar_presentacion import nombre_natural, titulo_natural, MARCA_LEGADO
+from sqlalchemy import and_, or_
 
 
 LEADS = [
@@ -93,7 +95,7 @@ def cargar() -> tuple[int, int, int, int]:
             lead = db.query(models.Lead).filter(models.Lead.email == datos["email"]).first()
             if not lead:
                 lead = models.Lead(
-                    **datos, es_demo=True, ejecutivo_id=responsable.id if responsable else None,
+                    **{**datos, 'nombre': nombre_natural(datos['nombre'])}, es_demo=True, ejecutivo_id=responsable.id if responsable else None,
                     fecha_proxima_accion=hoy + timedelta(days=indice + 1),
                     fecha_creacion=ahora - timedelta(days=(indice + 1) * 4),
                 )
@@ -104,17 +106,18 @@ def cargar() -> tuple[int, int, int, int]:
 
         propiedades = {}
         for datos in PROPIEDADES:
-            propiedad = db.query(models.Propiedad).filter(models.Propiedad.titulo == datos["titulo"]).first()
+            propiedad = db.query(models.Propiedad).filter(or_(
+                models.Propiedad.titulo == datos['titulo'],
+                and_(models.Propiedad.titulo == titulo_natural(datos['titulo']),
+                     models.Propiedad.descripcion.startswith(MARCA_LEGADO)),
+            )).first()
             if not propiedad:
-                propiedad = models.Propiedad(**datos)
+                propiedad = models.Propiedad(**{**datos,'titulo':titulo_natural(datos['titulo']),
+                    'descripcion':MARCA_LEGADO})
                 db.add(propiedad)
                 db.flush()
                 nuevas_propiedades += 1
-            else:
-                # Mantiene actualizado el escenario creado por versiones anteriores
-                # del script, sin duplicarlo ni alterar propiedades que no son demo.
-                for campo, valor in datos.items():
-                    setattr(propiedad, campo, valor)
+            # Las ediciones posteriores del usuario se conservan al repetir la carga.
             propiedades[datos["titulo"]] = propiedad
 
         relaciones = [
@@ -254,7 +257,7 @@ def cargar() -> tuple[int, int, int, int]:
 if __name__ == "__main__":
     cantidad_leads, cantidad_propiedades, cantidad_oportunidades, cantidad_visitas = cargar()
     print(
-        f"Datos demo listos: {cantidad_leads} leads, {cantidad_propiedades} propiedades "
+        f"Escenario de prueba listo: {cantidad_leads} leads, {cantidad_propiedades} propiedades "
         f"{cantidad_oportunidades} oportunidades y {cantidad_visitas} visitas nuevas."
     )
-    print("Los registros se distinguen por '(Demo)', '[DEMO]' y es_demo=true.")
+    print("Son datos ficticios: la marca interna y las descripciones conservan su origen.")

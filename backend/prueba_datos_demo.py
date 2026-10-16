@@ -22,7 +22,7 @@ segunda = cargar_datos_demo.cargar()
 db = database.SessionLocal()
 try:
     leads = db.query(models.Lead).filter(models.Lead.es_demo.is_(True)).all()
-    propiedades = db.query(models.Propiedad).filter(models.Propiedad.titulo.like("[DEMO]%")).all()
+    propiedades = db.query(models.Propiedad).filter(models.Propiedad.descripcion.startswith(cargar_datos_demo.MARCA_LEGADO)).all()
     assert primera == (5, 5, 5, 5), primera
     assert segunda == (0, 0, 0, 0), segunda
     assert len(leads) == 5

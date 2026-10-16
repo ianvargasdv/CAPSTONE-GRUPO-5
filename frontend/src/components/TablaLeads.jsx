@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Icono from './Iconos';
+import { coincideBusqueda } from '../presentacion';
 
 /**
  * Listado de leads. Es la vista principal de la sección: la creación y edición
@@ -76,13 +77,7 @@ function TablaLeads({
   }
 
   const leadsFiltrados = leads.filter((lead) => {
-    const termino = busqueda.toLowerCase().trim();
-    const coincideTexto =
-      !termino ||
-      lead.nombre.toLowerCase().includes(termino) ||
-      lead.email.toLowerCase().includes(termino) ||
-      (lead.telefono && lead.telefono.includes(termino)) ||
-      (lead.comunas_interes && lead.comunas_interes.toLowerCase().includes(termino));
+    const coincideTexto = coincideBusqueda(busqueda, lead.nombre, lead.email, lead.telefono, lead.comunas_interes, lead.ejecutivo_nombre);
     const coincideEstado = filtroEstado === 'Todos' || lead.estado === filtroEstado;
     const coincideCategoria = filtroCategoria === 'Todas' || lead.categoria === filtroCategoria;
     return coincideTexto && coincideEstado && coincideCategoria;
@@ -99,7 +94,7 @@ function TablaLeads({
           <input
             type="search"
             className="search-input"
-            placeholder="Buscar por nombre, correo o teléfono"
+            placeholder="Nombre, correo, comuna o responsable"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             aria-label="Buscar leads"
@@ -134,7 +129,9 @@ function TablaLeads({
           ))}
         </select>
 
-        <span className="results-count">
+        {(busqueda || filtroEstado !== 'Todos' || filtroCategoria !== 'Todas') &&
+          <button className="btn-secondary" onClick={() => {setBusqueda('');setFiltroEstado('Todos');setFiltroCategoria('Todas');}}>Limpiar filtros</button>}
+        <span className="results-count" role="status">
           {leadsFiltrados.length} de {leads.length}
         </span>
       </div>
@@ -145,7 +142,7 @@ function TablaLeads({
           <span className="vacio-detalle">Ajusta la búsqueda o los filtros aplicados.</span>
         </div>
       ) : (
-        <div className="table-wrapper">
+        <div className="table-wrapper" tabIndex={0} role="region" aria-label="Lista de leads; desplazamiento horizontal disponible">
           <table className="leads-table">
             <thead>
               <tr>

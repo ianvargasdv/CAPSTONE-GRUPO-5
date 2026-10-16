@@ -20,7 +20,7 @@ Moneda = Literal["UF", "CLP"]
 PlazoDecision = Literal["Inmediato", "0-3 meses", "3-6 meses", "6-12 meses", "Sin definir"]
 Financiamiento = Literal["Crédito preaprobado", "En evaluación", "Recursos propios", "Sin definir"]
 OrigenLead = Literal[
-    "Referido", "Portal inmobiliario", "Redes sociales", "Sitio web", "Llamada", "Otro", "Demo capstone"
+    "Referido", "Portal inmobiliario", "Redes sociales", "Sitio web", "Llamada", "Otro", "Demo capstone", "Escenario de prueba"
 ]
 EtapaOportunidad = Literal["Contacto", "Visita", "Oferta", "Negociación", "Ganada", "Perdida"]
 EstadoVisita = Literal["Programada", "Confirmada", "Realizada", "Cancelada", "No asistió"]
@@ -234,7 +234,7 @@ class DatosCatalogo(BaseModel):
 
 
 class PropiedadBase(DatosCatalogo):
-    titulo: TextoCorto
+    titulo: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=150)]
     tipo: TipoPropiedad = "Departamento"
     tipo_operacion: Optional[TipoOperacion] = "Compra"
     precio: int = Field(gt=0, le=999_999_999_999)

@@ -698,13 +698,13 @@ textarea {
   text-underline-offset: 2px;
 }
 
-/* Acciones que aparecen al pasar el mouse sobre la fila */
+/* Las acciones están visibles también sin mouse (pantallas táctiles y teclado). */
 .acciones-celda {
   display: flex;
   align-items: center;
   gap: 0.125rem;
   justify-content: flex-end;
-  opacity: 0;
+  opacity: 1;
   transition: opacity 0.12s ease;
 }
 
@@ -2594,3 +2594,29 @@ textarea {
 .asignacion-movimiento { padding: 12px 0; border-bottom: 1px solid var(--borde, #e5e7eb); }
 .asignacion-movimiento .celda-secundaria { display: block; margin-top: 4px; }
 .asignacion-paginacion { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 12px; }
+
+/* Controles operativos consistentes, también con teclado y pantallas estrechas. */
+button:focus-visible, input:focus-visible, select:focus-visible,
+textarea:focus-visible, summary:focus-visible, a:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--texto);
+  outline-offset: 3px;
+}
+.filtro-casilla { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; white-space: nowrap; }
+.filtro-casilla input { width: 1rem; height: 1rem; }
+.form-ayuda { margin: 0 0 1rem; color: var(--texto-suave); font-size: 0.8125rem; line-height: 1.5; }
+.ficha-opcional { border-top: 1px solid var(--borde); padding-top: 0.75rem; }
+.ficha-opcional > summary { cursor: pointer; font-weight: 500; padding: 0.5rem 0; }
+.ficha-opcional[open] > summary { margin-bottom: 0.75rem; }
+.tarea-descripcion { max-width: 32rem; white-space: normal; font-size: 0.8125rem; }
+.tarea-descripcion summary { cursor: pointer; color: var(--texto-suave); }
+.tarea-descripcion p { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
+@media (max-width: 640px) {
+  .table-wrapper .leads-table { min-width: 760px; }
+  .barra-herramientas .campo-busqueda { width: 100%; flex-basis: 100%; }
+  .barra-herramientas .filter-select { flex: 1 1 140px; min-width: 0; }
+  .barra-herramientas .results-count { margin-left: 0; }
+  .drawer-cuerpo { padding: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

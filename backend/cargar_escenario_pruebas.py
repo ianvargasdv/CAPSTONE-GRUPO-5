@@ -96,7 +96,7 @@ def cargar():
                     presupuesto_min=None if incompleto else int(propiedad.precio*.85),
                     presupuesto_max=None if incompleto else int(propiedad.precio*1.1),
                     moneda=propiedad.moneda,dormitorios_min=propiedad.dormitorios,banos_min=2,
-                    plazo_decision='0-3 meses',financiamiento='En evaluación',origen='Demo capstone',
+                    plazo_decision='0-3 meses',financiamiento='En evaluación',origen='Escenario de prueba',
                     proxima_accion=None if cerrado else 'Confirmar requisitos de estacionamiento y superficie de terreno',
                     fecha_proxima_accion=None if cerrado else hoy+timedelta(days=(i%7)-2),
                     fecha_creacion=ahora-timedelta(days=(i%12)+1)), 'lead','leads',nombre)

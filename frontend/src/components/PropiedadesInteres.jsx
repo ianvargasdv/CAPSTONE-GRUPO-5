@@ -193,7 +193,7 @@ function PropiedadesInteres({
                   </span>
                   {prop && (
                     <span className="interes-detalle">
-                      {prop.tipo} · {prop.direccion} · {prop.precio.toLocaleString('es-CL')}
+                      {prop.tipo} · {prop.direccion} · {prop.precio.toLocaleString('es-CL')} {prop.moneda || '(moneda sin registrar)'} · {prop.estado}
                     </span>
                   )}
                   {interes.notas && <span className="interes-notas">{interes.notas}</span>}

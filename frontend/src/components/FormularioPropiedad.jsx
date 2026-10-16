@@ -101,14 +101,17 @@ function FormularioPropiedad({ alGuardar, propiedadEditar, alCancelar, esAdmin =
 
   return (
     <form className="form-lead" onSubmit={manejarEnvio}>
+      <p className="form-ayuda">Los campos con * son obligatorios. El resto se puede completar después.</p>
       {error && <div className="alert-error">{error}</div>}
 
       <div className="form-grid">
         <div className="form-group form-group-full">
-          <label htmlFor="titulo">Título</label>
+          <label htmlFor="titulo">Título *</label>
           <input
             id="titulo"
             type="text"
+            required
+            maxLength={150}
             placeholder="Depto 2D/2B Metro Providencia"
             value={titulo}
             onChange={(e) => setTitulo(e.target.value)}
@@ -141,10 +144,13 @@ function FormularioPropiedad({ alGuardar, propiedadEditar, alCancelar, esAdmin =
         </div>
 
         <div className="form-group">
-          <label htmlFor="precio">Precio</label>
+          <label htmlFor="precio">Precio *</label>
           <input
             id="precio"
             type="number"
+            required
+            min="1"
+            step="1"
             placeholder="3500"
             value={precio}
             onChange={(e) => setPrecio(e.target.value)}
@@ -161,10 +167,12 @@ function FormularioPropiedad({ alGuardar, propiedadEditar, alCancelar, esAdmin =
         </div>
 
         <div className="form-group form-group-full">
-          <label htmlFor="direccion">Dirección</label>
+          <label htmlFor="direccion">Dirección *</label>
           <input
             id="direccion"
             type="text"
+            required
+            maxLength={200}
             placeholder="Av. Providencia 1234, Providencia"
             value={direccion}
             onChange={(e) => setDireccion(e.target.value)}
@@ -202,8 +210,13 @@ function FormularioPropiedad({ alGuardar, propiedadEditar, alCancelar, esAdmin =
             <option value="Retirada">Retirada</option>
           </select>
         </div>
-        <CamposCatalogo datos={catalogo} esAdmin={esAdmin} deshabilitado={cargando}
-          alCambiar={(nombre, valor) => setCatalogo(prev => ({ ...prev, [nombre]: valor }))} />
+        <details className="form-group-full ficha-opcional">
+          <summary>{esAdmin ? 'Ficha ampliada, fotografías y administración' : 'Ficha ampliada y fotografías'} (opcional)</summary>
+          <div className="form-grid">
+            <CamposCatalogo datos={catalogo} esAdmin={esAdmin} deshabilitado={cargando}
+              alCambiar={(nombre, valor) => setCatalogo(prev => ({ ...prev, [nombre]: valor }))} />
+          </div>
+        </details>
       </div>
 
       <div className="form-actions">

@@ -1,0 +1,20 @@
+{
+  "fecha_local": "2026-10-16 America/Santiago",
+  "previa": {
+    "leads": 29,
+    "propiedades": 5
+  },
+  "cambios": {
+    "leads": 29,
+    "propiedades": 5
+  },
+  "segunda_ejecucion": {
+    "leads": 0,
+    "propiedades": 0
+  },
+  "campos_ajenos_intactos": true,
+  "auditoria_anterior_intacta": true,
+  "nombres_pendientes": 0,
+  "titulos_pendientes": 0,
+  "limites": "Se normalizaron registros ficticios identificados; no se reescribieron análisis guardados, comentarios ni auditorías anteriores."
+}

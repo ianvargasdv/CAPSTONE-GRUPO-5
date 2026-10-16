@@ -6,6 +6,33 @@ de cada lead.
 
 ## Comprobación del asistente · 16/10/2026
 
+### Presentación y uso del CRM · módulo posterior
+
+Se retiraron los marcadores Demo de los nombres del escenario inicial y de sus
+títulos de propiedades. Los datos siguen siendo ficticios: se conserva la marca
+interna del cliente y la descripción de origen en las propiedades. El historial y
+los análisis guardados no se reescriben para ocultar cómo eran los registros antes.
+`backend/normalizar_presentacion.py` permite revisar los conteos; con `--aplicar`
+normaliza en una transacción y registra el cambio. Ya se aplicó el 16/10/2026:
+29 clientes con cambios de nombre y/o origen y cinco propiedades. Una segunda
+ejecución no cambió nada. No requiere una migración de estructura.
+
+Mejoras de interfaz verificadas en un escenario temporal:
+
+- Búsqueda sin tildes por cliente, responsable, comuna o código, según la vista.
+- Catálogo filtrable por venta/arriendo y botón para limpiar filtros.
+- Tareas con filtro Sólo vencidas, texto de vencimiento y detalles desplegables.
+- Acciones de editar/eliminar visibles sin pasar el mouse y moneda/estado en intereses.
+- Formularios con campos obligatorios marcados y ficha opcional plegable de propiedades.
+- Paneles utilizables con Tab, Shift+Tab y Escape, con retorno del foco al disparador.
+- Navegación con nombres accesibles en móvil y desplazamiento interno de tablas.
+- Indicador de sesión en vez de afirmar una conexión a Supabase sin comprobarla.
+
+La interfaz se revisó como administrador y ejecutivo; no se añadieron permisos ni
+un portal para clientes externos. Pruebas: 221 comprobaciones del backend y 14 del
+frontend aprobadas; compilación correcta. No equivale a una auditoría exhaustiva de
+accesibilidad, seguridad o todos los dispositivos.
+
 Se amplió el contexto con fecha de referencia, moneda y estado de las propiedades
 de interés. Las preguntas consideran también requisitos expresamente pendientes
 en notas o tareas, no sólo los campos básicos del perfil. Se reforzaron las
@@ -237,7 +264,7 @@ python cargar_datos_demo.py
 
 El script es idempotente: repetirlo no duplica el escenario. Todos los registros
 son ficticios, usan correos del dominio reservado `example.test`, teléfonos
-imposibles y se distinguen con `(Demo)`, `[DEMO]` o `es_demo=true`. No deben
+imposibles y se distinguen por la marca interna de prueba y la descripción del inmueble. No deben
 presentarse como datos de clientes reales.
 
 ### Frontend

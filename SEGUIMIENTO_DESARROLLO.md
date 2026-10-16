@@ -2,6 +2,55 @@
 
 Actualizado: 16/10/2026. Este archivo es un control de trabajo, no un acta de reunión.
 
+## Módulo de presentación y UX · 16/10/2026
+
+Antes de iniciar este módulo se creó y subió `3a0d95a`, con las mejoras anteriores
+de IA, tareas revisables, ocho casos de calidad y carga de datos ficticios. Los
+documentos no relacionados que estaban sin seguimiento se conservaron sin añadirlos
+al commit. Este módulo se mantiene separado del anterior.
+
+Se aplicó la normalización de 29 leads (cinco nombres con sufijo y/o origen del
+escenario) y cinco títulos de propiedades. Se retiraron los marcadores visibles de
+los nombres y se cambió el origen heredado a Escenario de prueba. Los datos no pasan
+a ser clientes u ofertas reales: conservan la marca interna o descripción ficticia.
+Se verificó que identificadores, relaciones, demás campos y auditorías anteriores
+quedaron intactos. La segunda ejecución produjo cero cambios. No se reescriben
+textos históricos ni análisis de IA ya guardados. Registro agregado:
+`backend/evidencias/normalizacion_presentacion_20261016.json`.
+
+Se adaptó el cargador inicial para no volver a crear propiedades con el prefijo
+anterior ni sobrescribir las ediciones del usuario. La API admite el origen nuevo y
+conserva la compatibilidad con el valor histórico. Se corrigió además el máximo de
+150 caracteres del título de propiedades para que coincida con su columna real.
+
+UX implementada: búsqueda sin tildes; búsqueda por responsable en leads y por código
+en propiedades; filtro venta/arriendo y limpieza de filtros; filtro Sólo vencidas;
+etiqueta textual de vencimiento; detalle de tareas plegable; acciones de fila siempre
+visibles; moneda y estado en los intereses. Se marcaron campos obligatorios y se
+plegaron los campos opcionales de la ficha ampliada de propiedades. Se cambió el
+indicador estático Supabase conectado por Sesión iniciada, que no pretende verificar
+el estado de la base.
+
+Paneles: foco visible, recorrido Tab/Shift+Tab limitado al formulario, cierre con
+Escape y retorno del foco a Nueva propiedad comprobado en navegador. En ancho 430px
+la página mantuvo 430px de ancho y la tabla se desplazó dentro de su contenedor;
+los botones de navegación mantienen nombres accesibles aunque se oculten los textos.
+Se corrigió durante la revisión el retorno del foco y la estrechez de las columnas.
+
+Verificación: 221 comprobaciones del backend (incluidas siete del nuevo módulo),
+14 del frontend y compilación aprobadas. En escenario temporal se combinaron nunoa
+y Arriendo (dos resultados), se limpiaron filtros y se vieron siete tareas vencidas.
+Se recorrieron Inicio, Pipeline, Agenda y Leads sin alertas visibles en ese escenario.
+Como ejecutivo no aparecieron Actividad, Consumo de IA ni campos privados del
+propietario. No hubo generaciones de IA ni escritura de pruebas visuales en Supabase.
+No es una auditoría completa de todos los dispositivos o de accesibilidad.
+
+Pendiente para documentación: registrar este módulo y los anteriores en Jira,
+actualizar historias y Product Backlog, Daily/impedimentos, informes 2.4/2.6, Release
+y evidencias. Mantener los sprints cerrados y sus burndowns como registros históricos.
+La definición inicial y el estado ficticio de los datos no se deben presentar como
+validaciones externas, clientes reales o ventas reales.
+
 ## Calidad del asistente y escenario ficticio · 16/10/2026
 
 Se añadió fecha de referencia UTC al contexto y moneda/estado al describir
