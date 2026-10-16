@@ -395,7 +395,12 @@ revisar(
 sin_resultado = listar(busqueda="texto que no existe")
 revisar(sin_resultado.total == 0 and sin_resultado.registros == [], "una búsqueda sin coincidencias devuelve vacío")
 
-hoy = date.today()
+# Fijar el día de la muestra evita mezclar el reloj local con las fechas UTC
+# de SQLite, especialmente en las horas cercanas a medianoche.
+hoy = date(2026, 1, 15)
+for registro in registros():
+    registro.fecha_creacion = datetime(2026, 1, 15, 12, tzinfo=timezone.utc)
+db.commit()
 de_hoy = listar(desde=hoy.isoformat(), hasta=hoy.isoformat())
 revisar(de_hoy.total == todo.total, f"el rango de hoy incluye el día completo ({de_hoy.total})")
 

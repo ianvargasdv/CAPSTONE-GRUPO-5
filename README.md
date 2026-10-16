@@ -42,6 +42,8 @@ backend/
   prueba_matching.py  Verifica puntaje, cobertura, orden y datos incompletos
   prueba_catalogo.py  Verifica ficha, fotografías, estados, permisos y auditoría
   prueba_asignaciones.py  Verifica responsables, historial, permisos y conflictos
+  consolidar_asignaciones.py  Importa movimientos anteriores sin borrar su origen
+  prueba_consolidacion.py  Verifica fechas, datos ausentes e importación sin duplicados
 
 frontend/src/
   App.jsx            Estado general y navegación
@@ -106,6 +108,13 @@ uvicorn main:app --reload
 Queda en `http://localhost:8000`, con la documentación de la API en `/docs`. Al
 arrancar crea las tablas que falten. `migrar.py` agrega columnas nuevas a tablas
 existentes sin borrar datos y puede ejecutarse más de una vez.
+
+Si existe `historial_asignaciones`, la migración incorpora sus movimientos en
+`asignaciones_lead` y conserva la tabla anterior. Mantiene las fechas, nombres
+registrados y correo del autor; el nombre del autor se obtiene de la cuenta actual.
+El identificador de origen impide importar dos veces el mismo movimiento. No cambia
+el responsable actual del lead ni crea eventos nuevos en Actividad. Los movimientos
+se consultan por fecha, usando el id para desempatar.
 
 ### Crear un usuario
 

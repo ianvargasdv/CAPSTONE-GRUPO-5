@@ -21,6 +21,7 @@ import sys
 from sqlalchemy import text
 
 import database
+from consolidar_asignaciones import consolidar_historial
 
 # Cada entrada es (descripción, instrucción SQL). Se agregan al final, nunca se
 # modifican las anteriores: así el script sirve también para una base recién creada.
@@ -137,6 +138,9 @@ CAMBIOS = [
         )""",
     ),
     ("asignaciones_lead: índice por lead", "CREATE INDEX IF NOT EXISTS ix_asignaciones_lead_lead_id ON asignaciones_lead (lead_id)"),
+    ("asignaciones_lead: correo del autor en registros anteriores", "ALTER TABLE asignaciones_lead ADD COLUMN IF NOT EXISTS autor_email VARCHAR(150)"),
+    ("asignaciones_lead: identificador del movimiento anterior", "ALTER TABLE asignaciones_lead ADD COLUMN IF NOT EXISTS historial_origen_id INTEGER"),
+    ("asignaciones_lead: evitar importar dos veces el mismo movimiento", "CREATE UNIQUE INDEX IF NOT EXISTS ux_asignaciones_historial_origen ON asignaciones_lead (historial_origen_id)"),
 ]
 
 
@@ -145,19 +149,21 @@ def main() -> int:
     print("-" * 60)
 
     aplicados = 0
-    with database.engine.begin() as conexion:
-        for descripcion, instruccion in CAMBIOS:
-            try:
+    try:
+        with database.engine.begin() as conexion:
+            for descripcion, instruccion in CAMBIOS:
                 conexion.execute(text(instruccion))
                 print(f"  ok   {descripcion}")
                 aplicados += 1
-            except Exception as error:
-                print(f"  FALLO {descripcion}")
-                print(f"        {error}")
-                return 1
+            importados = consolidar_historial(conexion)
+    except Exception as error:
+        # No mostrar parámetros SQL ni cadenas de conexión con datos privados.
+        print(f"  FALLO: {type(error).__name__}. No se confirmó ningún cambio de esta ejecución.")
+        return 1
 
     print("-" * 60)
     print(f"{aplicados} de {len(CAMBIOS)} instrucciones ejecutadas sin error.")
+    print(f"Movimientos anteriores incorporados: {importados}. La tabla original se conserva.")
     print("El script es idempotente: volver a correrlo no genera cambios.")
     return 0
 

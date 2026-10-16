@@ -1,5 +1,6 @@
 """SCRUM-30 y SCRUM-31. API real, SQLite temporal y usuarios ficticios; sin llamadas de IA."""
 import unittest
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
 # Reutiliza el cliente ASGI y su base temporal, nunca la conexión de Supabase.
@@ -152,6 +153,19 @@ class AsignacionesTest(unittest.TestCase):
         self.db.rollback()
         self.assertEqual(self.db.get(models.Lead, lead['id']).ejecutivo_id, self.admin.id)
         self.assertEqual(self.db.query(models.AsignacionLead).count(), 1)
+
+    def test_importacion_antigua_no_aparece_como_cambio_mas_reciente(self):
+        lead = self.crear()
+        self.cambiar(lead, self.dos.id)
+        reciente = self.db.query(models.AsignacionLead).order_by(models.AsignacionLead.id.desc()).first()
+        antiguo = models.AsignacionLead(lead_id=lead['id'], lead_nombre='Lead ficticio',
+            nuevo_nombre='Responsable histórico', autor_nombre='Autor histórico',
+            fecha_creacion=datetime.now(timezone.utc) - timedelta(days=30), historial_origen_id=1)
+        self.db.add(antiguo); self.db.commit()
+        self.assertGreater(antiguo.id, reciente.id)
+        historial = self.pedir('GET', f'/api/leads/{lead["id"]}/asignaciones').json()['items']
+        self.assertEqual(historial[0]['id'], reciente.id)
+        self.assertEqual(historial[-1]['id'], antiguo.id)
 
     def test_borrar_cuentas_o_lead_conserva_el_movimiento(self):
         lead = self.crear()

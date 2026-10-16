@@ -250,7 +250,9 @@ def listar_asignaciones(
         raise HTTPException(status_code=404, detail="Lead no encontrado")
     consulta = db.query(models.AsignacionLead).filter(models.AsignacionLead.lead_id == lead_id)
     total = consulta.count()
-    items = consulta.order_by(models.AsignacionLead.id.desc()).offset((pagina - 1) * por_pagina).limit(por_pagina).all()
+    items = consulta.order_by(
+        models.AsignacionLead.fecha_creacion.desc(), models.AsignacionLead.id.desc()
+    ).offset((pagina - 1) * por_pagina).limit(por_pagina).all()
     return {"items": items, "total": total, "pagina": pagina, "por_pagina": por_pagina}
 
 

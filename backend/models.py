@@ -77,6 +77,7 @@ class Lead(Base):
 class AsignacionLead(Base):
     """Movimientos de responsable. Los nombres conservan el contexto histórico."""
     __tablename__ = "asignaciones_lead"
+    __table_args__ = (UniqueConstraint('historial_origen_id', name='ux_asignaciones_historial_origen'),)
 
     id = Column(Integer, primary_key=True)
     lead_id = Column(Integer, ForeignKey("leads.id", ondelete="SET NULL"), nullable=True, index=True)
@@ -87,6 +88,9 @@ class AsignacionLead(Base):
     nuevo_nombre = Column(String(100), nullable=False)
     autor_id = Column(Integer, ForeignKey("usuarios.id", ondelete="SET NULL"), nullable=True)
     autor_nombre = Column(String(100), nullable=False)
+    autor_email = Column(String(150), nullable=True)
+    # Identifica el movimiento importado; los movimientos nuevos no tienen origen.
+    historial_origen_id = Column(Integer, nullable=True)
     fecha_creacion = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 

@@ -82,7 +82,7 @@ almacenamiento de archivos ni asignación de cartera (M7).
 
 ### M7. Equipo y asignación de cartera
 
-**Estado: SCRUM-30 y SCRUM-31 implementadas localmente; migración y comprobaciones funcionales manuales confirmadas por Bryan el 15/10/2026. Pendiente guardar cambios y actualizar Jira con autorización.**
+**Estado: SCRUM-30 y SCRUM-31 implementadas y finalizadas en Jira; validación manual confirmada el 15/10/2026. Historial anterior consolidado y verificado en Supabase.**
 
 Implementado: reasignación de leads por administración e historial paginado con
 responsable anterior, nuevo responsable, autor y fecha. La API rechaza usuarios

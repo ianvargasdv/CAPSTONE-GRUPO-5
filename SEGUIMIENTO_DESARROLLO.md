@@ -2,6 +2,35 @@
 
 Actualizado: 15/10/2026. Este archivo es un control de trabajo, no un acta de reunión.
 
+## Actualización del historial anterior · 15/10/2026
+
+Se confirmó directamente en Supabase que había tres movimientos en
+`historial_asignaciones` y uno en `asignaciones_lead`. Se aplicaron 51 instrucciones
+de migración y se incorporaron los tres movimientos anteriores al historial actual.
+Se verificó igualdad de fechas, responsables, nombres registrados y correo del autor.
+La tabla original, los responsables actuales y el movimiento nuevo quedaron intactos.
+Una segunda consolidación incorporó cero registros. No se eliminaron tablas ni filas.
+
+El historial ahora se ordena por fecha e id, no sólo por id: una importación antigua
+no debe aparecer por encima de una reasignación más reciente. El nombre del autor de
+la importación se resuelve con la cuenta actual y su correo anterior se conserva por
+separado. No se registran movimientos inventados para leads sin antecedentes.
+
+Validación: 12 pruebas de consolidación, 13 de asignaciones y 8 de catálogo
+aprobadas. También aprobaron auditoría (62), validaciones (33), datos demo (17),
+oportunidades (15), visitas (15), matching (13) y compilación del frontend.
+La prueba de auditoría utilizaba la fecha local para consultar registros UTC;
+se fijó una fecha de muestra para que no dependa del huso horario de la ejecución.
+No se cambió la interpretación UTC del filtro de la aplicación.
+
+Jira consultado: 25 historias finalizadas y cuatro sprints cerrados. Las cuatro
+épicas siguen Por hacer. Esta corrección complementa SCRUM-31, sin modificar fechas
+ni reabrir sprints cerrados. Pendiente de producto: evaluación sistemática de la IA;
+no se realizaron llamadas pagadas ni se inventaron resultados de calidad.
+
+Los apartados siguientes conservan el registro previo a esta actualización; sus
+pendientes de commit y cierre de Jira ya fueron atendidos en el avance anterior.
+
 ## Avance en curso: responsables de leads
 
 La consulta de Jira de esta sesión mantiene SCRUM-30 y SCRUM-31 en «Por hacer».
