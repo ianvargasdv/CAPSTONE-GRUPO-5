@@ -425,6 +425,33 @@ textarea {
   gap: 0.875rem;
 }
 
+.tarea-contexto {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem 0;
+  background: var(--superficie);
+  border-bottom: 1px solid var(--borde);
+  overflow-wrap: anywhere;
+}
+
+.tarea-contexto strong {
+  font-size: 1rem;
+  color: var(--texto);
+}
+
+.tarea-cliente {
+  display: block;
+  min-width: 9rem;
+  max-width: 16rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

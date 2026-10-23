@@ -1,5 +1,6 @@
 from datetime import date, datetime, time, timedelta, timezone
 from typing import List, Literal, Optional
+import unicodedata
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -1027,6 +1028,25 @@ def listar_tareas(db: Session = Depends(database.obtener_db)):
     return db.query(models.Tarea).order_by(models.Tarea.fecha_creacion.desc()).all()
 
 
+def _verificar_tarea_no_repetida(db, lead_id, titulo, descripcion, estado, excluir_id=None):
+    if not lead_id or estado == "Completada":
+        return
+
+    def comparable(valor):
+        texto = unicodedata.normalize("NFD", valor or "").lower()
+        return " ".join("".join(c for c in texto if not unicodedata.combining(c)).split())
+
+    pendientes = db.query(models.Tarea).filter(
+        models.Tarea.lead_id == lead_id, models.Tarea.estado != "Completada"
+    ).all()
+    for pendiente in pendientes:
+        if pendiente.id == excluir_id:
+            continue
+        # Sólo coincidencia exacta normalizada; no se infiere equivalencia semántica.
+        if comparable(pendiente.titulo) == comparable(titulo) and comparable(pendiente.descripcion) == comparable(descripcion):
+            raise HTTPException(status_code=409, detail="Ya existe una tarea pendiente igual para este cliente. Abre la existente en Tareas.")
+
+
 @router_privado.post("/tareas", response_model=schemas.TareaRespuesta, status_code=status.HTTP_201_CREATED)
 def crear_tarea(
     datos: schemas.TareaCrear,
@@ -1041,6 +1061,8 @@ def crear_tarea(
         lead = db.query(models.Lead).filter(models.Lead.id == datos.lead_id).first()
         if not lead:
             raise HTTPException(status_code=404, detail="Lead no encontrado")
+
+    _verificar_tarea_no_repetida(db, datos.lead_id, datos.titulo, datos.descripcion, datos.estado)
 
     # Convertir fecha_limite de string ISO a objeto date si se proporcionó
     fecha_limite_obj = None
@@ -1094,6 +1116,12 @@ def actualizar_tarea(
     antes = auditoria.instantanea(tarea, auditoria.TAREA)
 
     campos = datos.model_dump(exclude_unset=True)
+
+    if any(campo in campos for campo in ("lead_id", "titulo", "descripcion", "estado")):
+        _verificar_tarea_no_repetida(
+            db, campos.get("lead_id", tarea.lead_id), campos.get("titulo", tarea.titulo),
+            campos.get("descripcion", tarea.descripcion), campos.get("estado", tarea.estado), tarea.id,
+        )
 
     # Tratar fecha_limite por separado para convertirla a objeto date
     if "fecha_limite" in campos:

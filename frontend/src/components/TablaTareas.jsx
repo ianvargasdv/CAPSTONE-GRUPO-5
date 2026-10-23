@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Icono from './Iconos';
-import { coincideBusqueda, tareaVencida } from '../presentacion';
+import { coincideBusqueda, tareaVencida, clienteDeTarea, fechaDeTarea } from '../presentacion';
 
 /**
  * Listado de tareas con filtros por estado y prioridad.
@@ -140,11 +140,11 @@ function TablaTareas({
           <table className="leads-table">
             <thead>
               <tr>
+                <th>Cliente</th>
                 <th>Tarea</th>
                 <th>Estado</th>
                 <th>Prioridad</th>
                 <th>Vence</th>
-                <th>Lead</th>
                 <th />
               </tr>
             </thead>
@@ -152,9 +152,12 @@ function TablaTareas({
               {filtradas.map((tarea) => {
                 const vencida = tareaVencida(tarea);
                 const completada = tarea.estado === 'Completada';
+                const cliente = clienteDeTarea(tarea.lead_id, leads);
+                const contexto = `${tarea.titulo} · ${cliente}`;
 
                 return (
                   <tr key={tarea.id}>
+                    <td><span className="tarea-cliente">{cliente}</span></td>
                     <td>
                       <div className="celda-doble">
                         <span
@@ -188,19 +191,11 @@ function TablaTareas({
                           <span className="etiqueta peligro">
                             <Icono nombre="alerta" tamano={11} />
                             Vencida ·{' '}
-                            {new Date(tarea.fecha_limite + 'T00:00:00').toLocaleDateString('es-CL')}
+                            {fechaDeTarea(tarea.fecha_limite)}
                           </span>
                         ) : (
-                          new Date(tarea.fecha_limite + 'T00:00:00').toLocaleDateString('es-CL')
+                          fechaDeTarea(tarea.fecha_limite)
                         )
-                      ) : (
-                        <span className="celda-vacia">—</span>
-                      )}
-                    </td>
-
-                    <td>
-                      {tarea.lead_id && nombrePorLead[tarea.lead_id] ? (
-                        <span className="celda-secundaria">{nombrePorLead[tarea.lead_id]}</span>
                       ) : (
                         <span className="celda-vacia">—</span>
                       )}
@@ -214,17 +209,19 @@ function TablaTareas({
                             onClick={() => manejarCompletar(tarea)}
                             disabled={completandoId === tarea.id}
                             title="Marcar como completada"
+                            aria-label={`Completar tarea: ${contexto}`}
                           >
                             <Icono nombre="check" />
                           </button>
                         )}
-                        <button className="btn-icono" onClick={() => alEditar(tarea)} title="Editar">
+                        <button className="btn-icono" onClick={() => alEditar(tarea)} title={`Editar: ${contexto}`} aria-label={`Editar tarea: ${contexto}`}>
                           <Icono nombre="editar" />
                         </button>
                         <button
                           className="btn-icono peligro"
                           onClick={() => alPedirEliminar(tarea)}
                           title="Eliminar"
+                          aria-label={`Eliminar tarea: ${contexto}`}
                         >
                           <Icono nombre="eliminar" />
                         </button>

@@ -4,6 +4,45 @@ Sistema de gestión para ejecutivos inmobiliarios: prospectos (leads), catálogo
 propiedades, historial de contacto, tareas de seguimiento y propiedades de interés
 de cada lead.
 
+## Evaluación local del asistente
+
+Desde `backend`, se pueden validar nueve casos ficticios y comprobar el registro
+de evaluaciones sin abrir el CRM, conectarse a Supabase ni gastar saldo:
+
+```powershell
+.\venv\Scripts\python.exe evaluar_asistente.py validar
+.\venv\Scripts\python.exe evaluar_asistente.py ejecutar --salida evaluacion_01.json
+.\venv\Scripts\python.exe evaluar_asistente.py resumir evaluacion_01.json
+.\venv\Scripts\python.exe prueba_evaluacion.py
+```
+
+La herramienta actual sólo genera salidas simuladas. No ejecuta el modelo real
+ni mide su calidad: sirve para comprobar el registro, la comparación y la revisión.
+Cada ejecución queda identificada y sus respuestas empiezan pendientes de revisión.
+Los criterios de cada caso están en `backend/casos_asistente.json`; su fecha de
+referencia es fija para que el sentido de una visita o tarea vencida no cambie
+según el día de ejecución. La evidencia real anterior del 16/10 se conserva intacta.
+
+Para registrar una revisión, primero se lee la ficha, la respuesta y los criterios
+en el archivo. Luego se indica el identificador del caso, la decisión, el nombre
+de quien revisó y una observación concreta. Se guarda otro archivo, no se reemplaza
+el original. Revisar una simulación no acredita la calidad del modelo real.
+
+```powershell
+# Sustituye el autor y la observación por los de la revisión efectivamente realizada.
+.\venv\Scripts\python.exe evaluar_asistente.py revisar evaluacion_01.json --caso resumen_visita_pasada --estado rechazado --autor "Nombre del revisor" --observacion "Observación de la revisión" --salida evaluacion_01_revisada.json
+.\venv\Scripts\python.exe evaluar_asistente.py ejecutar --fallo-caso resumen_visita_pasada --salida evaluacion_02.json
+.\venv\Scripts\python.exe evaluar_asistente.py comparar evaluacion_01.json evaluacion_02.json --salida comparacion_01_02.json
+```
+
+El segundo ejemplo simula un error sin contactar a un proveedor. La comparación
+usa el identificador y la huella de cada caso: si cambian su ficha o sus criterios,
+lo señala como no comparable. Las huellas detectan diferencias, no autentican al
+autor de un archivo. No hay aprobación automática ni un porcentaje de precisión.
+Los archivos de salida deben ser nuevos y su carpeta debe existir. La prueba del
+modelo real requiere una ejecución posterior autorizada; esta herramienta todavía
+no ofrece ese modo ni importa resultados reales.
+
 ## Comprobación del asistente · 16/10/2026
 
 ### Presentación y uso del CRM · módulo posterior

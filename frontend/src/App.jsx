@@ -61,7 +61,7 @@ import AsistenteIA from './components/AsistenteIA';
 import ConsumoIA from './components/ConsumoIA';
 import Auditoria from './components/Auditoria';
 import AsignacionLead from './components/AsignacionLead';
-import { prepararTareaDesdeIA, pendientesDelLead, seleccionarTareaPendiente } from './tareaDesdeIA';
+import { prepararTareaDesdeIA, pendientesDelLead, seleccionarTareaPendiente, firmaPendientes, validarNuevaTareaIA } from './tareaDesdeIA';
 
 /** Configuración de cada vista: título de la barra superior y su acción principal. */
 const VISTAS = {
@@ -181,6 +181,8 @@ function App() {
 
   // ── Panel lateral de formularios: { entidad, registro } o null ──
   const [panelForm, setPanelForm] = useState(null);
+  const panelFormActual = useRef(panelForm);
+  panelFormActual.current = panelForm;
 
   // ── Ficha del lead y sus datos asociados ──
   const [fichaLead, setFichaLead] = useState(null);
@@ -358,17 +360,26 @@ function App() {
 
   const abrirCrear = (entidad) => setPanelForm({ entidad, registro: null });
   const abrirEditar = (entidad, registro) => setPanelForm({ entidad, registro });
-  const cerrarPanelForm = () => setPanelForm(null);
+  const cerrarPanelForm = () => {
+    panelFormActual.current = null;
+    setPanelForm(null);
+  };
 
-  const abrirPendienteDesdeIA = (tareaId) => {
+  const abrirPendienteDesdeIA = async (tareaId) => {
     if (!panelForm?.borradorIA) return;
+    const origen = panelForm;
+    let actuales;
     try {
+      actuales = await obtenerTareas();
+      setTareas(actuales);
       const registro = seleccionarTareaPendiente(
-        tareas, panelForm.borradorIA.lead_id, tareaId
+        actuales, origen.borradorIA.lead_id, tareaId
       );
-      setPanelForm({ entidad: 'tarea', registro,
-        contextoIA: panelForm.borradorIA.descripcion });
+      setPanelForm(actual => actual === origen ? { entidad: 'tarea', registro,
+        contextoIA: origen.borradorIA.descripcion } : actual);
     } catch (err) {
+      if (actuales) setPanelForm(actual => actual === origen ? {...actual,
+        tareasRelacionadas: pendientesDelLead(actuales, origen.borradorIA.lead_id)} : actual);
       mostrarToast(err.message);
     }
   };
@@ -635,7 +646,7 @@ function App() {
 
   // ══════════ Tareas ══════════
 
-  const guardarTarea = async (datos) => {
+  const guardarTarea = async (datos, decisionIA) => {
     const editando = panelForm?.registro;
 
     if (editando) {
@@ -643,6 +654,19 @@ function App() {
       setTareas((prev) => prev.map((t) => (t.id === actualizada.id ? actualizada : t)));
       mostrarToast('Tarea actualizada');
     } else {
+      if (panelForm?.borradorIA) {
+        const origen = panelForm;
+        const actuales = await obtenerTareas();
+        if (panelFormActual.current !== origen) throw new Error('El formulario se cerró o cambió. No se creó ninguna tarea.');
+        setTareas(actuales);
+        if (firmaPendientes(actuales, origen.borradorIA.lead_id) !==
+            firmaPendientes(origen.tareasRelacionadas || [], origen.borradorIA.lead_id)) {
+          setPanelForm(actual => actual === origen ? {...actual,
+            tareasRelacionadas: pendientesDelLead(actuales, origen.borradorIA.lead_id)} : actual);
+          throw new Error('Cambió el seguimiento pendiente. Revísalo antes de crear otra tarea.');
+        }
+        validarNuevaTareaIA(origen.borradorIA, actuales, datos, decisionIA);
+      }
       const creada = await crearTarea(datos);
       setTareas((prev) => [creada, ...prev]);
       mostrarToast('Tarea creada');
@@ -914,7 +938,9 @@ function App() {
         abierto={Boolean(panelForm)}
         titulo={
           panelForm
-            ? TITULOS_PANEL[panelForm.entidad][panelForm.registro ? 'editar' : 'crear']
+            ? panelForm.borradorIA && !panelForm.registro && panelForm.tareasRelacionadas?.length
+              ? 'Revisar seguimiento'
+              : TITULOS_PANEL[panelForm.entidad][panelForm.registro ? 'editar' : 'crear']
             : ''
         }
         alCerrar={cerrarPanelForm}

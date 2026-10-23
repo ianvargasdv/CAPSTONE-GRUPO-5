@@ -179,4 +179,36 @@ class TransporteIATest(unittest.TestCase):
         self.assertEqual(len(r['texto']),ia.MAX_CARACTERES_RESPUESTA)
 
 
+class FallosTransporteTest(unittest.TestCase):
+    def ejecutar_fallo(self, error):
+        with patch.object(ia, 'BASE_URL', 'https://proveedor.example.test/v1'), \
+             patch.object(ia, 'MODELO', 'modelo-simulado'), \
+             patch.object(ia.urllib.request, 'urlopen', side_effect=error):
+            with self.assertRaises(ia.IAFallo) as resultado:
+                ia.generar_analisis('Ficha ficticia', 'resumen')
+        return str(resultado.exception)
+
+    def test_timeout_y_fallo_de_conexion_son_controlados(self):
+        self.assertIn('no respondió', self.ejecutar_fallo(TimeoutError()))
+        self.assertIn('No se pudo conectar', self.ejecutar_fallo(ia.urllib.error.URLError('conexión simulada')))
+
+    def test_limite_de_llamadas_y_falta_de_credito_no_se_confunden(self):
+        for codigo, texto in [('rate_limit_exceeded', 'limitando'), ('insufficient_quota', 'crédito')]:
+            with self.subTest(codigo=codigo):
+                error = ia.urllib.error.HTTPError(
+                    'https://proveedor.example.test', 429, 'simulado', {},
+                    io.BytesIO(json.dumps({'error': {'code': codigo}}).encode()))
+                self.assertIn(texto, self.ejecutar_fallo(error))
+
+    def test_error_de_autenticacion_no_expone_clave(self):
+        clave = 'credencial-ficticia-sin-valor'
+        error = ia.urllib.error.HTTPError(
+            'https://proveedor.example.test', 401, 'simulado', {},
+            io.BytesIO(json.dumps({'error': {'message': 'Clave rechazada: ' + clave}}).encode()))
+        with patch.object(ia, 'API_KEY', clave):
+            mensaje = self.ejecutar_fallo(error)
+        self.assertNotIn(clave, mensaje)
+        self.assertIn('***', mensaje)
+
+
 if __name__=='__main__': unittest.main(verbosity=2)

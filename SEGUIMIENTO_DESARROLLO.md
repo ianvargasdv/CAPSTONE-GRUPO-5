@@ -1,6 +1,309 @@
 # Seguimiento del desarrollo
 
-Actualizado: 16/10/2026. Este archivo es un control de trabajo, no un acta de reunión.
+Actualizado: 23/10/2026. Este archivo es un control de trabajo, no un acta de reunión.
+
+## Revisión del seguimiento y preparación de entrega · 23/10/2026
+
+Bryan compartió dos capturas del CRM: primero se ofrece abrir el seguimiento
+pendiente de Diego Alvarado y después se abre esa tarea conservando título,
+descripción, prioridad, estado, cliente y fecha. Las capturas comprueban la
+apertura, no un guardado nuevo ni todos los casos de validación.
+
+Al preparar una tarea desde IA se consultan los pendientes actuales. Si existen,
+crear otra exige indicar una acción distinta y revisar su contenido. Antes de
+guardar se comprueba si los pendientes cambiaron. La API rechaza otra tarea
+activa del mismo cliente con título y descripción iguales tras normalizar
+espacios, mayúsculas y tildes. No detecta equivalencia semántica ni garantiza
+exclusión entre solicitudes simultáneas en PostgreSQL.
+
+Se repitieron 168 pruebas y verificaciones: 18 del evaluador, 24 del asistente,
+8 de duplicados, 23 del frontend, 62 de auditoría y 33 de validaciones.
+La compilación del frontend terminó correctamente. Los scripts de auditoría y
+validaciones se ejecutaron en procesos separados porque inicializan sus propios
+datos. Las pruebas usaron SQLite temporal y respuestas simuladas, sin modificar
+Supabase ni consumir saldo de IA. La herramienta de evaluación continúa siendo
+simulada: estos resultados no son una nueva evaluación del modelo real.
+
+Se prepara la integración en Git con autorización de Bryan, excluyendo el informe
+2.6 local y los documentos ajenos al desarrollo. Los estados de Jira no se han
+vuelto a consultar ni modificado en esta revisión. El commit y su subida no
+equivalen a despliegue, cierre del sprint o aceptación de todas sus historias.
+Pendiente: actualizar las evidencias compartidas del sprint 5 con el resultado
+real de la integración y revisar los criterios de cierre antes de finalizarlo.
+
+## Identificación del cliente al gestionar tareas · 21/10/2026
+
+Bryan detectó dificultad para distinguir tareas con el mismo título en distintos
+clientes al probar el seguimiento desde IA. La diferencia de fechas 17/10–19/10
+no es un error confirmado: aclaró que había seleccionado otro cliente durante
+la comprobación. No se modificaron las fechas almacenadas para hacerlas coincidir.
+
+Se creó SCRUM-37 como tarea de mejora de usabilidad bajo SCRUM-18, asignada al
+Sprint 5, con Bryan como informador y responsable. Inicio 21/10, vencimiento
+23/10 y estimación inicial de dos puntos. Se añadió después del inicio: la
+referencia original del sprint se conserva en 11 puntos y el alcance pasa a 13.
+Ese aumento debe verse en el burndown como cambio de alcance, no como trabajo
+planificado desde el 19/10. No se añadió un impedimento: se registró una mejora
+detectada durante las pruebas de SCRUM-36.
+
+Cambios locales de presentación:
+
+- FormularioTarea muestra al cliente antes de las instrucciones y mantiene el
+  encabezado visible al desplazarse. El nombre sigue al cliente seleccionado.
+- Los pendientes de una propuesta identifican al cliente y usan DD-MM-AAAA.
+- TablaTareas muestra al cliente en la primera columna y diferencia las acciones
+  accesibles de tareas con títulos iguales. No se reescriben títulos almacenados.
+- Si no hay cliente o no está disponible se indica expresamente. Un cliente no
+  disponible no aparece como Ninguno en el selector de edición.
+
+Verificación: 18 pruebas del frontend aprobadas (cuatro nuevas, con entradas
+válidas, ausencia de cliente, cambio de selección y formato de fecha) y compilación
+correcta. En un entorno visual aislado se usaron dos clientes ficticios con
+tareas homónimas, fechas 17/10 y 19/10 y descripciones distintas. Se comprobó
+identificación, apertura de la tarea existente con conservación de datos,
+cancelación sin llamadas de guardado, selección de otro cliente y guardado único
+en memoria. También se comprobaron las etiquetas Sin cliente asociado y Cliente
+no disponible. El entorno no carga App.jsx ni tiene API: esa prueba no acredita
+persistencia en Supabase ni sustituye todo el recorrido integrado pendiente en
+SCRUM-36. Las capturas están en outputs/sprint5-20261021, fuera del repo interior.
+
+SCRUM-37 pasa a En revisión; no se declara finalizada por la prueba aislada.
+README y los informes entregados no requieren cambios para esta mejora visual.
+La estructura y los datos de Supabase no se tocaron. Sin commit, push o despliegue.
+
+Texto para añadir a la Daily: Durante las pruebas confundimos tareas con el
+mismo título de distintos clientes. Mejoramos la identificación del cliente en
+el listado, el formulario y los pendientes propuestos por IA. Pasaron las pruebas
+del frontend y la compilación; verificamos el recorrido en un entorno aislado.
+Falta la revisión en el CRM integrado. No se confirmó un fallo de fechas.
+
+Pendiente en los archivos compartidos: añadir SCRUM-37 al Product Backlog, anotar
+la incorporación posterior al inicio en la planificación y sumar dos puntos de
+alcance al burndown, conservando la referencia inicial de 11. El Scrumboard de
+Jira ya refleja la actividad. Las hojas de Drive no se han editado en este cambio;
+no corresponde rehacer el 2.6 entregado, el modelo relacional ni las retrospectivas.
+
+## Inicio del Sprint 5 y primera implementación · 20 y 21/10/2026
+
+Con la indicación de Bryan de continuar se activó el Sprint 5 en Jira el
+20/10/2026 a las 23:55 de Chile (21/10 a las 02:55 UTC). Jira registra ese inicio
+efectivo; el fin se mantiene el 26/10 a las 00:00 de Chile. El período 19–26/10
+corresponde a la previsión anterior, no a trabajo acreditado desde el lunes.
+El alcance seleccionado contiene SCRUM-34, 35 y 36, con una referencia inicial
+de 11 puntos. No se atribuye una reunión ni una estimación de equipo no realizada.
+La épica SCRUM-18 está En curso y sus historias anteriores continúan finalizadas.
+
+Se prepararon nueve casos ficticios reutilizables en casos_asistente.json: dos
+resúmenes, dos recomendaciones, dos mensajes y tres casos de preguntas. Tienen
+fecha de referencia fija, ficha, criterios esperados y afirmaciones que deben
+evitarse. casos_evaluacion.py valida el conjunto y genera huellas para detectar
+cambios en la ficha o en los criterios. No importa el proveedor ni la base de datos.
+
+evaluar_asistente.py permite validar, ejecutar simulaciones, registrar revisiones
+en archivos nuevos, resumir sus estados y comparar ejecuciones por caso. No
+sobrescribe archivos existentes ni aprueba por defecto. Todas las salidas son
+simuladas y se identifican como tales. Este primer módulo todavía no ejecuta el
+modelo real ni importa respuestas reales. No acredita una mejora de la calidad
+de sus respuestas. README.md incluye los comandos y sus límites.
+
+Verificación realizada:
+
+- prueba_evaluacion.py: 18 pruebas aprobadas, incluyendo datos inválidos, límites,
+  duplicados, revisiones, archivos existentes, casos modificados y error simulado.
+- prueba_asistente.py: 24 pruebas aprobadas, tres nuevas para esperas agotadas,
+  conexión fallida, límites/cuota del proveedor y ocultación de claves en errores.
+- Frontend: 14 pruebas aprobadas de tareaDesdeIA y presentación; compilación de
+  producción aprobada. No se modificó la interfaz.
+- Se ejecutó el comando de simulación dos veces: primera con nueve respuestas
+  pendientes y segunda con ocho pendientes y un error simulado. Se generó su
+  comparación. No se registró una aprobación humana ni se reemplazó la evidencia
+  del 16/10. Archivos en outputs/sprint5-20261021, fuera del repositorio interior.
+
+El intento inicial de pruebas de API se interrumpió por bloqueo del entorno
+restringido. La repetición autorizada, con SQLite temporal y proveedor simulado,
+terminó correctamente. La primera compilación devolvió EPERM; la repetición
+autorizada terminó correctamente. No se consideran defectos confirmados del CRM.
+No hubo llamadas pagadas ni conexión a Supabase, migración o despliegue.
+
+Estado de entrega local: SCRUM-34 y SCRUM-35 pasan a En revisión; SCRUM-36 continúa
+En curso. Falta revisar el conjunto y la herramienta con Bryan y comprobar en
+pantalla, en un entorno temporal, la preparación/cancelación/confirmación de
+tareas. Las pruebas de funciones puras y de API no sustituyen esa comprobación
+completa de interfaz. No se ha completado el sprint y no se consumen puntos como
+finalizados en el burndown. No se hizo commit ni push; se conservaron las
+modificaciones ajenas, incluido el informe 2.6 local.
+
+### Texto para el registro de trabajo del 21/10
+
+Preparamos nueve casos reutilizables para las cuatro funciones del asistente y
+una herramienta local para registrar y comparar evaluaciones simuladas. Pasaron
+las pruebas del evaluador, del asistente y del frontend, junto con la compilación.
+Falta revisar los casos y comprobar en pantalla el flujo de tareas antes del cierre.
+No utilizamos saldo de IA ni modificamos la base de Supabase. No se confirmó un
+impedimento nuevo. Es un registro de trabajo, no un acta de una reunión con Amaro.
+
+Pendiente en los documentos compartidos: reflejar el inicio efectivo del sprint,
+las tres actividades seleccionadas y sus estados en Planning, Product Backlog y
+Scrumboard; incorporar este avance a la Daily. Para el burndown, conservar el
+inicio efectivo con 11 puntos y no inventar días de avance desde el 19/10. No se
+actualizaron Drive, Review, retrospectivas, Release ni el informe 2.6 entregado.
+
+## Alcance preparado del Sprint 5 · 20/10/2026
+
+Tras la indicación de continuar de Bryan, se revisaron ia.py, prueba_asistente.py,
+tareaDesdeIA.js, sus pruebas y la evaluación conservada del 16/10. Las funciones
+del asistente y varios controles ya existen; el nuevo alcance no los presenta
+como pendientes de implementación. No se encontraron actividades abiertas ni
+duplicados de evaluación/calidad en la consulta de Jira de este corte.
+
+Se crearon y asignaron al Sprint 5, en estado Por hacer:
+
+| Actividad | Tipo | Puntos propuestos | Inicio previsto | Vencimiento |
+| --- | --- | --- | --- | --- |
+| SCRUM-34 · Preparar casos reutilizables para evaluar el asistente | Historia | 3 | 20/10/2026 | 22/10/2026 |
+| SCRUM-35 · Ejecutar y revisar evaluaciones repetibles del asistente | Historia | 5 | 22/10/2026 | 24/10/2026 |
+| SCRUM-36 · Verificar errores del asistente y confirmación de tareas | Tarea | 3 | 24/10/2026 | 26/10/2026 |
+
+Bryan es informador y responsable de las tres actividades. No se asignó trabajo
+a Amaro ni se registró una opinión suya. Cada actividad contiene criterios de
+aceptación o cierre, prioridad y límites. SCRUM-35 depende del conjunto de casos
+de SCRUM-34. Los 11 puntos son una propuesta inicial, no capacidad confirmada ni
+un acuerdo de Planning Poker. Antes de iniciar se debe revisar si el alcance cabe
+en el tiempo disponible. La planificación del sprint sigue siendo 19–26/10, pero
+las actividades nuevas no se fechan como iniciadas el 19.
+
+La épica SCRUM-18 pasó a Por hacer porque ahora contiene trabajo nuevo. Sus
+historias anteriores siguen finalizadas. El Sprint 5 sigue en estado future;
+no se inició ni se modificaron los cuatro sprints cerrados. No se implementó ni
+probó código nuevo en esta preparación y no se realizaron llamadas pagadas.
+
+Pendiente documental inmediato: incorporar estas tres filas al Product Backlog
+priorizado, registrar el objetivo y alcance propuesto en Planificación de los
+sprints y reflejarlas en Scrumboard. La Daily puede registrar esta preparación
+real, no una reunión de equipo. No hay un impedimento nuevo confirmado que añadir.
+El burndown todavía no debe presentar consumo de puntos; la referencia propuesta
+es 11 puntos, sujeta a revisión antes del inicio. No se redactan Review,
+retrospectiva ni Release como si este trabajo estuviera completado.
+
+## Fechas de historias y control del Sprint 5 · 20/10/2026
+
+Por solicitud de Bryan se completaron y verificaron mediante el conector las
+fechas de SCRUM-30 a SCRUM-33. SCRUM-30 y SCRUM-31 tienen inicio 05/10/2026 y
+vencimiento 12/10/2026, correspondientes a la planificación del Sprint 4. Su
+finalización real permanece el 15/10. SCRUM-32 y SCRUM-33 tienen inicio 15/10 y
+vencimiento 16/10, regularizados según el intervalo histórico documentado, no
+como compromiso previo. Su cierre real permanece el 16/10 y siguen sin sprint.
+Se añadió esta aclaración a cada historia. No se alteraron puntos ni estados.
+
+Para el Sprint 5, registrar antes de desarrollar: objetivo, historias o tareas
+según la naturaleza del trabajo, épica correspondiente, criterios comprobables,
+prioridad, estimación propuesta y responsable. El informador debe corresponder a
+quien solicita la actividad; no se atribuirán solicitudes, pruebas u opiniones a
+Amaro sin respaldo. Las fechas de las actividades deben encajar en el período
+seleccionado, distinguiendo planificación e inicio efectivo. El sprint aún no se
+ha iniciado ni tiene actividades seleccionadas.
+
+Mantener al día la planificación, Product Backlog priorizado y Scrumboard; el
+Sprint Backlog se controla en Jira sin exigir otro archivo, según la decisión
+previa de Bryan de omitir ese documento. Registrar avances reales en Daily,
+bloqueos reales en impedimentos y cambios del trabajo pendiente para el burndown.
+Guardar pruebas y evidencias del código. Review, retrospectivas y Release se
+actualizarán cuando ocurran sus revisiones o resultados, sin inventar reuniones.
+Revisar impactos en Gantt, historias, mapas, modelo de datos y documentación
+técnica sólo cuando cambie el alcance o funcionamiento que describen. El informe
+2.6 entregado no se reescribe para presentar trabajo futuro como parte de aquella
+entrega. No se hizo commit, push ni cambio de código en esta regularización.
+
+## Período solicitado para el Sprint 5 · 20/10/2026
+
+Bryan indicó el período planificado del lunes 19 al lunes 26 de octubre de 2026.
+La configuración se realiza el 20/10; no acredita un inicio efectivo ni trabajo
+realizado el día 19. El sprint se mantendrá sin iniciar hasta seleccionar y estimar
+el alcance pendiente.
+
+El conector disponible permite consultar el tablero, pero no ofrece la operación
+de creación/edición de sprints. Se utilizó la interfaz de Jira. La creación produjo
+el contenedor vacío con id 40 y los datos automáticos «Sprint 4 Equipo y asignación
+2», período 12–19/10, estado future. Se intentó cambiarlo a «Sprint 5 Evaluación y
+calidad del asistente», período 19–26/10 y objetivo de evaluación repetible.
+
+Jira mostró «Algo ha ido mal. Actualiza la página y vuelve a intentarlo». La consulta
+posterior mediante el conector y la recarga del navegador confirmaron que las
+ediciones no persistieron. Un segundo intento reducido de nombre y objetivo también
+falló. No se crearon otros contenedores, no se añadieron actividades ni se inició
+el sprint.
+
+Después se guardó correctamente el mismo contenedor 40 con el nombre «Sprint 5
+Calidad del asistente», período 19–26/10/2026 y objetivo «Evaluar el asistente con
+casos repetibles y verificar errores y seguimiento con tareas». La consulta del
+conector y la recarga del tablero confirmaron la configuración. Sigue en estado
+future, sin iniciar y con cero actividades. Queda seleccionar y estimar el trabajo
+antes de iniciarlo. No se ha confirmado la causa del rechazo inicial. Los sprints
+anteriores no se modificaron.
+
+## Retoma del desarrollo y preparación del Sprint 5 · 20/10/2026
+
+El informe 2.6 ya fue entregado según lo comunicado por Bryan. Se conserva como
+registro de esa entrega y no se modifica para incorporar trabajo posterior.
+Los apartados fechados más abajo conservan los resultados y pendientes de sus
+respectivos cortes; no representan todos el estado actual.
+
+Se consultó Jira mediante el conector: 27 historias y cuatro épicas finalizadas.
+Las 27 historias tienen épica. Los sprints 1 a 4 están cerrados; no hay sprint
+activo ni Sprint 5 en el listado del tablero. SCRUM-32 y SCRUM-33 están finalizadas
+sin sprint y se mantienen fuera de los sprints históricos.
+
+La rama local es main y el código parte de deefe06. Tras consultar GitHub y
+descargar únicamente sus referencias, origin/main apunta a faff5b9. Hay nueve
+commits remotos posteriores que, comparados con deefe06, cambian sólo los informes
+2.4 y 2.6 y la presentación de Fase 2. No contienen cambios de código. Se conserva
+la modificación local del 2.6 y los archivos sin seguimiento del usuario. No se
+hizo pull ni se sustituyeron documentos.
+
+Se ejecutó prueba_asistente.py: 21 pruebas aprobadas. El script usa SQLite temporal
+y un proveedor simulado. Esta ejecución verifica el flujo y sus controles, no la
+calidad de respuestas nuevas de un modelo real. No se realizaron llamadas pagadas
+ni escrituras en Supabase. El primer intento bajo el entorno restringido no terminó
+y se interrumpió; la ejecución posterior autorizada finalizó correctamente.
+
+### Propuesta para el siguiente sprint
+
+Objetivo propuesto: hacer repetible la evaluación del asistente y comprobar sus
+controles ante errores antes de ampliar las automatizaciones. No es todavía una
+planificación acordada ni un sprint iniciado.
+
+Trabajo candidato, por priorizar y estimar antes de seleccionarlo:
+
+- Preparar casos ficticios reutilizables para las cuatro funciones, con criterios
+  de revisión por caso y separación entre resultados simulados y respuestas reales.
+- Preparar un registro de evaluación que permita repetir casos y comparar sus
+  respuestas sin modificar los datos del CRM. Una revisión pendiente no se contará
+  como aprobada. La ejecución con proveedor real requerirá autorización de gasto.
+- Revisar la cobertura de errores del proveedor y del flujo de tareas. Añadir
+  pruebas de límites o regresión sólo para comportamientos comprobables; los
+  defectos que aparezcan se registrarán con su reproducción y criterio de cierre.
+
+Para iniciar: definir alcance seleccionado, responsables y estimación; registrar
+el Sprint Planning y fijar fechas reales en Jira. No se fijan horas disponibles,
+opiniones del compañero ni una fecha de inicio retroactiva. WhatsApp no se incluye
+en esta propuesta. No se trasladan historias terminadas para llenar el sprint.
+
+### Seguimiento documental del nuevo trabajo
+
+- Planificación de sprints: añadir el Sprint 5 sin reescribir los sprints 1 a 4.
+- Product Backlog: registrar el trabajo nuevo y su prioridad antes de desarrollarlo.
+- Sprint Backlog y Scrumboard: reflejar sólo el alcance seleccionado y sus estados.
+- Registro de trabajo o Daily: anotar avances reales con fecha; no afirmar que hubo
+  una reunión si sólo se realizó trabajo individual.
+- Impedimentos: registrar sólo bloqueos reales, con su estado efectivo.
+- Burndown del Sprint 5: obtener la referencia inicial y los cambios desde su inicio,
+  conservando aparte los burndowns reconstruidos de los sprints anteriores.
+- Evidencias: conservar casos, resultados y comprobaciones durante el desarrollo.
+- Review, retrospectiva y Release: actualizar cuando existan una revisión, resultados
+  o una nueva versión que registrar; no redactarlos como hechos antes de realizarlos.
+
+No se modificaron Jira ni Drive durante esta retoma. No hubo cambios funcionales,
+commit, push ni despliegue.
 
 ## Módulo de presentación y UX · 16/10/2026
 

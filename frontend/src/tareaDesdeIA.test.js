@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { prepararTareaDesdeIA, pendientesDelLead, seleccionarTareaPendiente } from './tareaDesdeIA.js';
+import { prepararTareaDesdeIA, pendientesDelLead, seleccionarTareaPendiente, firmaPendientes, validarNuevaTareaIA } from './tareaDesdeIA.js';
 
 const lead = { id: 5, nombre: 'Cliente ficticio', estado: 'Contactado' };
 const recomendacion = { id: 9, lead_id: 5, tipo: 'recomendacion', salida: 'Revisar los requisitos pendientes.' };
@@ -74,4 +74,44 @@ test('no abre tareas de otro lead, completadas o que no están en la lista', () 
 test('permite abrir una tarea que ya está en progreso', () => {
   const tarea = {id:4,lead_id:5,estado:'En Progreso'};
   assert.equal(seleccionarTareaPendiente([tarea],5,4).id,4);
+});
+
+const pendiente = {id:10,lead_id:5,titulo:'Completar requisitos',descripcion:'Confirmar estacionamientos y terreno.',estado:'Pendiente',prioridad:'Media',fecha_limite:'2026-10-16'};
+const propuesta = prepararTareaDesdeIA(lead, recomendacion);
+
+test('con pendientes bloquea crear desde IA sin decidir expresamente otra acción', () => {
+  for (const decision of [undefined, {}, {crearDistinta:true}, {confirmarDistinta:true}]) {
+    assert.throws(() => validarNuevaTareaIA(propuesta,[pendiente],propuesta,decision));
+  }
+});
+
+test('rechaza reutilizar el borrador o copiar el título o descripción del pendiente', () => {
+  const decision = {crearDistinta:true,confirmarDistinta:true};
+  for (const cambio of [{}, {titulo:'Título distinto',descripcion:''},
+    {titulo:'  COMPLETAR  REQUISITOS ',descripcion:'Detalle diferente'},
+    {titulo:'Acción diferente',descripcion:'  Confirmar estacionamientos y terreno. '}]) {
+    assert.throws(() => validarNuevaTareaIA(propuesta,[pendiente],{...propuesta,...cambio},decision));
+  }
+});
+
+test('permite una acción distinta revisada sin tocar la tarea existente', () => {
+  const antes = JSON.stringify(pendiente);
+  validarNuevaTareaIA(propuesta,[pendiente],{...propuesta,titulo:'Enviar ficha de la propiedad',descripcion:'Enviar los antecedentes solicitados por el cliente.'},{crearDistinta:true,confirmarDistinta:true});
+  assert.equal(JSON.stringify(pendiente),antes);
+});
+
+test('sin pendientes no exige una decisión extra y excluye completadas y otros clientes', () => {
+  validarNuevaTareaIA(propuesta,[],propuesta);
+  validarNuevaTareaIA(propuesta,[{...pendiente,estado:'Completada'},{...pendiente,lead_id:6}],propuesta);
+  assert.throws(() => validarNuevaTareaIA(propuesta,[],{...propuesta,lead_id:6}));
+  validarNuevaTareaIA(null,[pendiente],{titulo:'Tarea manual'});
+});
+
+test('la firma detecta cambios sin depender del orden ni de las tareas de otros clientes', () => {
+  const otra = {...pendiente,id:11,titulo:'Otra tarea'};
+  assert.equal(firmaPendientes([pendiente,otra],5),firmaPendientes([otra,pendiente],5));
+  assert.equal(firmaPendientes([pendiente],5),firmaPendientes([pendiente,{...otra,lead_id:6}],5));
+  for (const cambio of [{estado:'Completada'},{fecha_limite:'2026-10-19'},{descripcion:'Nuevo detalle'},{titulo:'Título corregido'}]) {
+    assert.notEqual(firmaPendientes([pendiente],5),firmaPendientes([{...pendiente,...cambio}],5));
+  }
 });
