@@ -63,6 +63,7 @@ import AsistenteIA from './components/AsistenteIA';
 import ConsumoIA from './components/ConsumoIA';
 import Auditoria from './components/Auditoria';
 import AsignacionLead from './components/AsignacionLead';
+import SeccionesFichaLead from './components/SeccionesFichaLead';
 import { prepararTareaDesdeIA, pendientesDelLead, seleccionarTareaPendiente, firmaPendientes, validarNuevaTareaIA } from './tareaDesdeIA';
 
 /** Configuración de cada vista: título de la barra superior y su acción principal. */
@@ -70,8 +71,8 @@ const VISTAS = {
   inicio: { titulo: 'Inicio', subtitulo: 'Resumen de la operación' },
   leads: { titulo: 'Leads', accion: 'Nuevo lead', entidad: 'lead' },
   propiedades: { titulo: 'Propiedades', accion: 'Nueva propiedad', entidad: 'propiedad' },
-  oportunidades: { titulo: 'Pipeline', accion: 'Nueva oportunidad', entidad: 'oportunidad' },
-  visitas: { titulo: 'Agenda', accion: 'Agendar visita', entidad: 'visita' },
+  oportunidades: { titulo: 'Negocios', subtitulo: 'Seguimiento de ventas y arriendos', accion: 'Nuevo negocio', entidad: 'oportunidad' },
+  visitas: { titulo: 'Visitas', subtitulo: 'Agenda de visitas a propiedades', accion: 'Agendar visita', entidad: 'visita' },
   tareas: { titulo: 'Tareas', accion: 'Nueva tarea', entidad: 'tarea' },
   consumo: { titulo: 'Consumo de IA', subtitulo: 'Gasto del agente' },
   auditoria: { titulo: 'Actividad', subtitulo: 'Quién hizo qué y cuándo' },
@@ -82,7 +83,7 @@ const TITULOS_PANEL = {
   lead: { crear: 'Nuevo lead', editar: 'Editar lead' },
   propiedad: { crear: 'Nueva propiedad', editar: 'Editar propiedad' },
   tarea: { crear: 'Nueva tarea', editar: 'Editar tarea' },
-  oportunidad: { crear: 'Nueva oportunidad', editar: 'Editar oportunidad' },
+  oportunidad: { crear: 'Nuevo negocio', editar: 'Editar negocio' },
   visita: { crear: 'Agendar visita', editar: 'Editar visita' },
 };
 
@@ -122,7 +123,7 @@ const TEXTOS_ELIMINAR = {
     mensaje: `Se eliminará la tarea "${r.titulo}". Esta acción no se puede deshacer.`,
   }),
   oportunidad: (r) => ({
-    titulo: 'Eliminar oportunidad',
+    titulo: 'Eliminar negocio',
     mensaje: `Se eliminará el negocio de ${r.lead_nombre || 'este lead'}. Esta acción no se puede deshacer.`,
   }),
   visita: (r) => ({
@@ -259,7 +260,7 @@ function App() {
       setErrorOportunidades(null);
       setOportunidades(await obtenerOportunidades());
     } catch {
-      setErrorOportunidades('No se pudo conectar con el backend para cargar el pipeline.');
+      setErrorOportunidades('No se pudo conectar con el backend para cargar los negocios.');
     } finally {
       setCargandoOportunidades(false);
     }
@@ -593,11 +594,11 @@ function App() {
     if (editando) {
       const actualizada = await actualizarOportunidad(editando.id, datos);
       setOportunidades((prev) => prev.map((o) => (o.id === actualizada.id ? actualizada : o)));
-      mostrarToast('Oportunidad actualizada');
+        mostrarToast('Negocio actualizado');
     } else {
       const creada = await crearOportunidad(datos);
       setOportunidades((prev) => [creada, ...prev]);
-      mostrarToast('Oportunidad creada');
+        mostrarToast('Negocio creado');
     }
     cerrarPanelForm();
   };
@@ -772,7 +773,7 @@ function App() {
       } else if (entidad === 'oportunidad') {
         await eliminarOportunidad(registro.id);
         setOportunidades((prev) => prev.filter((o) => o.id !== registro.id));
-        mostrarToast('Oportunidad eliminada');
+        mostrarToast('Negocio eliminado');
         setVisitas((prev) => prev.map((v) => v.oportunidad_id === registro.id
           ? { ...v, oportunidad_id: null }
           : v));
@@ -1023,7 +1024,8 @@ function App() {
         alCerrar={cerrarFicha}
       >
         {fichaLead && (
-          <>
+          <SeccionesFichaLead key={fichaLead.id}
+            resumen={<>
             <div className="ficha-resumen">
               <div className="ficha-dato">
                 <span className="ficha-dato-label">Correo</span>
@@ -1081,15 +1083,14 @@ function App() {
               </div>
             </div>
 
-            <AsignacionLead
-              key={fichaLead.id}
-              lead={fichaLead}
-              esAdmin={usuario.rol === 'admin'}
-              alActualizar={(actualizado) => {
-                setFichaLead(actualizado);
-                setLeads((actuales) => ordenarPorPrioridad(actuales.map((lead) => lead.id === actualizado.id ? actualizado : lead)));
-              }}
-            />
+            <div className="ficha-proximo-seguimiento">
+              <span className="ficha-dato-label">Próximo seguimiento</span>
+              <p>{fichaLead.proxima_accion || 'Sin próxima acción registrada'}</p>
+              {fichaLead.fecha_proxima_accion && <span className="ficha-proxima-fecha">
+                <Icono nombre="calendario" tamano={14} />
+                {new Date(`${fichaLead.fecha_proxima_accion}T12:00:00`).toLocaleDateString('es-CL')}
+              </span>}
+            </div>
 
             <div className="ficha-seccion">
               <div className="ficha-seccion-encabezado">
@@ -1106,19 +1107,103 @@ function App() {
                 <div className="ficha-dato"><span className="ficha-dato-label">Plazo</span><span className="ficha-dato-valor">{fichaLead.plazo_decision || 'Sin definir'}</span></div>
                 <div className="ficha-dato"><span className="ficha-dato-label">Financiamiento</span><span className="ficha-dato-valor">{fichaLead.financiamiento || 'Sin definir'}</span></div>
                 <div className="ficha-dato"><span className="ficha-dato-label">Origen</span><span className="ficha-dato-valor">{fichaLead.origen || 'Sin definir'}</span></div>
-                <div className="ficha-dato"><span className="ficha-dato-label">Ejecutivo</span><span className="ficha-dato-valor">{fichaLead.ejecutivo_nombre || 'Sin asignar'}</span></div>
-                <div className="ficha-dato"><span className="ficha-dato-label">Próxima fecha</span><span className="ficha-dato-valor">{fichaLead.fecha_proxima_accion ? new Date(`${fichaLead.fecha_proxima_accion}T12:00:00`).toLocaleDateString('es-CL') : 'Sin definir'}</span></div>
-                <div className="ficha-dato form-group-full"><span className="ficha-dato-label">Próxima acción</span><span className="ficha-dato-valor texto-completo">{fichaLead.proxima_accion || 'Sin acción registrada'}</span></div>
+              </div>
+            </div>
+
+            <details className="ficha-desplegable">
+              <summary>Responsable e historial <span>{fichaLead.ejecutivo_nombre || 'Sin asignar'}</span></summary>
+            <AsignacionLead
+              key={fichaLead.id}
+              lead={fichaLead}
+              esAdmin={usuario.rol === 'admin'}
+              alActualizar={(actualizado) => {
+                setFichaLead(actualizado);
+                setLeads((actuales) => ordenarPorPrioridad(actuales.map((lead) => lead.id === actualizado.id ? actualizado : lead)));
+              }}
+            />
+            </details>
+
+            <details className="ficha-desplegable">
+              <summary>Cómo se calcula la atención <span>{fichaLead.categoria || 'Sin calcular'}</span></summary>
+            {fichaLead.categoria && (
+              <div className="ficha-seccion">
+                <div className="ficha-seccion-encabezado">
+                  <span className="ficha-seccion-titulo">Prioridad de atención</span>
+                  <span className={`etiqueta ${TONO_CATEGORIA[fichaLead.categoria] || 'neutra'}`}>
+                    {fichaLead.categoria}
+                  </span>
+                </div>
+
+                <div className="bloque-prioridad">
+                  <div className="prioridad-puntaje">
+                    <span className="puntaje-numero">{fichaLead.puntaje}</span>
+                    <span className="puntaje-label">puntos</span>
+                  </div>
+
+                  <ul className="lista-motivos">
+                    {(fichaLead.motivos || []).map((motivo, indice) => (
+                      <li key={indice}>{motivo}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <p className="nota-prioridad">
+                  El puntaje se calcula con reglas sobre la actividad registrada:
+                  antigüedad del último contacto, propiedades de interés, etapa del
+                  embudo y prioridad asignada.
+                </p>
+              </div>
+            )}
+            </details>
+            </>}
+            asistente={
+            <div className="ficha-seccion">
+              <AsistenteIA
+                analisis={analisis}
+                cargando={cargandoAnalisis}
+                error={errorAnalisis}
+                iaConfigurada={iaConfigurada}
+                alGenerar={generarAnalisisDeLead}
+                alPrepararTarea={prepararSeguimientoIA}
+                preparandoTarea={preparandoTareaIA}
+                registroLlamada={
+                  <RegistroLlamadaIA key={fichaLead.id} cliente={fichaLead} integrado
+                    alPreparar={prepararNotasLlamada} alGuardar={guardarInteraccion}
+                    iaConfigurada={iaConfigurada} analisis={analisis} />
+                }
+                leadCerrado={fichaLead.estado === 'Cerrado'}
+              />
+            </div>
+            }
+            seguimiento={<>
+            <div className="ficha-seccion">
+              <div className="ficha-seccion-encabezado">
+                <span className="ficha-seccion-titulo">
+                  Historial de contacto {interacciones.length > 0 && `(${interacciones.length})`}
+                </span>
+              </div>
+
+              <details className="ficha-desplegable ficha-registro-contacto">
+                <summary>Registrar un contacto</summary>
+                <FormularioInteraccion key={`manual-${fichaLead.id}`} alGuardar={guardarInteraccion} />
+              </details>
+
+              <div style={{ marginTop: '1.25rem' }}>
+                <HistorialInteracciones
+                  interacciones={interacciones}
+                  cargando={cargandoInteracciones}
+                  error={errorInteracciones}
+                />
               </div>
             </div>
 
             <div className="ficha-seccion">
               <div className="ficha-seccion-encabezado">
                 <span className="ficha-seccion-titulo">
-                  Oportunidades ({oportunidades.filter((o) => o.lead_id === fichaLead.id).length})
+                  Negocios ({oportunidades.filter((o) => o.lead_id === fichaLead.id).length})
                 </span>
                 <button className="btn-secondary" onClick={() => { cerrarFicha(); setVista('oportunidades'); }}>
-                  Ver pipeline
+                  Ver negocios
                 </button>
               </div>
               {oportunidades.filter((o) => o.lead_id === fichaLead.id).length === 0 ? (
@@ -1157,38 +1242,18 @@ function App() {
                 </div>
               )}
             </div>
-
-            {/* Explica de dónde sale el puntaje, para que la priorización no sea
-                una caja negra y se pueda discutir el criterio */}
-            {fichaLead.categoria && (
-              <div className="ficha-seccion">
-                <div className="ficha-seccion-encabezado">
-                  <span className="ficha-seccion-titulo">Prioridad de atención</span>
-                  <span className={`etiqueta ${TONO_CATEGORIA[fichaLead.categoria] || 'neutra'}`}>
-                    {fichaLead.categoria}
-                  </span>
-                </div>
-
-                <div className="bloque-prioridad">
-                  <div className="prioridad-puntaje">
-                    <span className="puntaje-numero">{fichaLead.puntaje}</span>
-                    <span className="puntaje-label">puntos</span>
-                  </div>
-
-                  <ul className="lista-motivos">
-                    {(fichaLead.motivos || []).map((motivo, indice) => (
-                      <li key={indice}>{motivo}</li>
-                    ))}
-                  </ul>
-                </div>
-
-                <p className="nota-prioridad">
-                  El puntaje se calcula con reglas sobre la actividad registrada:
-                  antigüedad del último contacto, propiedades de interés, etapa del
-                  embudo y prioridad asignada.
-                </p>
-              </div>
-            )}
+            </>}
+            propiedades={<>
+            <div className="ficha-seccion">
+              <PropiedadesInteres
+                intereses={intereses}
+                propiedades={propiedades}
+                cargando={cargandoIntereses}
+                error={errorIntereses}
+                alGuardar={guardarInteres}
+                alEliminar={quitarInteres}
+              />
+            </div>
 
             <div className="ficha-seccion">
               <div className="ficha-seccion-encabezado">
@@ -1203,52 +1268,8 @@ function App() {
                 alAsociar={guardarInteres}
               />
             </div>
-
-            <div className="ficha-seccion">
-              <AsistenteIA
-                analisis={analisis}
-                cargando={cargandoAnalisis}
-                error={errorAnalisis}
-                iaConfigurada={iaConfigurada}
-                alGenerar={generarAnalisisDeLead}
-                alPrepararTarea={prepararSeguimientoIA}
-                preparandoTarea={preparandoTareaIA}
-                leadCerrado={fichaLead.estado === 'Cerrado'}
-              />
-            </div>
-
-            <div className="ficha-seccion">
-              <PropiedadesInteres
-                intereses={intereses}
-                propiedades={propiedades}
-                cargando={cargandoIntereses}
-                error={errorIntereses}
-                alGuardar={guardarInteres}
-                alEliminar={quitarInteres}
-              />
-            </div>
-
-            <div className="ficha-seccion">
-              <div className="ficha-seccion-encabezado">
-                <span className="ficha-seccion-titulo">
-                  Historial de contacto {interacciones.length > 0 && `(${interacciones.length})`}
-                </span>
-              </div>
-
-              <FormularioInteraccion key={`manual-${fichaLead.id}`} alGuardar={guardarInteraccion} />
-              <RegistroLlamadaIA key={fichaLead.id} cliente={fichaLead}
-                alPreparar={prepararNotasLlamada} alGuardar={guardarInteraccion}
-                iaConfigurada={iaConfigurada} analisis={analisis} />
-
-              <div style={{ marginTop: '1.25rem' }}>
-                <HistorialInteracciones
-                  interacciones={interacciones}
-                  cargando={cargandoInteracciones}
-                  error={errorInteracciones}
-                />
-              </div>
-            </div>
-          </>
+            </>}
+          />
         )}
       </Drawer>
 

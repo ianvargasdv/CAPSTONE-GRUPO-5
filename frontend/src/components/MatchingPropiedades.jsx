@@ -20,7 +20,7 @@ function MatchingPropiedades({ resultados, cargando, error, intereses, alAsociar
       await alAsociar({
         propiedad_id: resultado.propiedad.id,
         nivel_interes: resultado.puntaje >= 80 ? 'Alto' : 'Medio',
-        notas: `Sugerida por matching determinista (${resultado.puntaje ?? 'sin puntaje'}%).`,
+        notas: `Sugerida según los criterios de búsqueda (${resultado.puntaje ?? 'sin puntaje'}%).`,
       });
     } catch (err) {
       setErrorAccion(err.message || 'No se pudo asociar la propiedad');

@@ -82,7 +82,7 @@ function FormularioOportunidad({ alGuardar, oportunidadEditar, leads, propiedade
       setError(null);
       await alGuardar(payload);
     } catch (err) {
-      setError(err.message || 'No se pudo guardar la oportunidad');
+      setError(err.message || 'No se pudo guardar el negocio');
     } finally {
       setCargando(false);
     }
@@ -159,7 +159,7 @@ function FormularioOportunidad({ alGuardar, oportunidadEditar, leads, propiedade
 
       <div className="form-actions">
         <button type="button" className="btn-secondary" onClick={alCancelar} disabled={cargando}>Cancelar</button>
-        <button type="submit" className="btn-primary" disabled={cargando}>{cargando ? 'Guardando...' : oportunidadEditar ? 'Guardar cambios' : 'Crear oportunidad'}</button>
+        <button type="submit" className="btn-primary" disabled={cargando}>{cargando ? 'Guardando...' : oportunidadEditar ? 'Guardar cambios' : 'Crear negocio'}</button>
       </div>
     </form>
   );

@@ -95,7 +95,7 @@ function costoUSD(valor) {
   });
 }
 
-function AsistenteIA({ analisis = [], cargando, error, iaConfigurada, alGenerar, alPrepararTarea, preparandoTarea = false, leadCerrado = false }) {
+function AsistenteIA({ analisis = [], cargando, error, iaConfigurada, alGenerar, alPrepararTarea, preparandoTarea = false, leadCerrado = false, registroLlamada }) {
   // Evita generar dos análisis al mismo tiempo desde esta ficha.
   const [generandoTipo, setGenerandoTipo] = useState(null);
   const [errorPorTipo, setErrorPorTipo] = useState({});
@@ -123,9 +123,8 @@ function AsistenteIA({ analisis = [], cargando, error, iaConfigurada, alGenerar,
         <div className="state-message empty">
           <span className="vacio-titulo">Servicio de IA sin configurar</span>
           <span className="vacio-detalle">
-            Para usar el asistente hay que completar IA_BASE_URL e
-            IA_MODELO en el archivo .env del backend. El resto del sistema funciona
-            igual sin esto.
+            Puedes seguir consultando la ficha y registrar contactos desde Seguimiento.
+            Solicita a administración que revise la configuración del asistente.
           </span>
         </div>
       </>
@@ -159,15 +158,15 @@ function AsistenteIA({ analisis = [], cargando, error, iaConfigurada, alGenerar,
 
   return (
     <>
-      <div className="ficha-seccion-encabezado">
-        <span className="ficha-seccion-titulo">Asistente</span>
-      </div>
-
-      <div className="asistente-opciones" role="group" aria-label="Funciones del asistente">
-        {Object.entries(TEXTOS).map(([tipo, textos]) => (
-          <button key={tipo} className="btn-secondary" aria-pressed={tipoActivo === tipo}
-            disabled={generandoTipo !== null} onClick={() => setTipoActivo(tipo)}>{textos.titulo}</button>
-        ))}
+      <div className="asistente-selector">
+        <label htmlFor="funcion-asistente">¿Qué necesitas preparar?</label>
+        <select id="funcion-asistente" value={tipoActivo} disabled={generandoTipo !== null}
+          onChange={(e) => setTipoActivo(e.target.value)}>
+          {Object.entries(TEXTOS).map(([tipo, textos]) => (
+            <option key={tipo} value={tipo}>{textos.titulo}</option>
+          ))}
+          {registroLlamada && <option value="registro_llamada">Notas de una llamada</option>}
+        </select>
       </div>
       <div className="asistente-bloques">
         {Object.keys(TEXTOS).map((tipo) => {
@@ -232,35 +231,34 @@ function AsistenteIA({ analisis = [], cargando, error, iaConfigurada, alGenerar,
 
                   <div className="resumen-pie">
                     <span className="resumen-origen">
-                      <Icono nombre="alerta" tamano={11} />
-                      Generado automáticamente
+                      Generado con IA
                     </span>
                     <span className="resumen-meta">
                       {fechaLarga(ultimo.fecha_creacion)}
-                      {ultimo.modelo && ` · ${ultimo.modelo}`}
                     </span>
                   </div>
 
-                  {/* Consumo de la llamada. Queda en nulo en los análisis generados
-                      antes de que se empezara a registrar. */}
-                  {(ultimo.tokens_entrada != null || ultimo.tokens_salida != null) && (
-                    <div className="resumen-consumo">
-                      <span>
-                        {ultimo.tokens_entrada ?? 0} tokens enviados ·{' '}
-                        {ultimo.tokens_salida ?? 0} recibidos
-                      </span>
-                      {ultimo.costo_estimado_usd != null && (
-                        <span className="consumo-costo">
-                          {costoUSD(ultimo.costo_estimado_usd)} estimados
+                  <details className="resumen-detalle asistente-detalles">
+                    <summary>Detalles del análisis</summary>
+                    {ultimo.modelo && <p className="resumen-anteriores">Modelo: {ultimo.modelo}</p>}
+                    {(ultimo.tokens_entrada != null || ultimo.tokens_salida != null) && (
+                      <div className="resumen-consumo">
+                        <span>
+                          {ultimo.tokens_entrada ?? 0} tokens enviados ·{' '}
+                          {ultimo.tokens_salida ?? 0} recibidos
                         </span>
-                      )}
-                    </div>
-                  )}
+                        {ultimo.costo_estimado_usd != null && (
+                          <span className="consumo-costo">
+                            {costoUSD(ultimo.costo_estimado_usd)} estimados
+                          </span>
+                        )}
+                      </div>
+                    )}
 
-                  {ultimo.entrada && (
-                    <details className="resumen-detalle">
-                      <summary>Ver los datos que recibió el modelo</summary>
-                      <pre className="resumen-entrada">{ultimo.entrada}</pre>
+                    {ultimo.entrada && (
+                      <details className="resumen-detalle">
+                        <summary>Ver los datos que recibió el modelo</summary>
+                        <pre className="resumen-entrada">{ultimo.entrada}</pre>
                     </details>
                   )}
 
@@ -271,11 +269,17 @@ function AsistenteIA({ analisis = [], cargando, error, iaConfigurada, alGenerar,
                       {anteriores !== 1 ? 's' : ''}.
                     </p>
                   )}
+                  </details>
                 </div>
               )}
             </div>
           );
         })}
+        {registroLlamada && (
+          <div className="asistente-bloque" hidden={tipoActivo !== 'registro_llamada'}>
+            {registroLlamada}
+          </div>
+        )}
       </div>
     </>
   );

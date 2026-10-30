@@ -1725,6 +1725,63 @@ textarea {
   color: var(--texto-suave);
 }
 
+.ficha-organizada { min-width: 0; }
+.ficha-navegacion {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  position: sticky;
+  top: -1.125rem;
+  z-index: 2;
+  background: var(--superficie);
+  border-bottom: 1px solid var(--borde);
+  margin: -0.25rem 0 1.25rem;
+  padding-top: 0.25rem;
+}
+.ficha-navegacion button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--texto-suave);
+  padding: 0.875rem 0.25rem;
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+.ficha-navegacion button:hover { color: var(--texto); background: var(--superficie-alt); }
+.ficha-navegacion button[aria-selected="true"] { color: var(--texto); border-bottom-color: var(--texto); font-weight: 600; }
+.ficha-navegacion button:focus-visible { outline: 2px solid var(--texto-medio); outline-offset: -3px; }
+.ficha-contenido { min-width: 0; }
+.ficha-contenido[hidden] { display: none; }
+.ficha-contenido > .ficha-seccion:first-child { padding-top: 0; }
+.ficha-proximo-seguimiento {
+  padding: 1rem;
+  margin-top: 1rem;
+  border-left: 3px solid var(--borde-fuerte);
+  background: var(--superficie-alt);
+  border-radius: var(--radio);
+}
+.ficha-proximo-seguimiento p { margin: 0.375rem 0; font-size: 0.875rem; line-height: 1.5; overflow-wrap: anywhere; }
+.ficha-proxima-fecha { display: flex; gap: 0.375rem; align-items: center; font-size: 0.75rem; color: var(--texto-medio); }
+.ficha-desplegable { border-top: 1px solid var(--borde); margin-top: 1.125rem; padding-top: 0.125rem; }
+.ficha-desplegable > summary { padding: 0.875rem 0; cursor: pointer; font-size: 0.8125rem; font-weight: 600; color: var(--texto); }
+.ficha-desplegable > summary span { display: block; margin: 0.375rem 0 0 0.875rem; font-size: 0.75rem; font-weight: 400; color: var(--texto-suave); }
+.ficha-desplegable[open] > summary { margin-bottom: 0.25rem; }
+.ficha-desplegable > .ficha-seccion { padding-top: 0; }
+.ficha-registro-contacto { margin-top: 0; }
+.ficha-registro-contacto .form-lead { padding-bottom: 0.875rem; }
+.asistente-selector { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.25rem; }
+.asistente-selector label { font-size: 0.8125rem; color: var(--texto-medio); font-weight: 500; }
+.asistente-selector select { width: 100%; min-width: 0; padding: 0.75rem; border: 1px solid var(--borde-fuerte); border-radius: var(--radio); color: var(--texto); background: var(--superficie); font: inherit; font-size: 0.875rem; }
+.asistente-detalles { border-top: 1px solid var(--borde); padding-top: 0.5rem; }
+.registro-llamada-ia.integrado { margin: 0; padding: 0; border: 0; }
+.registro-llamada-ia.integrado h3 { margin: 0 0 0.75rem; }
+
+@media (max-width: 420px) {
+  .ficha-navegacion { grid-template-columns: repeat(2, minmax(0, 1fr)); top: -1rem; }
+  .asistente-encabezado { align-items: flex-start; flex-wrap: wrap; }
+  .ficha-resumen { gap: 0.75rem; }
+}
+
 /* ══════════════════════════════════════
    PROPIEDADES DE INTERÉS
 ══════════════════════════════════════ */
@@ -1861,6 +1918,12 @@ textarea {
 /* ══════════════════════════════════════
    RESPONSIVE
 ══════════════════════════════════════ */
+
+@media (max-width: 1380px) {
+  .kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
 
 @media (max-width: 1100px) {
   .kpi-grid {

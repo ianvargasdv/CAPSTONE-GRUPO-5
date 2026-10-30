@@ -36,8 +36,8 @@ const SECCIONES = [
     titulo: 'Gestión',
     items: [
       { id: 'leads', etiqueta: 'Leads', icono: 'usuarios', contador: 'leads' },
-      { id: 'oportunidades', etiqueta: 'Pipeline', icono: 'negocio', contador: 'oportunidades' },
-      { id: 'visitas', etiqueta: 'Agenda', icono: 'calendario', contador: 'visitas' },
+      { id: 'oportunidades', etiqueta: 'Negocios', icono: 'negocio', contador: 'oportunidades' },
+      { id: 'visitas', etiqueta: 'Visitas', icono: 'calendario', contador: 'visitas' },
       { id: 'propiedades', etiqueta: 'Propiedades', icono: 'edificio', contador: 'propiedades' },
       { id: 'tareas', etiqueta: 'Tareas', icono: 'tareas', contador: 'tareasPendientes', destacar: true },
     ],

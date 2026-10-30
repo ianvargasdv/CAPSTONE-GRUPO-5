@@ -40,7 +40,7 @@ function PipelineOportunidades({ oportunidades, cargando, error, alEditar, alEli
   const [modo, setModo] = useState('kanban');
   const [busqueda, setBusqueda] = useState('');
 
-  if (cargando) return <div className="state-message">Cargando pipeline...</div>;
+  if (cargando) return <div className="state-message">Cargando negocios...</div>;
   if (error) return <div className="panel-cuerpo"><div className="alert-error"><Icono nombre="alerta" />{error}</div></div>;
 
   const termino = busqueda.toLowerCase().trim();
@@ -59,22 +59,22 @@ function PipelineOportunidades({ oportunidades, cargando, error, alEditar, alEli
     <>
       <div className="pipeline-resumen">
         <div><span>Negocios abiertos</span><strong>{abiertas.length}</strong></div>
-        <div><span>Valor abierto</span><strong>{Object.entries(totales).map(([m, v]) => dinero(v, m)).join(' · ') || 'Sin monto'}</strong></div>
-        <div><span>Pipeline ponderado</span><strong>{Object.entries(ponderados).map(([m, v]) => dinero(Math.round(v), m)).join(' · ') || 'Sin monto'}</strong></div>
-        <div><span>Cerradas ganadas</span><strong>{oportunidades.filter((o) => o.etapa === 'Ganada').length}</strong></div>
+        <div><span>Valor de negocios abiertos</span><strong>{Object.entries(totales).map(([m, v]) => dinero(v, m)).join(' · ') || 'Sin monto'}</strong></div>
+        <div title="Suma del valor de cada negocio multiplicado por su probabilidad estimada; no es un ingreso asegurado."><span>Valor según probabilidad</span><strong>{Object.entries(ponderados).map(([m, v]) => dinero(Math.round(v), m)).join(' · ') || 'Sin monto'}</strong></div>
+        <div><span>Negocios concretados</span><strong>{oportunidades.filter((o) => o.etapa === 'Ganada').length}</strong></div>
       </div>
 
       <div className="barra-herramientas">
         <div className="campo-busqueda"><Icono nombre="buscar" tamano={14} /><input className="search-input" type="search" placeholder="Buscar lead, propiedad o ejecutivo" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} /></div>
         <div className="selector-vista">
-          <button className={modo === 'kanban' ? 'activo' : ''} onClick={() => setModo('kanban')}>Pipeline</button>
+          <button className={modo === 'kanban' ? 'activo' : ''} onClick={() => setModo('kanban')}>Por etapas</button>
           <button className={modo === 'tabla' ? 'activo' : ''} onClick={() => setModo('tabla')}>Tabla</button>
         </div>
         <span className="results-count">{filtradas.length} de {oportunidades.length}</span>
       </div>
 
       {oportunidades.length === 0 ? (
-        <div className="state-message empty"><Icono nombre="negocio" tamano={20} /><span className="vacio-titulo">Todavía no hay oportunidades</span><span className="vacio-detalle">Crea el primer negocio para comenzar a medir el pipeline.</span></div>
+        <div className="state-message empty"><Icono nombre="negocio" tamano={20} /><span className="vacio-titulo">Todavía no hay negocios</span><span className="vacio-detalle">Crea un negocio para seguir una venta o un arriendo desde el contacto hasta el cierre.</span></div>
       ) : modo === 'kanban' ? (
         <div className="pipeline-kanban">
           {ETAPAS_PIPELINE.map((etapa) => {

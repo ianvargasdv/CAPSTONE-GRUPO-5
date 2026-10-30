@@ -23,3 +23,10 @@ frontend/.env
 .DS_Store
 *.db
 
+# Auxiliares locales de documentos y revisiones
+/.doc-builder/
+/outputs/
+/output/
+/.codex-temp/
+/.tmp_*/
+

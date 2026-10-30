@@ -6,7 +6,7 @@
  * llamada se le olvide la autenticación.
  */
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
+const API_URL = (import.meta.env.VITE_API_URL ?? 'http://localhost:8000').replace(/\/+$/, '');
 const BASE = `${API_URL}/api`;
 const CLAVE_TOKEN = 'crm_token';
 
@@ -128,7 +128,7 @@ async function pedir(ruta, { metodo = 'GET', cuerpo, mensajeError = 'Error de co
   } catch {
     // fetch solo lanza si no hubo respuesta: servidor caído, sin red o CORS.
     // Sin esto el usuario vería el "Failed to fetch" del navegador.
-    throw new Error('No se pudo conectar con el servidor. Verifica que el backend esté corriendo.');
+    throw new Error('No se pudo conectar con el servidor. Intenta nuevamente o informa a administración si el problema continúa.');
   }
 
   // Token ausente, inválido o expirado: se cierra la sesión en el frontend
@@ -270,7 +270,7 @@ export function obtenerMatching(leadId) {
 /* ══════════════════ Oportunidades ══════════════════ */
 
 export function obtenerOportunidades() {
-  return pedir('/oportunidades', { mensajeError: 'No se pudo cargar el pipeline' });
+  return pedir('/oportunidades', { mensajeError: 'No se pudo cargar los negocios' });
 }
 
 export function crearOportunidad(datos) {

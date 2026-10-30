@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { textoDeAnalisisLlamada, validarRespuestaLlamada } from '../notasLlamada';
 
-function RegistroLlamadaIA({ cliente, alPreparar, alGuardar, iaConfigurada, analisis = [] }) {
+function RegistroLlamadaIA({ cliente, alPreparar, alGuardar, iaConfigurada, analisis = [], integrado = false }) {
   const [notas, setNotas] = useState('');
   const [preparacion, setPreparacion] = useState(null);
   const [texto, setTexto] = useState('');
@@ -45,9 +45,7 @@ function RegistroLlamadaIA({ cliente, alPreparar, alGuardar, iaConfigurada, anal
     }
   };
 
-  return (
-    <details className="registro-llamada-ia">
-      <summary>Preparar notas de llamada con IA</summary>
+  const formulario = (
       <form className="form-lead" onSubmit={guardar} aria-label={`Registro asistido de llamada de ${cliente.nombre}`}>
         <p className="resumen-anteriores"><strong>Cliente: {cliente.nombre}</strong><br />
           Usa notas de una llamada que ya realizaste. Revisa el texto antes de registrarlo.</p>
@@ -107,6 +105,17 @@ function RegistroLlamadaIA({ cliente, alPreparar, alGuardar, iaConfigurada, anal
           </details>
         )}
       </form>
+  );
+
+  return integrado ? (
+    <section className="registro-llamada-ia integrado" aria-label="Notas de una llamada">
+      <h3 className="asistente-titulo">Notas de una llamada</h3>
+      {formulario}
+    </section>
+  ) : (
+    <details className="registro-llamada-ia">
+      <summary>Preparar notas de llamada con IA</summary>
+      {formulario}
     </details>
   );
 }

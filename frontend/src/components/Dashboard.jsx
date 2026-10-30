@@ -1,5 +1,6 @@
 import React from 'react';
 import Icono from './Iconos';
+import { clienteDeTarea } from '../presentacion';
 
 /**
  * Vista de inicio. Está pensada para responder "qué tengo que hacer hoy"
@@ -72,6 +73,8 @@ function Dashboard({ leads, propiedades, tareas, oportunidades = [], visitas = [
     Disponible: propiedades.filter((p) => p.estado === 'Disponible').length,
     Reservada: propiedades.filter((p) => p.estado === 'Reservada').length,
     Vendida: propiedades.filter((p) => p.estado === 'Vendida').length,
+    Arrendada: propiedades.filter((p) => p.estado === 'Arrendada').length,
+    Retirada: propiedades.filter((p) => p.estado === 'Retirada').length,
   };
 
   // ── Tareas ──
@@ -113,7 +116,7 @@ function Dashboard({ leads, propiedades, tareas, oportunidades = [], visitas = [
         <button className="kpi-card kpi-clicable" onClick={() => alIrA('oportunidades')}>
           <div className="kpi-encabezado">
             <Icono nombre="negocio" tamano={13} />
-            <span className="kpi-label">Pipeline abierto</span>
+            <span className="kpi-label">Negocios en curso</span>
           </div>
           <div className="kpi-numero">{negociosAbiertos.length}</div>
           <div className="kpi-detalle">{oportunidades.filter((o) => o.etapa === 'Negociación').length} en negociación</div>
@@ -125,13 +128,13 @@ function Dashboard({ leads, propiedades, tareas, oportunidades = [], visitas = [
             <span className="kpi-label">Próximas visitas</span>
           </div>
           <div className="kpi-numero">{visitasProximas.length}</div>
-          <div className="kpi-detalle">{visitas.filter((v) => v.estado === 'Confirmada').length} confirmadas</div>
+          <div className="kpi-detalle">{visitas.filter((v) => v.estado === 'Confirmada').length} confirmadas en total</div>
         </button>
 
         <div className="kpi-card">
           <div className="kpi-encabezado">
             <Icono nombre="edificio" tamano={13} />
-            <span className="kpi-label">Disponibles</span>
+            <span className="kpi-label">Propiedades disponibles</span>
           </div>
           <div className="kpi-numero">{propPorEstado.Disponible}</div>
           <div className="kpi-detalle">de {propiedades.length} en catálogo</div>
@@ -140,7 +143,7 @@ function Dashboard({ leads, propiedades, tareas, oportunidades = [], visitas = [
         <div className="kpi-card">
           <div className="kpi-encabezado">
             <Icono nombre="tareas" tamano={13} />
-            <span className="kpi-label">Por hacer</span>
+            <span className="kpi-label">Tareas por completar</span>
           </div>
           <div className="kpi-numero">{abiertas.length}</div>
           <div className="kpi-detalle">
@@ -151,7 +154,7 @@ function Dashboard({ leads, propiedades, tareas, oportunidades = [], visitas = [
         <div className="kpi-card">
           <div className="kpi-encabezado">
             <Icono nombre="alerta" tamano={13} />
-            <span className="kpi-label">Vencidas</span>
+            <span className="kpi-label">Tareas atrasadas</span>
           </div>
           <div className="kpi-numero">{vencidas.length}</div>
           <div className={`kpi-detalle ${vencidas.length > 0 ? 'critico' : ''}`}>
@@ -164,7 +167,7 @@ function Dashboard({ leads, propiedades, tareas, oportunidades = [], visitas = [
       <div className="grid-dos">
         <div className="panel">
           <div className="panel-encabezado">
-            <span className="panel-titulo">Agenda</span>
+            <span className="panel-titulo">Seguimiento de tareas</span>
             <button className="btn-secondary" onClick={() => alIrA('tareas')}>
               Ver tareas
             </button>
@@ -189,6 +192,7 @@ function Dashboard({ leads, propiedades, tareas, oportunidades = [], visitas = [
                   <div className="lista-simple-info">
                     <span className="lista-simple-nombre">{t.titulo}</span>
                     <span className="lista-simple-sub">
+                      {clienteDeTarea(t.lead_id, leads)} ·{' '}
                       {tipo === 'vencida' && 'Vencida · '}
                       {tipo === 'hoy' && 'Vence hoy · '}
                       {tipo === 'proxima' && `${fechaCorta(t.fecha_limite)} · `}
@@ -260,7 +264,7 @@ function Dashboard({ leads, propiedades, tareas, oportunidades = [], visitas = [
       <div className="grid-dos">
         <div className="panel">
           <div className="panel-encabezado">
-            <span className="panel-titulo">Embudo de leads</span>
+            <span className="panel-titulo">Estado de los leads</span>
           </div>
           <div className="panel-cuerpo">
             <div className="distribucion-lista">
@@ -284,7 +288,7 @@ function Dashboard({ leads, propiedades, tareas, oportunidades = [], visitas = [
 
         <div className="panel">
           <div className="panel-encabezado">
-            <span className="panel-titulo">Estado del catálogo</span>
+            <span className="panel-titulo">Estado de las propiedades</span>
           </div>
           <div className="panel-cuerpo">
             <div className="distribucion-lista">
@@ -292,6 +296,8 @@ function Dashboard({ leads, propiedades, tareas, oportunidades = [], visitas = [
                 ['Disponible', propPorEstado.Disponible, 'exito'],
                 ['Reservada', propPorEstado.Reservada, 'alerta'],
                 ['Vendida', propPorEstado.Vendida, ''],
+                ['Arrendada', propPorEstado.Arrendada, ''],
+                ['Retirada', propPorEstado.Retirada, ''],
               ].map(([estado, cantidad, tono]) => (
                 <div key={estado} className="distribucion-item">
                   <span className="distribucion-label">{estado}</span>
