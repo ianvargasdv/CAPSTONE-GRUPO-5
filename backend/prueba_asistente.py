@@ -100,10 +100,10 @@ class TransporteIATest(unittest.TestCase):
     def respuesta(self, contenido='Texto simulado', **extra):
         return {'choices':[{'message':{'content':contenido}}], 'usage':{'prompt_tokens':100,'completion_tokens':20}, **extra}
 
-    def ejecutar(self, tipo='mensaje', datos=None, raw=None):
+    def ejecutar(self, tipo='mensaje', datos=None, raw=None, max_tokens=None, ficha='FICHA FICTICIA'):
         cuerpo=raw if raw is not None else json.dumps(datos or self.respuesta()).encode()
         with patch.object(ia,'BASE_URL','https://proveedor.example.test/v1'), patch.object(ia,'API_KEY','clave-ficticia-sin-valor'), patch.object(ia,'MODELO','modelo-prueba'), patch.object(ia.urllib.request,'urlopen',return_value=io.BytesIO(cuerpo)) as llamada:
-            resultado=ia.generar_analisis('FICHA FICTICIA',tipo)
+            resultado=ia.generar_analisis(ficha,tipo,max_tokens=max_tokens)
             enviada=json.loads(llamada.call_args.args[0].data)
             return resultado,enviada
 
@@ -150,6 +150,23 @@ class TransporteIATest(unittest.TestCase):
         self.assertIn('estado Reservada',ficha)
         self.assertNotIn('no-exponer',ficha)
 
+    def test_datos_del_perfil_no_completan_la_comuna_del_inmueble(self):
+        lead = SimpleNamespace(nombre='Cliente ficticio', estado='Contactado', prioridad='Media',
+            fecha_creacion=datetime(2026, 1, 1, tzinfo=timezone.utc), comunas_interes='La Reina')
+        interes = SimpleNamespace(propiedad_id=1, nivel_interes='Alto', notas=None)
+        for comuna, esperado in [(None, 'sin registrar'), ('', 'sin registrar'), ('Macul', 'Macul')]:
+            propiedad = SimpleNamespace(titulo='Casa ficticia', tipo='Casa', direccion='Ubicación referencial',
+                precio=7000, moneda='UF', estado='Reservada', comuna=comuna)
+            ficha = ia.construir_ficha(lead, [], [interes], {1: propiedad})
+            datos_inmueble = ficha.split('PROPIEDADES DE INTERÉS')[1].split('OPORTUNIDADES COMERCIALES')[0]
+            self.assertIn(f'comuna {esperado}', datos_inmueble)
+            self.assertNotIn('La Reina', datos_inmueble)
+            self.assertIn('estado Reservada', datos_inmueble)
+            _, peticion = self.ejecutar(ficha=ficha)
+            self.assertEqual(peticion['messages'][1]['content'], ficha)
+            self.assertIn('no prueban que una propiedad los tenga', peticion['messages'][0]['content'])
+            self.assertIn('no está disponible', peticion['messages'][0]['content'])
+
     def test_ficha_no_inventa_moneda_cuando_falta(self):
         lead=SimpleNamespace(nombre='Cliente ficticio',estado='Nuevo',prioridad='Media',fecha_creacion=datetime(2026,1,1))
         propiedad=SimpleNamespace(titulo='Casa ficticia',tipo='Casa',direccion='Sector',precio=7000)
@@ -159,6 +176,20 @@ class TransporteIATest(unittest.TestCase):
     def test_tipo_desconocido_no_sale_a_la_red(self):
         with patch.object(ia,'esta_configurada',return_value=True), patch.object(ia.urllib.request,'urlopen') as red:
             with self.assertRaises(ValueError): ia.generar_analisis('ficha','enviar')
+            red.assert_not_called()
+
+    def test_tope_por_llamada_no_modifica_la_configuracion_del_crm(self):
+        original = ia.MAX_TOKENS
+        _, peticion = self.ejecutar(max_tokens=50)
+        self.assertEqual(peticion['max_completion_tokens'], 50)
+        self.assertEqual(ia.MAX_TOKENS, original)
+        _, predeterminada = self.ejecutar()
+        self.assertEqual(predeterminada['max_completion_tokens'], original)
+
+    def test_tope_invalido_no_sale_a_la_red(self):
+        with patch.object(ia, 'esta_configurada', return_value=True), patch.object(ia.urllib.request, 'urlopen') as red:
+            for limite in [True, 0, -1, 1.5, '50']:
+                with self.assertRaises(ValueError): ia.generar_analisis('Ficha ficticia', 'resumen', max_tokens=limite)
             red.assert_not_called()
 
     def test_rechaza_contenido_vacio_o_no_textual(self):

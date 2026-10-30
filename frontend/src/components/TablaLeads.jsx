@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Icono from './Iconos';
-import { coincideBusqueda } from '../presentacion';
+import { obtenerEjecutivos, obtenerLeads } from '../api';
+import { filtrarClientes, parametrosCartera } from '../cartera';
 
 /**
  * Listado de leads. Es la vista principal de la sección: la creación y edición
@@ -40,6 +41,8 @@ function TablaLeads({
   tareas = [],
   cargando,
   error,
+  usuario,
+  alActualizar,
   alVerFicha,
   alEditar,
   alPedirEliminar,
@@ -48,6 +51,51 @@ function TablaLeads({
   const [busqueda, setBusqueda] = useState('');
   const [filtroEstado, setFiltroEstado] = useState('Todos');
   const [filtroCategoria, setFiltroCategoria] = useState('Todas');
+  const [cartera, setCartera] = useState('todos');
+  const [resultadoCartera, setResultadoCartera] = useState(null);
+  const [responsables, setResponsables] = useState([]);
+  const [errorResponsables, setErrorResponsables] = useState('');
+  const [version, setVersion] = useState(0);
+
+  useEffect(() => {
+    if (usuario?.rol !== 'admin') return undefined;
+    let vigente = true;
+    setErrorResponsables('');
+    obtenerEjecutivos()
+      .then((datos) => { if (vigente) setResponsables(datos); })
+      .catch((e) => { if (vigente) setErrorResponsables(e.message); });
+    return () => { vigente = false; };
+  }, [usuario?.id, usuario?.rol, version]);
+
+  useEffect(() => {
+    if (cartera === 'todos') return undefined;
+    let vigente = true;
+    const guardar = (items, mensaje = '') => {
+      if (vigente) setResultadoCartera({ cartera, base: leads, version, items, error: mensaje });
+    };
+    try {
+      obtenerLeads(parametrosCartera(cartera, usuario))
+        .then((items) => guardar(items))
+        .catch((e) => guardar([], e.message));
+    } catch (e) { guardar([], e.message); }
+    return () => { vigente = false; };
+  }, [cartera, leads, version, usuario?.id, usuario?.rol]);
+
+  // Ocultar resultados de otra consulta también durante cambios rápidos o reasignaciones.
+  const resultadoVigente = resultadoCartera?.cartera === cartera
+    && resultadoCartera?.base === leads && resultadoCartera?.version === version;
+  const cargandoCartera = cartera !== 'todos' && !resultadoVigente;
+  const errorCartera = cartera !== 'todos' && resultadoVigente ? resultadoCartera.error : '';
+  const clientesCartera = cartera === 'todos' ? (leads || []) : resultadoVigente ? resultadoCartera.items : [];
+  const leadsFiltrados = filtrarClientes(clientesCartera, busqueda, filtroEstado, filtroCategoria);
+  const nombreCartera = cartera === 'todos' ? 'Todos' : cartera === 'mia' ? 'Mi cartera'
+    : cartera === 'sin_asignar' ? 'Sin asignar'
+      : responsables.find((u) => `responsable:${u.id}` === cartera)?.nombre || 'Responsable seleccionado';
+
+  const actualizar = () => {
+    setVersion((v) => v + 1);
+    if (cartera === 'todos') alActualizar?.();
+  };
 
   if (cargando) {
     return <div className="state-message">Cargando leads...</div>;
@@ -60,34 +108,34 @@ function TablaLeads({
           <Icono nombre="alerta" />
           <span>{error}</span>
         </div>
+        <button type="button" className="btn-secondary" onClick={alActualizar}>Reintentar</button>
       </div>
     );
   }
-
-  if (!leads || leads.length === 0) {
-    return (
-      <div className="state-message empty">
-        <Icono nombre="usuarios" tamano={20} />
-        <span className="vacio-titulo">Todavía no hay leads</span>
-        <span className="vacio-detalle">
-          Registra el primer prospecto para empezar a seguir su historial de contacto.
-        </span>
-      </div>
-    );
-  }
-
-  const leadsFiltrados = leads.filter((lead) => {
-    const coincideTexto = coincideBusqueda(busqueda, lead.nombre, lead.email, lead.telefono, lead.comunas_interes, lead.ejecutivo_nombre);
-    const coincideEstado = filtroEstado === 'Todos' || lead.estado === filtroEstado;
-    const coincideCategoria = filtroCategoria === 'Todas' || lead.categoria === filtroCategoria;
-    return coincideTexto && coincideEstado && coincideCategoria;
-  });
 
   const tareasAbiertas = (leadId) =>
     tareas.filter((t) => t.lead_id === leadId && t.estado !== 'Completada').length;
 
   return (
     <>
+      <div className="barra-cartera">
+        <label htmlFor="cartera-clientes">Cartera</label>
+        <select id="cartera-clientes" className="filter-select" value={cartera}
+          onChange={(e) => setCartera(e.target.value)}>
+          <option value="todos">Todos los clientes</option>
+          <option value="mia">Mi cartera</option>
+          {usuario?.rol === 'admin' && <>
+            <option value="sin_asignar">Sin asignar</option>
+            <optgroup label="Responsables activos">
+              {responsables.map((u) => <option key={u.id} value={`responsable:${u.id}`}>{u.nombre}{u.rol === 'admin' ? ' (administración)' : ''}</option>)}
+            </optgroup>
+            {cartera.startsWith('responsable:') && !responsables.some((u) => `responsable:${u.id}` === cartera) &&
+              <option value={cartera} disabled>Responsable no disponible</option>}
+          </>}
+        </select>
+        <button type="button" className="btn-secondary" onClick={actualizar} disabled={cargandoCartera}>Actualizar cartera</button>
+        {errorResponsables && <span className="cartera-aviso" role="alert">{errorResponsables}. Usa Actualizar cartera para reintentar.</span>}
+      </div>
       <div className="barra-herramientas">
         <div className="campo-busqueda">
           <Icono nombre="buscar" tamano={14} />
@@ -132,14 +180,17 @@ function TablaLeads({
         {(busqueda || filtroEstado !== 'Todos' || filtroCategoria !== 'Todas') &&
           <button className="btn-secondary" onClick={() => {setBusqueda('');setFiltroEstado('Todos');setFiltroCategoria('Todas');}}>Limpiar filtros</button>}
         <span className="results-count" role="status">
-          {leadsFiltrados.length} de {leads.length}
+          {cargandoCartera ? 'Consultando cartera…' : errorCartera ? 'Cartera sin cargar' : `${leadsFiltrados.length} de ${clientesCartera.length} · ${nombreCartera}`}
         </span>
       </div>
 
-      {leadsFiltrados.length === 0 ? (
+      {cargandoCartera ? <div className="state-message" role="status">Cargando cartera…</div> : errorCartera ? (
+        <div className="panel-cuerpo"><div className="alert-error" role="alert">{errorCartera}</div>
+          <button type="button" className="btn-secondary" onClick={actualizar}>Reintentar consulta</button></div>
+      ) : leadsFiltrados.length === 0 ? (
         <div className="state-message empty">
-          <span className="vacio-titulo">Sin resultados</span>
-          <span className="vacio-detalle">Ajusta la búsqueda o los filtros aplicados.</span>
+          <span className="vacio-titulo">{clientesCartera.length ? 'Sin resultados' : cartera === 'mia' ? 'No tienes clientes asignados' : cartera === 'todos' ? 'Todavía no hay leads' : 'No hay clientes en esta cartera'}</span>
+          <span className="vacio-detalle">{clientesCartera.length ? 'Ajusta la búsqueda o los filtros aplicados.' : cartera === 'todos' ? 'Registra el primer prospecto para empezar a seguir su historial de contacto.' : 'Puedes cambiar de cartera o actualizar la consulta.'}</span>
         </div>
       ) : (
         <div className="table-wrapper" tabIndex={0} role="region" aria-label="Lista de leads; desplazamiento horizontal disponible">

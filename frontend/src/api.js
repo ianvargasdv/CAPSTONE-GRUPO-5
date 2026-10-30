@@ -182,8 +182,13 @@ export function obtenerPerfil() {
 
 /* ══════════════════ Leads ══════════════════ */
 
-export function obtenerLeads() {
-  return pedir('/leads', { mensajeError: 'No se pudo cargar la lista de leads' });
+export function obtenerLeads(filtros = {}) {
+  const parametros = new URLSearchParams();
+  for (const campo of ['cartera', 'ejecutivo_id', 'sin_asignar']) {
+    if (filtros[campo] != null) parametros.set(campo, String(filtros[campo]));
+  }
+  const consulta = parametros.size ? `?${parametros}` : '';
+  return pedir(`/leads${consulta}`, { mensajeError: 'No se pudo cargar la lista de leads' });
 }
 
 export function crearLead(datos) {
@@ -403,6 +408,14 @@ export function generarAnalisis(leadId, tipo = 'resumen') {
   return pedir(`/leads/${leadId}/analisis?tipo=${tipo}`, {
     metodo: 'POST',
     mensajeError: 'No se pudo generar el análisis',
+  });
+}
+
+export function prepararLlamada(leadId, notas) {
+  return pedir(`/leads/${leadId}/propuesta-llamada`, {
+    metodo: 'POST',
+    cuerpo: { notas },
+    mensajeError: 'No se pudieron preparar las notas de la llamada',
   });
 }
 

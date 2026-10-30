@@ -2647,3 +2647,13 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible, [tabindex]:focus
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+/* Mantiene la preparación de llamadas dentro del historial, con el ancho de la ficha. */
+.registro-llamada-ia { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--borde, #e2e8f0); }
+.registro-llamada-ia > summary { cursor: pointer; font-weight: 600; margin-bottom: .75rem; }
+.registro-llamada-ia .form-textarea { width: 100%; box-sizing: border-box; }
+.registro-llamada-ia .form-actions { flex-wrap: wrap; }
+.registro-llamada-ia pre { white-space: pre-wrap; overflow-wrap: anywhere; max-width: 100%; }
+.barra-cartera { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; padding: .75rem 1.125rem; border-bottom: 1px solid var(--borde); }
+.barra-cartera label { font-size: .8125rem; font-weight: 600; }
+.barra-cartera .filter-select { max-width: 100%; min-width: 0; }
+.cartera-aviso { flex-basis: 100%; font-size: .8125rem; color: var(--texto-medio); }

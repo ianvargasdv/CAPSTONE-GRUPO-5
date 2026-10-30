@@ -29,6 +29,7 @@ import {
   obtenerEstadoIA,
   obtenerAnalisis,
   generarAnalisis,
+  prepararLlamada,
   obtenerConsumoIA,
   iniciarSesion,
   obtenerPerfil,
@@ -54,6 +55,7 @@ import FormularioTarea from './components/FormularioTarea';
 import FormularioOportunidad from './components/FormularioOportunidad';
 import FormularioVisita from './components/FormularioVisita';
 import FormularioInteraccion from './components/FormularioInteraccion';
+import RegistroLlamadaIA from './components/RegistroLlamadaIA';
 import PropiedadesInteres from './components/PropiedadesInteres';
 import MatchingPropiedades from './components/MatchingPropiedades';
 import HistorialInteracciones from './components/HistorialInteracciones';
@@ -186,6 +188,8 @@ function App() {
 
   // ── Ficha del lead y sus datos asociados ──
   const [fichaLead, setFichaLead] = useState(null);
+  const fichaLeadActual = useRef(null);
+  fichaLeadActual.current = fichaLead;
   const [interacciones, setInteracciones] = useState([]);
   const [cargandoInteracciones, setCargandoInteracciones] = useState(false);
   const [errorInteracciones, setErrorInteracciones] = useState(null);
@@ -691,10 +695,20 @@ function App() {
   // piden los leads de nuevo al terminar.
 
   const guardarInteraccion = async (datos) => {
-    const nueva = await crearInteraccion(fichaLead.id, datos);
-    setInteracciones((prev) => [nueva, ...prev]);
+    const clienteId = fichaLead.id;
+    const nueva = await crearInteraccion(clienteId, datos);
+    if (fichaLeadActual.current?.id === clienteId) setInteracciones((prev) => [nueva, ...prev]);
     mostrarToast('Interacción registrada');
     refrescarLeads();
+  };
+
+  const prepararNotasLlamada = async (notas) => {
+    const clienteId = fichaLead.id;
+    const respuesta = await prepararLlamada(clienteId, notas);
+    if (fichaLeadActual.current?.id === clienteId) {
+      setAnalisis((prev) => [respuesta.analisis, ...prev]);
+    }
+    return respuesta;
   };
 
   const guardarInteres = async (datos) => {
@@ -851,7 +865,10 @@ function App() {
           {vista === 'leads' && (
             <div className="panel">
               <TablaLeads
+                key={`${usuario.id}-${usuario.rol}`}
                 leads={leads}
+                usuario={usuario}
+                alActualizar={cargarLeads}
                 tareas={tareas}
                 cargando={cargandoLeads}
                 error={errorLeads}
@@ -1218,7 +1235,10 @@ function App() {
                 </span>
               </div>
 
-              <FormularioInteraccion alGuardar={guardarInteraccion} />
+              <FormularioInteraccion key={`manual-${fichaLead.id}`} alGuardar={guardarInteraccion} />
+              <RegistroLlamadaIA key={fichaLead.id} cliente={fichaLead}
+                alPreparar={prepararNotasLlamada} alGuardar={guardarInteraccion}
+                iaConfigurada={iaConfigurada} analisis={analisis} />
 
               <div style={{ marginTop: '1.25rem' }}>
                 <HistorialInteracciones

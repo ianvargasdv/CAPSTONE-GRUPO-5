@@ -1,6 +1,11 @@
 import React from 'react';
 import Icono from './Iconos';
 
+const NOMBRES_TIPO = {
+  resumen: 'Resumen', recomendacion: 'Siguiente acción', mensaje: 'Borrador de seguimiento',
+  preguntas: 'Preguntas de perfil', registro_llamada: 'Notas de llamada',
+};
+
 /**
  * Panel de consumo del agente de IA. Solo lo ve el rol admin.
  *
@@ -167,7 +172,7 @@ function ConsumoIA({ consumo, cargando, error, alRecargar }) {
                 <tbody>
                   {porTipo.map((fila) => (
                     <tr key={fila.etiqueta}>
-                      <td className="celda-principal">{fila.etiqueta}</td>
+                      <td className="celda-principal">{NOMBRES_TIPO[fila.etiqueta] || fila.etiqueta}</td>
                       <td className="col-numero">{numero(fila.cantidad)}</td>
                       <td className="col-numero">
                         {numero(fila.tokens_entrada + fila.tokens_salida)}

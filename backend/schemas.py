@@ -603,6 +603,26 @@ class AnalisisRespuesta(BaseModel):
         from_attributes = True
 
 
+class NotasLlamadaPeticion(BaseModel):
+    notas: TextoLargo
+
+
+FragmentoLlamada = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=600)]
+
+
+class PropuestaLlamada(BaseModel):
+    # Rechazar campos imprevistos evita convertir una salida del modelo en órdenes.
+    model_config = {"extra": "forbid", "strict": True}
+    resumen: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=1600)]
+    requisitos: List[FragmentoLlamada] = Field(max_length=8)
+    proxima_accion: Optional[FragmentoLlamada]
+
+
+class PreparacionLlamadaRespuesta(BaseModel):
+    analisis: AnalisisRespuesta
+    propuesta: PropuestaLlamada
+
+
 class EstadoIARespuesta(BaseModel):
     """
     Indica si hay proveedor de IA configurado, para que la interfaz no ofrezca
