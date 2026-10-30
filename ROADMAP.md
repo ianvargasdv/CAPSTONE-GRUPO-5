@@ -3,6 +3,33 @@
 Este roadmap ordena el desarrollo por valor operativo. Cada módulo debe poder
 probarse y demostrarse por separado antes de pasar al siguiente.
 
+## Próxima etapa · 29/10/2026
+
+Sprint 6 Seguimiento con IA programado para el 2–9/11/2026, todavía sin iniciar.
+Incluye SCRUM-39 (8 puntos propuestos) y SCRUM-40 (5). SCRUM-41 permanece en el
+backlog. No se atribuye una reunión o estimación de equipo no realizada.
+
+- SCRUM-39: preparación de notas de llamada implementada localmente el 29/10,
+  antes del sprint. Permite revisar y confirmar una interacción; no modifica
+  automáticamente el perfil ni crea tareas. Verificada con IA simulada; falta
+  comprobar las respuestas del proveedor real y revisar el flujo en el CRM habitual.
+- SCRUM-40: vista de cartera implementada y comprobada localmente el 29/10,
+  antes del sprint. Mi cartera toma la identidad de la sesión; administración
+  puede filtrar por responsable activo o clientes sin asignar. Conserva la
+  visibilidad de Todos y no reasigna actividades. Pendiente de revisión en el CRM habitual.
+- SCRUM-41: herramienta preparada localmente el 29/10 para planificar y ejecutar
+  lotes reales con confirmación, límites y registro parcial. Se ejecutó un lote
+  autorizado de once casos para cinco funciones, por US$0,0013079 estimados.
+  La revisión asistida detectó un hallazgo en un borrador; la revisión humana
+  permanece pendiente. La historia continúa fuera del alcance del sprint 6.
+- SCRUM-42: corregidas localmente la atribución de datos del cliente al inmueble
+  y las reglas sobre disponibilidad. Se reforzó el contexto y el caso de prueba,
+  con 145 comprobaciones sin costo aprobadas. Un segundo lote autorizado de dos
+  casos cumplió los criterios en revisión técnica asistida; corrección comprobada
+  en esa muestra. La tarea se cierra técnicamente, sin afirmar precisión general.
+
+Los apartados fechados de octubre que siguen conservan el contexto de sus entregas.
+
 ## Criterio común de terminado
 
 - Backend, interfaz y permisos coherentes.
@@ -144,7 +171,8 @@ inactivos, modificaciones sin permisos y cambios desde una ficha desactualizada.
 Esto no completa todo M7. Se mantienen pendientes:
 
 - Reasignación coordinada de tareas y oportunidades junto con el lead.
-- Vista personal y vista de equipo para administradores.
+- Extender la vista de cartera a tareas, visitas y oportunidades. El listado de
+  clientes ya cuenta con Mi cartera y filtros administrativos en SCRUM-40.
 - Gestión de activación/desactivación de usuarios desde la interfaz.
 
 ### M8. Automatizaciones y notificaciones

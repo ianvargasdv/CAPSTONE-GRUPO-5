@@ -4,9 +4,46 @@ Sistema de gestión para ejecutivos inmobiliarios: prospectos (leads), catálogo
 propiedades, historial de contacto, tareas de seguimiento y propiedades de interés
 de cada lead.
 
-## Evaluación local del asistente
+## Cartera de clientes · avance local del 29/10/2026
 
-Desde `backend`, se pueden validar nueve casos ficticios y comprobar el registro
+En **Leads**, el selector **Cartera** permite alternar entre **Todos los clientes**
+y **Mi cartera**. Mi cartera usa el usuario de la sesión y la asignación vigente,
+no un nombre escrito en la búsqueda. Administración también puede elegir un
+responsable activo o consultar clientes sin asignar.
+
+La búsqueda, estado y nivel de atención se combinan dentro de esa cartera. El
+contador muestra los resultados respecto de los clientes de la cartera elegida.
+**Actualizar cartera** vuelve a consultar los datos; una cartera vacía conserva
+los controles para regresar a Todos. Una reasignación se refleja al recargar.
+
+Esta función organiza el listado, sin cambiar la visibilidad que ya existía en
+Todos ni reasignar tareas, visitas u oportunidades. La API valida los filtros y
+reserva los de responsable y sin asignar a administración. No requiere migración.
+Pruebas sin costo: `python prueba_cartera.py` desde `backend` y
+`node --test src/cartera.test.js` desde `frontend`.
+
+## Notas de llamada con IA · avance local del 29/10/2026
+
+En la ficha del cliente, dentro de **Historial de contacto**, abre **Preparar notas
+de llamada con IA**. Introduce notas de una llamada que ya realizaste y solicita
+la propuesta. Incluye resumen, requisitos mencionados y próxima acción cuando las
+notas la respalden. Revisa y edita el texto y pulsa **Confirmar y registrar llamada**
+para guardarlo como una interacción normal. Descartar conserva las notas sin
+registrar el contacto. Si falla el guardado, el texto editado permanece disponible.
+
+Preparar consulta al proveedor y guarda el análisis original con su consumo; no
+guarda un contacto ni modifica requisitos, tareas o visitas. Las propuestas previas
+se consultan en el mismo bloque y no acreditan por sí solas una llamada registrada.
+La función usa `analisis_ia` e `interacciones` existentes: no requiere migración.
+
+Comprobación sin costo desde `backend`: `python prueba_llamada.py`. Se validaron
+el flujo y los errores con un proveedor simulado y SQLite temporal. La calidad de
+las respuestas reales de esta nueva función sigue pendiente de evaluación; no se
+reutiliza la autorización de llamadas pagadas de octubre.
+
+## Evaluación del asistente
+
+Desde `backend`, se pueden validar once casos ficticios para las cinco funciones y comprobar el registro
 de evaluaciones sin abrir el CRM, conectarse a Supabase ni gastar saldo:
 
 ```powershell
@@ -14,10 +51,13 @@ de evaluaciones sin abrir el CRM, conectarse a Supabase ni gastar saldo:
 .\venv\Scripts\python.exe evaluar_asistente.py ejecutar --salida evaluacion_01.json
 .\venv\Scripts\python.exe evaluar_asistente.py resumir evaluacion_01.json
 .\venv\Scripts\python.exe prueba_evaluacion.py
+.\venv\Scripts\python.exe prueba_evaluacion_real.py
 ```
 
-La herramienta actual sólo genera salidas simuladas. No ejecuta el modelo real
-ni mide su calidad: sirve para comprobar el registro, la comparación y la revisión.
+El comando `ejecutar` genera únicamente salidas simuladas y no mide la calidad del
+modelo. El conjunto conserva los nueve casos anteriores y añade dos de llamada:
+requisitos explícitos y notas contradictorias con una orden pegada. La versión 1
+del conjunto anterior sigue siendo válida; el conjunto de cinco funciones usa versión 2.
 Cada ejecución queda identificada y sus respuestas empiezan pendientes de revisión.
 Los criterios de cada caso están en `backend/casos_asistente.json`; su fecha de
 referencia es fija para que el sentido de una visita o tarea vencida no cambie
@@ -39,9 +79,71 @@ El segundo ejemplo simula un error sin contactar a un proveedor. La comparación
 usa el identificador y la huella de cada caso: si cambian su ficha o sus criterios,
 lo señala como no comparable. Las huellas detectan diferencias, no autentican al
 autor de un archivo. No hay aprobación automática ni un porcentaje de precisión.
-Los archivos de salida deben ser nuevos y su carpeta debe existir. La prueba del
-modelo real requiere una ejecución posterior autorizada; esta herramienta todavía
-no ofrece ese modo ni importa resultados reales.
+Los archivos de salida deben ser nuevos y su carpeta debe existir.
+
+### Lote con el proveedor real
+
+Primero prepara y revisa un plan. Este paso no realiza llamadas ni usa Supabase:
+
+```powershell
+.\venv\Scripts\python.exe evaluar_asistente.py planificar-real --max-llamadas 11 --presupuesto-usd 0.10 --max-tokens-salida 900 --salida plan_01.json
+```
+
+El plan detalla casos, modelo, precios configurados, límite por respuesta y reserva
+estimada. La entrada se estima por sus bytes más un margen de formato: no es un
+tokenizador del proveedor ni una garantía de facturación. Requiere precios positivos
+y finitos. Si la configuración, el código de IA o las reservas cambian, hay que
+preparar otro plan. No se incluyen claves ni una conexión a la base de datos.
+
+Sólo después de autorizar expresamente ese lote y su presupuesto se ejecuta el
+comando siguiente, sustituyendo el identificador por el del plan revisado:
+
+```powershell
+.\venv\Scripts\python.exe evaluar_asistente.py ejecutar-real --plan plan_01.json --confirmar-lote IDENTIFICADOR_DEL_LOTE --salida evaluacion_real_01.json
+.\venv\Scripts\python.exe evaluar_asistente.py resumir evaluacion_real_01.json
+```
+
+Cada plan se usa una sola vez desde su carpeta: se crea una marca de consumo que
+no debe borrarse para reintentar. Un nuevo lote exige otro plan y otra confirmación.
+El archivo de resultados se reserva antes de llamar y se actualiza con puntos de
+control. `llamadas_reales` cuenta los intentos iniciados, no cargos confirmados.
+Ante un error o interrupción se conserva la evidencia parcial, sin reintentos
+automáticos. Si faltan tokens, cambia el modelo respondido o el consumo supera la
+estimación, el lote se detiene. Un costo desconocido queda nulo, no como gratis.
+
+Las respuestas válidas quedan pendientes de revisión; el JSON de llamadas también
+debe cumplir el esquema de la aplicación. Los comandos `revisar` y `comparar`
+admiten estos resultados nuevos sin convertir simulaciones en respuestas reales.
+La comparación marca los modos diferentes como no comparables. Las evidencias
+históricas del 16/10 no se reescriben ni se importan como una nueva ejecución.
+
+### Resultado inicial · 29/10/2026
+
+Se ejecutó un lote autorizado de once casos, con costo total estimado de
+US$0,0013079. Llegaron once respuestas sin errores de transporte. La revisión
+técnica asistida no detectó problemas en diez y encontró un hallazgo en el
+borrador con una propiedad reservada: atribuye al inmueble la comuna buscada
+por el cliente, que no estaba informada para esa propiedad, y deja ambiguo
+el efecto del estado sobre su disponibilidad.
+
+SCRUM-42 registra la corrección. Las reglas ahora separan requisitos del cliente
+y atributos del inmueble, respetan los estados no disponibles y muestran la
+comuna de la propiedad como sin registrar cuando falta. Se reforzaron los criterios
+del caso sin cambiar su entrada ni la evidencia original. Pasaron 145 comprobaciones
+sin costo tras el ajuste. Un segundo lote autorizado de dos casos respondió según
+los criterios en la revisión técnica asistida: no atribuyó al inmueble la comuna
+buscada, respetó la reserva y conservó la contradicción de dormitorios pendiente
+de aclarar. Este segundo lote costó US$0,0004061 estimados.
+
+Resultados originales: `backend/evidencias/evaluacion_real_20261029.json`.
+Observaciones separadas: `backend/evidencias/revision_asistida_20261029.json`.
+La revisión asistida no sustituye la humana: las once respuestas originales
+permanecen pendientes de esa revisión. La muestra no acredita precisión general.
+La regresión y sus observaciones se conservan en
+`backend/evidencias/evaluacion_regresion_disponibilidad_20261029.json` y
+`backend/evidencias/revision_asistida_regresion_20261029.json`, también sin registrar
+una aprobación humana. Entre ambos lotes se hicieron trece llamadas autorizadas
+por US$0,0017140 estimados.
 
 ## Comprobación del asistente · 16/10/2026
 
@@ -450,16 +552,20 @@ consultar la base una vez por lead, la actividad se obtiene con consultas agrupa
 
 ## Asistente con IA
 
-Desde la ficha de un lead se pueden pedir dos análisis:
+Desde la ficha de un lead se pueden pedir cuatro análisis:
 
 - **Resumen de la situación**: describe en qué punto está el prospecto.
 - **Siguiente acción recomendada**: propone qué hacer, revisando las tareas
   pendientes para no proponer algo que ya está agendado.
+- **Borrador de seguimiento**: prepara un mensaje editable y copiable, sin enviarlo.
+- **Preguntas para completar el perfil**: sugiere aclaraciones a partir de datos
+  faltantes o requisitos pendientes. La preparación de notas de llamada se ofrece
+  por separado en Historial de contacto, a partir de las notas introducidas.
 
 El backend arma un texto con los datos registrados (perfil de búsqueda, oportunidades,
 agenda y resultados de visitas, historial de contacto, propiedades de interés,
 prioridad calculada y tareas pendientes), lo envía al modelo
-y guarda en `analisis_ia` tanto lo que se envió como lo que respondió. Los dos tipos
+y guarda en `analisis_ia` tanto lo que se envió como lo que respondió. Estas cuatro funciones
 parten de la misma ficha y se diferencian solo en las instrucciones.
 
 Cada generación ocurre al presionar el botón. No hay procesos automáticos ni
@@ -580,8 +686,8 @@ un historial que se puede alterar no sirve como historial.
 - CORS está limitado a `localhost:3000`. Al desplegar hay que agregar el dominio en
   `backend/main.py`.
 - La reasignación de leads no reasigna sus tareas, visitas ni oportunidades.
-  No hay todavía una vista de cartera por ejecutivo ni gestión de cuentas desde
-  la interfaz; esas partes del módulo M7 siguen pendientes.
+  La vista de cartera se limita al listado de clientes; no hay gestión de cuentas
+  desde la interfaz. Esas ampliaciones del módulo M7 siguen pendientes.
 - No hay cambio de contraseña desde la interfaz.
 - El registro de actividad y el historial de responsables están paginados. Los demás
   listados traen todo, porque su tamaño lo acota la operación del negocio.
@@ -612,9 +718,9 @@ y en Windows `localhost` se resuelve primero a IPv6. Se corrige creando
 
 Implementado: leads con perfil comercial 360, oportunidades y pipeline, agenda de
 visitas, matching explicable, catálogo ampliado de propiedades, interacciones, tareas, propiedades de interés,
-autenticación con roles, priorización de leads, asistente con IA (resumen y
-recomendación), seguimiento del consumo del agente, registro de actividad y vista de
-inicio.
+autenticación con roles, priorización de leads, asistente con IA (resumen,
+recomendación, borrador y preguntas), preparación revisable de notas de llamada,
+cartera por responsable, seguimiento del consumo, registro de actividad y vista de inicio.
 
 El catálogo permite registrar código interno, superficies, estacionamientos, bodega,
 gastos comunes en CLP, disponibilidad, descripción y características. Admite hasta

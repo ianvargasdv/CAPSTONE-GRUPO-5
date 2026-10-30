@@ -1,4 +1,4 @@
-"""Herramienta local de evaluación. Este módulo sólo ejecuta simulaciones sin red."""
+"""Evaluación local: simulación predeterminada y lotes reales con confirmación explícita."""
 import argparse
 import copy
 import hashlib
@@ -9,7 +9,7 @@ from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
-from casos_evaluacion import CASOS_PREDETERMINADOS, cargar_casos, huella_caso, texto_valido
+from casos_evaluacion import CASOS_PREDETERMINADOS, cargar_casos, huella_caso, texto_valido, validar_caso
 
 
 def ahora():
@@ -65,12 +65,16 @@ def _fecha_valida(valor):
 
 
 def validar_ejecucion(documento):
-    if not isinstance(documento, dict) or type(documento.get('version')) is not int or documento['version'] != 1:
+    if not isinstance(documento, dict) or type(documento.get('version')) is not int or documento['version'] not in (1, 2):
         raise ValueError('Versión de ejecución inválida.')
-    if documento.get('modo') != 'simulado' or documento.get('datos') != 'ficticios':
-        raise ValueError('Esta herramienta sólo admite ejecuciones simuladas con datos ficticios.')
-    if type(documento.get('llamadas_reales')) is not int or documento['llamadas_reales'] != 0:
-        raise ValueError('Una simulación no puede declarar llamadas reales.')
+    if documento['version'] == 2:
+        from evaluacion_real import validar_contexto_real
+        validar_contexto_real(documento)
+    else:
+        if documento.get('modo') != 'simulado' or documento.get('datos') != 'ficticios':
+            raise ValueError('Una ejecución histórica de versión 1 debe ser simulada y ficticia.')
+        if type(documento.get('llamadas_reales')) is not int or documento['llamadas_reales'] != 0:
+            raise ValueError('Una simulación no puede declarar llamadas reales.')
     if not _fecha_valida(documento.get('fecha_utc')):
         raise ValueError('Fecha de ejecución inválida.')
     try:
@@ -91,6 +95,7 @@ def validar_ejecucion(documento):
         if not isinstance(resultado, dict) or not isinstance(resultado.get('caso'), dict):
             raise ValueError('Resultado inválido.')
         caso = resultado['caso']
+        validar_caso(caso)
         try:
             huella = huella_caso(caso)
             identificador = caso['id']
@@ -106,6 +111,9 @@ def validar_ejecucion(documento):
         elif estado == 'error':
             if resultado.get('respuesta') is not None or not texto_valido(resultado.get('error'), 1000):
                 raise ValueError('Un error no puede contener una respuesta válida.')
+        elif documento['version'] == 2 and estado in ('no_ejecutado', 'en_curso'):
+            if resultado.get('respuesta') is not None or resultado.get('error') is not None or resultado.get('revision') is not None:
+                raise ValueError('Un caso sin respuesta no puede tener revisión ni resultado inventado.')
         else:
             raise ValueError('Estado de resultado inválido.')
         revision = resultado.get('revision')
@@ -144,21 +152,32 @@ def resumen(documento):
     for resultado in documento['resultados']:
         if resultado['estado'] == 'error':
             conteo['errores'] += 1
+        elif resultado['estado'] in ('no_ejecutado', 'en_curso'):
+            conteo[resultado['estado']] += 1
         elif resultado['revision'] is None:
             conteo['pendientes'] += 1
         else:
             conteo[resultado['revision']['estado']] += 1
-    return {
+    real = documento['modo'] == 'real'
+    informe = {
         'ejecucion_id': documento['ejecucion_id'],
         'modo': documento['modo'],
         'total': len(documento['resultados']),
-        'aprobados_simulados': conteo['aprobado'],
-        'rechazados_simulados': conteo['rechazado'],
+        'aprobados_simulados': 0 if real else conteo['aprobado'],
+        'rechazados_simulados': 0 if real else conteo['rechazado'],
+        'aprobados_reales': conteo['aprobado'] if real else 0,
+        'rechazados_reales': conteo['rechazado'] if real else 0,
         'errores': conteo['errores'],
         'pendientes': conteo['pendientes'],
-        'respuestas_reales_evaluadas': 0,
-        'alcance': 'Comprueba el registro y la revisión. No mide la calidad del modelo real.',
+        'no_ejecutados': conteo['no_ejecutado'], 'en_curso': conteo['en_curso'],
+        'respuestas_reales_evaluadas': conteo['aprobado'] + conteo['rechazado'] if real else 0,
+        'alcance': 'Revisión de una muestra de respuestas reales; no acredita precisión general.' if real else 'Comprueba el registro y la revisión. No mide la calidad del modelo real.',
     }
+    if real:
+        from evaluacion_real import totales
+        informe.update(totales(documento))
+        informe.update(estado_lote=documento['estado_lote'], motivo_detencion=documento['motivo_detencion'], llamadas_reales=documento['llamadas_reales'])
+    return informe
 
 
 def comparar(anterior, actual):
@@ -169,21 +188,22 @@ def comparar(anterior, actual):
     filas = []
     for identificador in sorted(previos.keys() | actuales.keys()):
         antes, despues = previos.get(identificador), actuales.get(identificador)
-        comparable = antes is not None and despues is not None and antes['huella_caso'] == despues['huella_caso']
+        mismo_modo = anterior['modo'] == actual['modo']
+        comparable = mismo_modo and antes is not None and despues is not None and antes['huella_caso'] == despues['huella_caso']
         filas.append({
             'caso': identificador,
             'comparable': comparable,
-            'motivo': 'misma ficha y criterios' if comparable else 'caso nuevo, eliminado o modificado',
+            'motivo': 'misma ficha y criterios' if comparable else 'modos distintos' if not mismo_modo else 'caso nuevo, eliminado o modificado',
             'estado_anterior': antes['estado'] if antes else None,
             'estado_actual': despues['estado'] if despues else None,
             'revision_anterior': antes['revision']['estado'] if antes and antes['revision'] else None,
             'revision_actual': despues['revision']['estado'] if despues and despues['revision'] else None,
         })
     return {
-        'anterior': anterior['ejecucion_id'], 'actual': actual['ejecucion_id'], 'modo': 'simulado',
+        'anterior': anterior['ejecucion_id'], 'actual': actual['ejecucion_id'], 'modo': anterior['modo'] if anterior['modo'] == actual['modo'] else 'mixto',
         'codigo_ia_igual': anterior['configuracion']['codigo_ia_sha256'] == actual['configuracion']['codigo_ia_sha256'],
         'casos': filas,
-        'alcance': 'Comparación de registros simulados; no acredita mejora de un modelo real.',
+        'alcance': 'No se equipara una simulación con una respuesta real ni se infiere precisión general.',
     }
 
 
@@ -196,6 +216,17 @@ def main(argumentos=None):
     ejecutar_cli.add_argument('--casos', type=Path, default=CASOS_PREDETERMINADOS)
     ejecutar_cli.add_argument('--salida', type=Path, required=True)
     ejecutar_cli.add_argument('--fallo-caso', action='append', default=[], help='Simular un error en este caso.')
+    plan_cli = comandos.add_parser('planificar-real', help='Preparar un lote y su estimación sin llamar al proveedor.')
+    plan_cli.add_argument('--casos', type=Path, default=CASOS_PREDETERMINADOS)
+    plan_cli.add_argument('--caso', action='append', default=[], help='Seleccionar explícitamente un caso; sin este argumento incluye el conjunto completo.')
+    plan_cli.add_argument('--max-llamadas', type=int, required=True)
+    plan_cli.add_argument('--presupuesto-usd', required=True)
+    plan_cli.add_argument('--max-tokens-salida', type=int)
+    plan_cli.add_argument('--salida', type=Path, required=True)
+    real_cli = comandos.add_parser('ejecutar-real', help='Ejecutar un plan nuevo sólo después de autorizar ese lote y su gasto estimado.')
+    real_cli.add_argument('--plan', type=Path, required=True)
+    real_cli.add_argument('--confirmar-lote', required=True)
+    real_cli.add_argument('--salida', type=Path, required=True)
     revisar_cli = comandos.add_parser('revisar', help='Crear un archivo nuevo con una revisión humana explícita.')
     revisar_cli.add_argument('archivo', type=Path)
     revisar_cli.add_argument('--caso', required=True)
@@ -217,6 +248,25 @@ def main(argumentos=None):
             documento = ejecutar(cargar_casos(args.casos), args.fallo_caso)
             guardar_nuevo(args.salida, documento)
             salida = resumen(documento)
+        elif args.comando == 'planificar-real':
+            from evaluacion_real import crear_plan
+            import ia
+            casos = cargar_casos(args.casos)
+            if args.caso:
+                if len(set(args.caso)) != len(args.caso) or set(args.caso) - {c['id'] for c in casos}:
+                    raise ValueError('Selección de casos inválida.')
+                casos = [c for c in casos if c['id'] in args.caso]
+            plan = crear_plan(casos, args.max_llamadas, args.presupuesto_usd,
+                ia.MAX_TOKENS if args.max_tokens_salida is None else args.max_tokens_salida)
+            guardar_nuevo(args.salida, plan)
+            salida = {'lote_id': plan['lote_id'], 'casos': [e['caso']['id'] for e in plan['entradas']],
+                'modelo': plan['configuracion']['modelo'], 'llamadas_reales': 0,
+                'reserva_estimada_usd': plan['reserva_total_usd'], 'presupuesto_usd': plan['presupuesto_usd'],
+                'aviso': 'Plan sin ejecutar. La estimación no es una garantía de facturación. Requiere autorización nueva para este lote.'}
+        elif args.comando == 'ejecutar-real':
+            from evaluacion_real import ejecutar_real
+            documento = ejecutar_real(args.plan, args.confirmar_lote, args.salida)
+            salida = resumen(documento)
         elif args.comando == 'revisar':
             documento = revisar(leer_ejecucion(args.archivo), args.caso, args.estado, args.autor, args.observacion)
             guardar_nuevo(args.salida, documento)
@@ -227,7 +277,7 @@ def main(argumentos=None):
             salida = comparar(leer_ejecucion(args.anterior), leer_ejecucion(args.actual))
             guardar_nuevo(args.salida, salida)
         print(json.dumps(salida, ensure_ascii=False, indent=2))
-        return 0
+        return 2 if args.comando == 'ejecutar-real' and documento['estado_lote'] != 'completado' else 0
     except (ValueError, OSError, KeyError, TypeError):
         # No imprimir contenido de archivos ni mensajes externos en un error del CLI.
         print('No se pudo completar: revisa los datos, las rutas y que la salida no exista.', file=sys.stderr)

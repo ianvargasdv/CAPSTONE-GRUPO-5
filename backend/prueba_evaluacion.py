@@ -18,7 +18,7 @@ class EvaluacionTest(unittest.TestCase):
         self.addCleanup(self.temporal.cleanup)
         self.ruta = Path(self.temporal.name)
         self.casos = casos.cargar_casos()
-        self.documento = {'version': 1, 'datos': 'ficticios', 'casos': copy.deepcopy(self.casos)}
+        self.documento = {'version': 2, 'datos': 'ficticios', 'casos': copy.deepcopy(self.casos)}
 
     def cargar(self, documento):
         archivo = self.ruta / 'entrada.json'
@@ -30,16 +30,16 @@ class EvaluacionTest(unittest.TestCase):
             codigo = evaluar.main(list(argumentos))
         return codigo, salida.getvalue(), errores.getvalue()
 
-    def test_conjunto_cubre_cuatro_funciones_y_no_muta(self):
-        self.assertEqual(len(self.casos), 9)
-        for tipo in casos.TIPOS:
+    def test_conjunto_cubre_cinco_funciones_y_no_muta(self):
+        self.assertEqual(len(self.casos), 11)
+        for tipo in casos.TIPOS_ACTUALES:
             self.assertGreaterEqual(sum(c['tipo'] == tipo for c in self.casos), 2)
         antes = copy.deepcopy(self.documento)
         self.cargar(self.documento)
         self.assertEqual(self.documento, antes)
 
     def test_rechaza_version_y_datos_no_ficticios(self):
-        for campo, valor in [('version', True), ('version', 2), ('datos', 'reales')]:
+        for campo, valor in [('version', True), ('version', 3), ('datos', 'reales')]:
             with self.subTest(campo=campo, valor=valor):
                 documento = copy.deepcopy(self.documento)
                 documento[campo] = valor
@@ -72,7 +72,7 @@ class EvaluacionTest(unittest.TestCase):
         documento = copy.deepcopy(self.documento)
         documento['casos'][0]['ficha'] = 'a' * 20000
         documento['casos'][0]['esperado'] = ['b' * 1000] * 20
-        self.assertEqual(len(self.cargar(documento)), 9)
+        self.assertEqual(len(self.cargar(documento)), 11)
         documento['casos'][0]['esperado'].append('criterio extra')
         with self.assertRaises(ValueError):
             self.cargar(documento)
@@ -88,7 +88,7 @@ class EvaluacionTest(unittest.TestCase):
         with patch('urllib.request.urlopen', side_effect=AssertionError('No usar red')):
             documento = evaluar.ejecutar(self.casos)
         informe = evaluar.resumen(documento)
-        self.assertEqual(informe['pendientes'], 9)
+        self.assertEqual(informe['pendientes'], 11)
         self.assertEqual(informe['aprobados_simulados'], 0)
         self.assertEqual(informe['respuestas_reales_evaluadas'], 0)
         self.assertEqual(documento['llamadas_reales'], 0)
@@ -98,7 +98,7 @@ class EvaluacionTest(unittest.TestCase):
         documento = evaluar.ejecutar(self.casos, [self.casos[0]['id']])
         informe = evaluar.resumen(documento)
         self.assertEqual(informe['errores'], 1)
-        self.assertEqual(informe['pendientes'], 8)
+        self.assertEqual(informe['pendientes'], 10)
         with self.assertRaises(ValueError):
             evaluar.revisar(documento, self.casos[0]['id'], 'aprobado', 'Revisor de prueba', 'No corresponde.')
 
@@ -185,7 +185,7 @@ class EvaluacionTest(unittest.TestCase):
         self.assertEqual(self.cli('validar')[0], 0)
         codigo, texto, _ = self.cli('ejecutar', '--salida', str(salida))
         self.assertEqual(codigo, 0)
-        self.assertEqual(json.loads(texto)['pendientes'], 9)
+        self.assertEqual(json.loads(texto)['pendientes'], 11)
         self.assertEqual(self.cli('resumir', str(salida))[0], 0)
         revisada = self.ruta / 'revisada.json'
         self.assertEqual(self.cli('revisar', str(salida), '--caso', self.casos[0]['id'], '--estado', 'rechazado', '--autor', 'Revisor ficticio', '--observacion', 'Sólo prueba del flujo.', '--salida', str(revisada))[0], 0)
@@ -203,6 +203,10 @@ class EvaluacionTest(unittest.TestCase):
         codigo, _, errores = self.cli('resumir', str(archivo))
         self.assertEqual(codigo, 1)
         self.assertNotIn('contenido privado', errores)
+
+    def test_conjunto_historico_de_cuatro_funciones_sigue_siendo_valido(self):
+        antiguo = {'version': 1, 'datos': 'ficticios', 'casos': [c for c in self.casos if c['tipo'] in casos.TIPOS]}
+        self.assertEqual(len(self.cargar(antiguo)), 9)
 
 
 if __name__ == '__main__':

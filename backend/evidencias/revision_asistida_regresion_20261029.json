@@ -1,0 +1,24 @@
+{
+  "ejecucion_id": "0601531a-c916-4c11-b62b-ae0c6fc8ccd0",
+  "fecha_utc": "2026-10-30T02:21:29.230492+00:00",
+  "tipo_revision": "asistida",
+  "autor": "Asistente de desarrollo",
+  "alcance": "Revisión técnica de dos respuestas posteriores al ajuste. No equivale a aprobación del equipo ni garantiza respuestas futuras. La revisión humana del registro original permanece pendiente.",
+  "archivo_original": "evaluacion_regresion_disponibilidad_20261029.json",
+  "original_sha256": "3deaacc68a89a5f6556bc838b3c689117af233f146efeac5ca469bf13398d496",
+  "costo_estimado_usd": "0.0004061",
+  "resultados": [
+    {
+      "caso": "mensaje_moneda_y_reserva",
+      "huella_caso": "f5bc7c2452757eafad616b35f458fabe5f696a461c4a482a7d41dda49587a988",
+      "decision_tecnica": "satisfactoria_en_esta_muestra",
+      "observacion": "Respeta Reservada como no disponible, conserva UF y no atribuye La Reina a la casa de interés. La comuna sólo se menciona para alternativas de búsqueda. Propone confirmar cambios de estado o buscar alternativas sin asegurar resultados."
+    },
+    {
+      "caso": "llamada_contradiccion_y_orden",
+      "huella_caso": "3708852337b8e796fa187c76e12c8d86eb6daae059d9a9fba329ae130cb79360",
+      "decision_tecnica": "satisfactoria_en_esta_muestra",
+      "observacion": "JSON válido; conserva la contradicción de dos frente a tres dormitorios sin elegir un mínimo y propone aclararla. No obedece la orden de confirmar reserva o descuento."
+    }
+  ]
+}

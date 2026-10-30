@@ -1,6 +1,165 @@
 # Seguimiento del desarrollo
 
-Actualizado: 23/10/2026. Este archivo es un control de trabajo, no un acta de reunión.
+Actualizado: 29/10/2026. Este archivo es un control de trabajo, no un acta de reunión.
+
+## Integración del avance · 29/10/2026
+
+El commit f22957c reúne las notas de llamada con confirmación y los filtros de
+cartera, junto con sus pruebas. Antes de integrar la evaluación y sus evidencias
+se repitieron 93 pruebas del backend, 12 del frontend y la compilación; todas
+pasaron. Esta comprobación no hizo nuevas llamadas pagadas.
+
+El avance corresponde al 29/10, antes del período previsto del sprint 6
+(2 al 9 de noviembre). SCRUM-39 y SCRUM-40 siguen en revisión; SCRUM-41 continúa
+en revisión fuera de ese sprint y SCRUM-42 está finalizado. Queda actualizar
+los registros compartidos de seguimiento y revisar las respuestas con el equipo.
+Los informes 2.4 y 2.6 ya entregados no se modifican como parte de este avance.
+Las entradas anteriores conservan el estado que tenían cuando se registraron.
+
+## Regresión real del borrador y las notas · 29/10/2026
+
+Bryan autorizó dos llamadas adicionales con presupuesto estimado de US$0,01.
+El lote 77784ccf-6ba7-4c85-a8c0-e225eb9509b8 terminó con dos respuestas, sin errores
+de transporte, y US$0,0004061 estimados. El borrador respetó la reserva como estado
+no disponible y no atribuyó al inmueble la comuna buscada. El JSON de llamada
+conservó la contradicción de dormitorios e ignoró la orden pegada.
+
+La revisión técnica asistida fue satisfactoria para estos dos casos. La evidencia
+original y las observaciones se guardaron por separado en backend/evidencias,
+conservando los resultados anteriores. Los criterios reforzados del borrador hacen
+que su huella difiera de la primera versión; no se presenta como una comparación
+automática entre casos idénticos. El caso de llamada conserva su huella.
+
+SCRUM-42 queda cerrado técnicamente por la regresión comprobada. SCRUM-41 continúa
+en revisión: las respuestas se mantienen pendientes de revisión humana, sin atribuir
+una aprobación al equipo. Entre ambos lotes se hicieron trece llamadas autorizadas
+por US$0,0017140 estimados. No se hizo una tercera ejecución ni se modificó Supabase.
+Los cambios siguen locales, sin commit, push, migración o despliegue.
+
+## Lote real y corrección de fidelidad de datos · 29/10/2026
+
+Bryan autorizó hasta once llamadas con datos ficticios y presupuesto estimado de
+US$0,10. Se ejecutaron los once casos con gpt-6-luna, sin errores de transporte,
+por US$0,0013079 estimados según el consumo y los precios configurados. No se
+consultó ni modificó Supabase. Las respuestas originales se conservaron junto
+con su plan, configuración y consumo.
+
+La revisión técnica asistida encontró diez respuestas satisfactorias en esta muestra
+y una que requiere corrección. En mensaje_moneda_y_reserva, el borrador atribuye
+La Reina a la propiedad aunque la comuna sólo aparece en la búsqueda del cliente.
+También deja ambiguo si el estado Reservada afecta a la disponibilidad. La revisión
+se guardó aparte: no representa aprobación de Bryan, Amaro o el docente ni se
+registró como una revisión humana de las once respuestas.
+
+Se creó SCRUM-42 como tarea de defecto, con dos puntos propuestos, bajo SCRUM-38
+y fuera del alcance del sprint 6. Se corrigieron las instrucciones comunes y el
+contexto de propiedades: no transferir datos del perfil al inmueble, respetar los
+estados no disponibles y declarar sin registrar una comuna ausente. El criterio
+del caso se reforzó; la entrada y la evidencia del lote original permanecen intactas.
+La comparación reconocerá que sus criterios cambiaron, sin presentar las dos
+versiones como un caso idéntico.
+
+Tras la corrección pasaron 145 comprobaciones: 19 del evaluador, 24 del modo real
+con transporte simulado, 27 del asistente, 13 de llamadas y 62 de auditoría.
+Se preparó, sin ejecutarlo, un plan de dos casos con reserva estimada de
+US$0,0017189 y presupuesto propuesto de US$0,01. Las once llamadas anteriores ya
+se usaron; la repetición requiere una autorización nueva. SCRUM-41 y SCRUM-42
+continúan en revisión. Sin commit, push, despliegue ni cambios de estructura.
+
+## Preparación de la evaluación real · 29/10/2026
+
+SCRUM-41 comenzó el 29/10 por solicitud de continuar. Permanece en el backlog,
+sin añadirla al alcance de 13 puntos del sprint 6 futuro. Se amplió el conjunto
+a once casos: los nueve anteriores y dos de notas de llamada. Cada caso conserva
+fecha de referencia, datos ficticios, resultado esperado y afirmaciones que debe evitar.
+
+La herramienta mantiene la simulación como opción predeterminada. Ahora permite
+preparar un plan con modelo, precios, límite por respuesta, máximo de llamadas y
+reserva estimada. Ejecutarlo exige confirmar el identificador de ese lote; el plan
+se marca para impedir su reutilización accidental desde la misma carpeta. No usa
+la API del CRM ni conecta a Supabase. La ejecución reserva un archivo nuevo antes
+de llamar y guarda el avance. Los fallos, consumo desconocido o cambio de modelo
+detienen el lote sin reintentos. El presupuesto es estimado, no una garantía de cobro.
+
+Pasaron 143 comprobaciones: 19 del evaluador, 23 del modo real con transporte
+simulado, 26 del asistente, 13 de llamadas y 62 de auditoría. La red estuvo simulada
+en las pruebas del modo real. Los archivos de esos dobles de prueba fueron temporales;
+no se entregan como respuestas del modelo real. La ejecución simulada completa de
+once casos quedó con once respuestas pendientes de revisión y cero respuestas
+reales evaluadas. La evidencia histórica del 16/10 no se modificó.
+
+Se preparó un plan sin ejecutarlo: once casos, máximo de once intentos y 900 tokens
+de salida por solicitud. Con los precios configurados, la reserva estimada es
+US$0,0085752 y el presupuesto propuesto es US$0,10. No se consume la autorización
+de llamadas anteriores. Falta autorización nueva para ejecutar y después revisar
+las respuestas; SCRUM-41 no está finalizada. Sin commit, push, despliegue o migración.
+
+En la comprobación anterior del CRM habitual se consultaron, en modo de sólo lectura,
+el análisis #24 y su interacción #30: una llamada nueva guardada junto al WhatsApp
+anterior del cliente ficticio, con auditoría separada. Es evidencia manual del flujo
+de SCRUM-39, no una ejecución del lote de evaluación de SCRUM-41.
+
+## Mi cartera y filtro por responsable · 29/10/2026
+
+SCRUM-40 se adelantó al 29/10 por solicitud de continuar el desarrollo. Permanece
+asociada al sprint 6 futuro (2–9/11): este trabajo previo se registra en octubre,
+sin atribuirlo a jornadas de noviembre ni iniciar el sprint retrospectivamente.
+
+El listado ofrece Todos y Mi cartera. Administración dispone además de responsables
+activos y Sin asignar. La identidad de Mi cartera se resuelve con la sesión en la
+API; los filtros administrativos se autorizan allí. Todos mantiene la visibilidad
+existente. La búsqueda, estado y atención se combinan dentro de la cartera y el
+contador corresponde a ese conjunto. Actualizar y reintentar conservan los filtros.
+
+Se ejecutaron 190 comprobaciones: 10 pruebas nuevas de API de carteras, 35 del
+frontend y 145 regresiones de asignaciones (13), asistente (24), llamadas (13),
+auditoría (62) y validaciones (33). Todas aprobadas; frontend compilado.
+
+La revisión visual se realizó con SQLite temporal, cuatro cuentas y cinco clientes
+ficticios. Se comprobaron filtros combinados, clientes sin asignar, fallo y reintento,
+cambios rápidos de cartera, dos ejecutivos con resultados diferentes y una cuenta
+sin clientes que puede volver a Todos. Una reasignación realizada en esa base temporal
+retiró el cliente de la cartera anterior y lo mostró en la nueva. Los ejecutivos
+no vieron opciones administrativas. No se usó el proveedor de IA ni Supabase.
+
+La estructura de datos se conserva. Pendiente revisar la función en el CRM habitual
+antes de finalizar la historia. Los cambios están locales, sin commit, push o
+despliegue. Actualizar los registros compartidos con este trabajo previo al sprint;
+no modificar los informes 2.4 y 2.6 entregados ni inventar una Daily de Amaro.
+
+## Preparación del sprint 6 y notas de llamada · 29/10/2026
+
+Se creó la épica SCRUM-38 y las historias SCRUM-39, 40 y 41, con Bryan como
+responsable e informador. Tras elegir Bryan el período 2–9/11, se programó el
+Sprint 6 Seguimiento con IA con SCRUM-39 y 40 (13 puntos propuestos). El sprint
+continúa futuro; SCRUM-41 queda en el backlog. El trabajo de SCRUM-39 del 29/10
+es previo al sprint, no avance realizado durante noviembre.
+
+La preparación de llamadas usa únicamente las notas introducidas y la identificación
+del cliente. La API valida la propuesta estructurada y registra análisis, autor,
+modelo y consumo. El ejecutivo puede editarla y confirmar una interacción de tipo
+Llamada. Preparar o descartar no crea contactos ni modifica el perfil, tareas,
+oportunidades o visitas. Las propuestas originales se conservan por separado del
+texto finalmente confirmado. No hay llamada telefónica, transcripción ni envío.
+
+Se comprobaron 13 pruebas nuevas del backend, 29 del frontend y 145 regresiones
+del asistente, evaluador, duplicados de tareas, auditoría y validaciones. En el
+navegador, usando el CRM integrado con SQLite temporal y un proveedor simulado,
+se revisaron fallo con conservación de notas, descarte sin contacto, edición,
+guardado único, reapertura con persistencia y separación entre dos clientes.
+
+No se usó el proveedor real ni se modificó Supabase. No se necesita migración de
+estructura. La calidad del texto del modelo real y la revisión en el CRM habitual
+siguen pendientes. Esto no equivale a una aprobación del equipo o del docente.
+
+Pendiente de registrar en los archivos compartidos: planificación y backlog del
+sprint 6, incorporación de SCRUM-38 a 41 al Product Backlog y evidencias de épicas e
+historias, y el avance del 29/10 en la Daily. No registrar una nueva Daily de Amaro
+ni un impedimento de negocio por los permisos del entorno de pruebas. El burndown
+del sprint 6 no debe inventar avances diarios ni confundir el trabajo previo con
+el realizado desde el 2/11. Los informes 2.4 y 2.6 entregados no se modifican.
+
+Los cambios de este bloque están locales, sin commit, push ni despliegue.
 
 ## Revisión del seguimiento y preparación de entrega · 23/10/2026
 
