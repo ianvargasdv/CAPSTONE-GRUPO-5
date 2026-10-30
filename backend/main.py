@@ -1,5 +1,6 @@
 from datetime import date, datetime, time, timedelta, timezone
 from typing import List, Literal, Optional
+import os
 import unicodedata
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, status
@@ -16,19 +17,15 @@ import models
 import prioridad
 import schemas
 import seguridad
+from origenes import cargar_origenes
 
 # Crear las tablas definidas en los modelos si aún no existen
 models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI(title="Capstone API")
 
-# Orígenes autorizados a consumir la API. Antes estaba en "*", que con
-# autenticación deja de tener sentido: solo el frontend debe poder llamar.
-# Al desplegar hay que agregar aquí el dominio de producción.
-ORIGENES_PERMITIDOS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
+# Se autoriza el dominio concreto de la interfaz, sin abrir todos los sitios.
+ORIGENES_PERMITIDOS = cargar_origenes(os.getenv("CORS_ORIGINS", ""))
 
 # allow_credentials queda en False porque el token viaja en la cabecera
 # Authorization, no en cookies, así que no hacen falta credenciales de origen.

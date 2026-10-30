@@ -24,8 +24,8 @@ Pruebas sin costo: `python prueba_cartera.py` desde `backend` y
 
 ## Notas de llamada con IA · avance local del 29/10/2026
 
-En la ficha del cliente, dentro de **Historial de contacto**, abre **Preparar notas
-de llamada con IA**. Introduce notas de una llamada que ya realizaste y solicita
+En la ficha del cliente, abre **Asistente** y selecciona **Notas de una llamada**.
+Introduce notas de una llamada que ya realizaste y solicita
 la propuesta. Incluye resumen, requisitos mencionados y próxima acción cuando las
 notas la respalden. Revisa y edita el texto y pulsa **Confirmar y registrar llamada**
 para guardarlo como una interacción normal. Descartar conserva las notas sin
@@ -308,6 +308,54 @@ frontend/src/
 ```
 
 ## Cómo levantar el proyecto
+
+### Publicación con Cloudflare Pages y Render
+
+La interfaz se publica en Cloudflare Pages y la API de Python en Render. Supabase
+continúa alojando la base. Con ambos servicios publicados, los visitantes sólo
+necesitan navegador e internet; no dependen de este computador.
+
+1. Publica en Git la versión que se vaya a desplegar. En Render, crea un Blueprint
+   desde este repositorio utilizando `render.yaml`. El archivo propone el plan
+   gratuito y desactiva las publicaciones automáticas por cada commit. Define
+   `DATABASE_URL` con la conexión de Supabase y `CORS_ORIGINS` con el dominio final
+   de Pages, por ejemplo `https://NOMBRE-DEL-PROYECTO.pages.dev`. La clave de sesión
+   se genera en Render. Para habilitar la IA, configura allí su dirección, clave y
+   modelo; las claves nunca se copian al frontend. `IA_TEMPERATURA` queda vacía.
+   Puedes configurar también los precios y presupuesto indicados en
+   `backend/.env.example` para mostrar las estimaciones de consumo.
+2. Espera a que la API esté disponible y guarda su URL HTTPS. Si la conexión
+   directa de Supabase no es compatible con la red del alojamiento, usa su
+   conexión de pooler de sesión. No cambies las tablas ni vuelvas a cargar datos
+   para publicar. La aplicación conserva su comportamiento de inicialización
+   existente; el script de publicación no ejecuta migraciones ni cargas.
+3. En PowerShell, desde la raíz del repositorio, inicia sesión en Cloudflare:
+
+   ```powershell
+   npx.cmd --yes wrangler@4 login
+   ```
+
+4. Publica la interfaz sustituyendo ambos valores por los reales:
+
+   ```powershell
+   .\publicar-web.ps1 -ApiUrl "https://TU-BACKEND.onrender.com" -Proyecto "TU-PROYECTO" -CrearProyecto
+   ```
+
+   El nombre del proyecto va en minúsculas, con números o guiones. Si el proyecto
+   de Pages ya existe, omite `-CrearProyecto`. El script comprueba `/health` y el
+   permiso del dominio antes de compilar. Sólo sube `frontend/dist`; no sube el
+   backend, documentos ni archivos `.env`. No usa la IA para comprobar el servicio.
+   Al terminar muestra la dirección `https://TU-PROYECTO.pages.dev`.
+
+Para compilar sin publicar ni consultar el backend, añade `-SoloPreparar` y omite
+`-CrearProyecto`. Ese modo no confirma que el servidor público esté disponible.
+La primera ejecución de Wrangler puede descargar su herramienta desde npm.
+Un enlace alojado no garantiza disponibilidad: el plan gratuito de Render puede
+suspender el servicio por inactividad y tardar en responder al volver a abrirlo.
+
+Comprobación local sin red: desde `backend`, ejecuta `python prueba_publicacion.py`.
+Se conserva la ejecución local con `localhost:3000`; `CORS_ORIGINS` sólo añade
+dominios concretos y no sustituye la autenticación por sesión.
 
 Hacen falta dos terminales, una para el backend y otra para el frontend.
 
