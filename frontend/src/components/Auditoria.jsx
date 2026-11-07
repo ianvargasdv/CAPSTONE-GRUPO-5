@@ -17,7 +17,7 @@ import { obtenerAuditoria, obtenerFiltrosAuditoria } from '../api';
  * comparten entre secciones; el registro de auditoría no se comparte con ninguna.
  */
 
-const POR_PAGINA = 25;
+const POR_PAGINA = 10;
 
 // Sin filtros aplicados. Se usa también para el botón de limpiar.
 const FILTROS_VACIOS = {
@@ -45,6 +45,7 @@ const ETIQUETA_ENTIDAD = {
   interaccion: 'Interacción',
   interes: 'Interés',
   analisis: 'Análisis de IA',
+  propuesta_tarea: 'Mobilita',
 };
 
 // El color comunica el riesgo de la acción: lo que se borra no se recupera

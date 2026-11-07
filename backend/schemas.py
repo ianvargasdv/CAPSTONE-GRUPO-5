@@ -659,6 +659,18 @@ class ConfiguracionIA(BaseModel):
     envia_temperatura: bool
 
 
+class ConsumoHistoricoMobilita(BaseModel):
+    total_solicitudes: int
+    solicitudes_con_costo: int
+    solicitudes_sin_costo: int
+    solicitudes_sin_tokens: int
+    tokens_entrada: int
+    tokens_salida: int
+    costo_total_usd: Optional[float] = None
+    primera_solicitud: Optional[datetime] = None
+    ultima_solicitud: Optional[datetime] = None
+
+
 class ConsumoIARespuesta(BaseModel):
     """
     Consumo del agente de IA, para que el administrador pueda seguir el gasto.
@@ -673,6 +685,7 @@ class ConsumoIARespuesta(BaseModel):
     tokens_salida: int
     costo_total_usd: float
     costo_promedio_usd: Optional[float] = None
+    mobilita_historico: Optional[ConsumoHistoricoMobilita] = None
 
     # Presupuesto declarado en la configuración, para calcular cuánto queda
     presupuesto_usd: Optional[float] = None

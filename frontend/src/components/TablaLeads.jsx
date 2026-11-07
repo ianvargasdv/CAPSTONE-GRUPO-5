@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Icono from './Iconos';
+import ListadoPaginado from './ListadoPaginado';
 import { obtenerEjecutivos, obtenerLeads } from '../api';
 import { filtrarClientes, parametrosCartera } from '../cartera';
 
@@ -193,7 +194,7 @@ function TablaLeads({
           <span className="vacio-detalle">{clientesCartera.length ? 'Ajusta la búsqueda o los filtros aplicados.' : cartera === 'todos' ? 'Registra el primer prospecto para empezar a seguir su historial de contacto.' : 'Puedes cambiar de cartera o actualizar la consulta.'}</span>
         </div>
       ) : (
-        <div className="table-wrapper" tabIndex={0} role="region" aria-label="Lista de leads; desplazamiento horizontal disponible">
+        <ListadoPaginado key={JSON.stringify([busqueda,filtroEstado,filtroCategoria,cartera])} items={leadsFiltrados} etiqueta="leads">{(visibles) => ( <div className="table-wrapper" tabIndex={0} role="region" aria-label="Lista de leads; desplazamiento horizontal disponible">
           <table className="leads-table">
             <thead>
               <tr>
@@ -207,7 +208,7 @@ function TablaLeads({
               </tr>
             </thead>
             <tbody>
-              {leadsFiltrados.map((lead) => {
+              {visibles.map((lead) => {
                 const abiertas = tareasAbiertas(lead.id);
                 const nuncaContactado = lead.total_interacciones === 0;
                 const critico = lead.dias_sin_contacto > DIAS_SIN_CONTACTO_CRITICO;
@@ -219,13 +220,15 @@ function TablaLeads({
                         <button className="enlace-fila" onClick={() => alVerFicha(lead)}>
                           {lead.nombre}
                         </button>
-                        <span className="celda-secundaria">{lead.email}</span>
                         <span className="celda-secundaria">Responsable: {lead.ejecutivo_nombre || 'Sin asignar'}</span>
+                        <details className="lead-datos-secundarios"><summary>Datos de contacto y búsqueda</summary>
+                        <span className="celda-secundaria">{lead.email}</span>
                         {lead.tipo_operacion && (
                           <span className="celda-secundaria">
                             {lead.tipo_operacion} · {lead.tipo_propiedad_buscada || 'Propiedad sin definir'}
                           </span>
                         )}
+                        </details>
                       </div>
                     </td>
 
@@ -290,11 +293,11 @@ function TablaLeads({
                     <td className="col-acciones">
                       <div className="acciones-celda">
                         <button
-                          className="btn-icono"
+                          className="btn-secondary"
                           onClick={() => alVerFicha(lead)}
                           title="Ver ficha"
                         >
-                          <Icono nombre="chevron" />
+                          Ver ficha
                         </button>
                         <button className="btn-icono" onClick={() => alEditar(lead)} title="Editar">
                           <Icono nombre="editar" />
@@ -313,7 +316,7 @@ function TablaLeads({
               })}
             </tbody>
           </table>
-        </div>
+        </div> )}</ListadoPaginado>
       )}
     </>
   );

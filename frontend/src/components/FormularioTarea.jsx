@@ -11,7 +11,7 @@ import { pendientesDelLead, firmaPendientes, validarNuevaTareaIA } from '../tare
  * - alCancelar: cierra el panel sin guardar
  * - leads: lista de leads disponibles para vincular
  */
-function FormularioTarea({ alGuardar, tareaEditar, alCancelar, leads = [], borradorIA, tareasRelacionadas = [], alAbrirPendiente, contextoIA }) {
+function FormularioTarea({ alGuardar, tareaEditar, alCancelar, leads = [], borradorIA, tareasRelacionadas = [], alAbrirPendiente, contextoIA, usuario }) {
   const envioEnCurso = useRef(false);
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
@@ -194,8 +194,9 @@ function FormularioTarea({ alGuardar, tareaEditar, alCancelar, leads = [], borra
             value={leadId}
             onChange={(e) => setLeadId(e.target.value)}
             disabled={cargando || Boolean(borradorIA)}
+            required={usuario?.rol !== 'admin'}
           >
-            <option value="">Ninguno</option>
+            <option value="">{usuario?.rol === 'admin' ? 'Ninguno' : 'Selecciona un lead de tu cartera'}</option>
             {leadId && !leads.some((lead) => String(lead.id) === leadId) && (
               <option value={leadId}>Cliente no disponible</option>
             )}

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Icono from './Iconos';
+import ListadoPaginado from './ListadoPaginado';
 import { coincideBusqueda, tareaVencida, clienteDeTarea, fechaDeTarea } from '../presentacion';
 
 /**
@@ -136,7 +137,7 @@ function TablaTareas({
           <span className="vacio-detalle">Ajusta la búsqueda o los filtros aplicados.</span>
         </div>
       ) : (
-        <div className="table-wrapper" tabIndex={0} role="region" aria-label="Lista de tareas; desplazamiento horizontal disponible">
+        <ListadoPaginado key={JSON.stringify([busqueda,filtroEstado,filtroPrioridad,soloVencidas])} items={filtradas} etiqueta="tareas">{(visibles) => ( <div className="table-wrapper" tabIndex={0} role="region" aria-label="Lista de tareas; desplazamiento horizontal disponible">
           <table className="leads-table">
             <thead>
               <tr>
@@ -149,7 +150,7 @@ function TablaTareas({
               </tr>
             </thead>
             <tbody>
-              {filtradas.map((tarea) => {
+              {visibles.map((tarea) => {
                 const vencida = tareaVencida(tarea);
                 const completada = tarea.estado === 'Completada';
                 const cliente = clienteDeTarea(tarea.lead_id, leads);
@@ -232,7 +233,7 @@ function TablaTareas({
               })}
             </tbody>
           </table>
-        </div>
+        </div> )}</ListadoPaginado>
       )}
     </>
   );

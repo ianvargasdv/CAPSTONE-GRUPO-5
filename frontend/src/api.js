@@ -147,8 +147,15 @@ async function pedir(ruta, { metodo = 'GET', cuerpo, mensajeError = 'Error de co
       ? datos.detail
       : Array.isArray(datos?.detail) && datos.detail.length > 0
         ? datos.detail.map(explicarValidacion).join('. ')
-        : null;
-    throw new Error(detalle ?? mensajeError);
+        : typeof datos?.detail?.mensaje === 'string' ? datos.detail.mensaje : null;
+    const error = new Error(detalle ?? mensajeError);
+    error.status = respuesta.status;
+    if (datos?.detail?.codigo === 'tarea_duplicada') {
+      error.codigo = datos.detail.codigo;
+      error.tareaId = datos.detail.tarea_id;
+      error.leadId = datos.detail.lead_id;
+    }
+    throw error;
   }
 
   // Las respuestas 204 (borrados) no traen cuerpo
@@ -335,6 +342,24 @@ export function crearInteraccion(leadId, datos) {
 
 export function obtenerTareas() {
   return pedir('/tareas', { mensajeError: 'No se pudo cargar la lista de tareas' });
+}
+
+export function prepararTareaChat(mensaje, anteriorId = null) {
+  return pedir('/asistente/tareas/preparar', {
+    metodo: 'POST', cuerpo: { mensaje, anterior_id: anteriorId }, mensajeError: 'No se pudo consultar a Mobilita',
+  });
+}
+
+export function confirmarTareaChat(id, datos) {
+  return pedir(`/asistente/tareas/${id}/confirmar`, {
+    metodo: 'POST', cuerpo: datos, mensajeError: 'No se pudo confirmar la tarea',
+  });
+}
+
+export function cancelarTareaChat(id) {
+  return pedir(`/asistente/tareas/${id}/cancelar`, {
+    metodo: 'POST', mensajeError: 'No se pudo cancelar la propuesta',
+  });
 }
 
 export function crearTarea(datos) {

@@ -141,6 +141,25 @@ CAMBIOS = [
     ("asignaciones_lead: correo del autor en registros anteriores", "ALTER TABLE asignaciones_lead ADD COLUMN IF NOT EXISTS autor_email VARCHAR(150)"),
     ("asignaciones_lead: identificador del movimiento anterior", "ALTER TABLE asignaciones_lead ADD COLUMN IF NOT EXISTS historial_origen_id INTEGER"),
     ("asignaciones_lead: evitar importar dos veces el mismo movimiento", "CREATE UNIQUE INDEX IF NOT EXISTS ux_asignaciones_historial_origen ON asignaciones_lead (historial_origen_id)"),
+    (
+        "propuestas_tarea_chat: solicitudes y confirmación del asistente",
+        """CREATE TABLE IF NOT EXISTS propuestas_tarea_chat (
+            id SERIAL PRIMARY KEY,
+            usuario_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+            solicitud TEXT NOT NULL,
+            salida_original TEXT NOT NULL,
+            propuesta JSON,
+            estado VARCHAR(30) NOT NULL DEFAULT 'pendiente',
+            tarea_id INTEGER REFERENCES tareas(id) ON DELETE SET NULL,
+            confirmacion JSON,
+            modelo VARCHAR(100),
+            tokens_entrada INTEGER,
+            tokens_salida INTEGER,
+            costo_estimado_usd DOUBLE PRECISION,
+            fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )""",
+    ),
+    ("propuestas_tarea_chat: índice por autor", "CREATE INDEX IF NOT EXISTS ix_propuestas_tarea_chat_usuario_id ON propuestas_tarea_chat (usuario_id)"),
 ]
 
 

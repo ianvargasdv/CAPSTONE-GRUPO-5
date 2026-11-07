@@ -263,6 +263,25 @@ class AnalisisIA(Base):
     fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())
 
 
+class PropuestaTareaChat(Base):
+    """Solicitud original y confirmación de una tarea; nunca ejecuta texto del modelo."""
+    __tablename__ = "propuestas_tarea_chat"
+
+    id = Column(Integer, primary_key=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id", ondelete="SET NULL"), nullable=True, index=True)
+    solicitud = Column(Text, nullable=False)
+    salida_original = Column(Text, nullable=False)
+    propuesta = Column(JSON, nullable=True)
+    estado = Column(String(30), nullable=False, default="pendiente")
+    tarea_id = Column(Integer, ForeignKey("tareas.id", ondelete="SET NULL"), nullable=True)
+    confirmacion = Column(JSON, nullable=True)
+    modelo = Column(String(100), nullable=True)
+    tokens_entrada = Column(Integer, nullable=True)
+    tokens_salida = Column(Integer, nullable=True)
+    costo_estimado_usd = Column(Float, nullable=True)
+    fecha_creacion = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
 class Auditoria(Base):
     """
     Modelo ORM del registro de auditoría: qué hizo cada usuario y cuándo.

@@ -47,6 +47,7 @@ import Dashboard from './components/Dashboard';
 import TablaLeads from './components/TablaLeads';
 import TablaPropiedades from './components/TablaPropiedades';
 import TablaTareas from './components/TablaTareas';
+import Mobilita from './components/Mobilita';
 import PipelineOportunidades from './components/PipelineOportunidades';
 import AgendaVisitas from './components/AgendaVisitas';
 import FormularioLead from './components/FormularioLead';
@@ -365,6 +366,14 @@ function App() {
 
   const abrirCrear = (entidad) => setPanelForm({ entidad, registro: null });
   const abrirEditar = (entidad, registro) => setPanelForm({ entidad, registro });
+  const abrirTareaDesdeMobilita = async (tareaId, leadId) => {
+    // Recupera el registro permitido actual; no abre datos viejos enviados en el aviso.
+    const actuales = await obtenerTareas();
+    setTareas(actuales);
+    const tarea = actuales.find(t => t.id === tareaId && t.lead_id === leadId);
+    if (!tarea) throw new Error('La tarea ya no está disponible para tu cuenta. Actualiza o descarta la propuesta.');
+    abrirEditar('tarea', tarea);
+  };
   const cerrarPanelForm = () => {
     panelFormActual.current = null;
     setPanelForm(null);
@@ -951,6 +960,13 @@ function App() {
         </main>
       </div>
 
+      <Mobilita key={usuario.id} iaConfigurada={iaConfigurada} tareas={tareas}
+        alVerTarea={abrirTareaDesdeMobilita}
+        alVerPropiedades={() => setVista('propiedades')}
+        oculto={Boolean(panelForm || fichaLead || confirmacion)}
+        alGenerar={() => { if (usuario.rol === 'admin') cargarConsumo(); }}
+        alGuardar={(tarea) => setTareas(prev => [tarea, ...prev.filter(t => t.id !== tarea.id)])} />
+
       {/* ── Panel lateral de creación y edición ── */}
       <Drawer
         abierto={Boolean(panelForm)}
@@ -982,10 +998,11 @@ function App() {
 
         {panelForm?.entidad === 'tarea' && (
           <FormularioTarea
+            usuario={usuario}
             alGuardar={guardarTarea}
             tareaEditar={panelForm.registro}
             alCancelar={cerrarPanelForm}
-            leads={leads}
+            leads={usuario.rol === 'admin' ? leads : leads.filter(lead => lead.ejecutivo_id === usuario.id)}
             borradorIA={panelForm.borradorIA}
             tareasRelacionadas={panelForm.tareasRelacionadas}
             alAbrirPendiente={abrirPendienteDesdeIA}

@@ -6,7 +6,7 @@ import unicodedata
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
-from sqlalchemy import case, func
+from sqlalchemy import case, func, literal
 from sqlalchemy.orm import Session
 
 import auditoria
@@ -18,6 +18,9 @@ import prioridad
 import schemas
 import seguridad
 from origenes import cargar_origenes
+from tareas_servicio import (registrar_tarea, tareas_permitidas, obtener_tarea_permitida,
+                            validar_cliente_tarea, verificar_tarea_no_repetida as _verificar_tarea_no_repetida)
+from tareas_chat import router as router_chat
 
 # Crear las tablas definidas en los modelos si aún no existen
 models.Base.metadata.create_all(bind=database.engine)
@@ -1044,30 +1047,12 @@ def crear_interaccion(
 
 
 @router_privado.get("/tareas", response_model=List[schemas.TareaRespuesta])
-def listar_tareas(db: Session = Depends(database.obtener_db)):
+def listar_tareas(db: Session = Depends(database.obtener_db),
+                  usuario: models.Usuario = Depends(seguridad.usuario_actual)):
     """
-    Obtiene todas las tareas ordenadas por fecha de creación descendente.
+    Administración consulta todas; el ejecutivo sólo las de sus leads asignados.
     """
-    return db.query(models.Tarea).order_by(models.Tarea.fecha_creacion.desc()).all()
-
-
-def _verificar_tarea_no_repetida(db, lead_id, titulo, descripcion, estado, excluir_id=None):
-    if not lead_id or estado == "Completada":
-        return
-
-    def comparable(valor):
-        texto = unicodedata.normalize("NFD", valor or "").lower()
-        return " ".join("".join(c for c in texto if not unicodedata.combining(c)).split())
-
-    pendientes = db.query(models.Tarea).filter(
-        models.Tarea.lead_id == lead_id, models.Tarea.estado != "Completada"
-    ).all()
-    for pendiente in pendientes:
-        if pendiente.id == excluir_id:
-            continue
-        # Sólo coincidencia exacta normalizada; no se infiere equivalencia semántica.
-        if comparable(pendiente.titulo) == comparable(titulo) and comparable(pendiente.descripcion) == comparable(descripcion):
-            raise HTTPException(status_code=409, detail="Ya existe una tarea pendiente igual para este cliente. Abre la existente en Tareas.")
+    return tareas_permitidas(db, usuario).order_by(models.Tarea.fecha_creacion.desc()).all()
 
 
 @router_privado.post("/tareas", response_model=schemas.TareaRespuesta, status_code=status.HTTP_201_CREATED)
@@ -1080,41 +1065,7 @@ def crear_tarea(
     Registra una nueva tarea en la base de datos.
     Si se indica lead_id, verifica que el lead exista antes de asociarlo.
     """
-    if datos.lead_id:
-        lead = db.query(models.Lead).filter(models.Lead.id == datos.lead_id).first()
-        if not lead:
-            raise HTTPException(status_code=404, detail="Lead no encontrado")
-
-    _verificar_tarea_no_repetida(db, datos.lead_id, datos.titulo, datos.descripcion, datos.estado)
-
-    # Convertir fecha_limite de string ISO a objeto date si se proporcionó
-    fecha_limite_obj = None
-    if datos.fecha_limite:
-        try:
-            fecha_limite_obj = date.fromisoformat(datos.fecha_limite)
-        except ValueError:
-            raise HTTPException(status_code=400, detail="Formato de fecha inválido. Use YYYY-MM-DD")
-
-    nueva_tarea = models.Tarea(
-        titulo=datos.titulo,
-        descripcion=datos.descripcion,
-        estado=datos.estado,
-        prioridad=datos.prioridad,
-        fecha_limite=fecha_limite_obj,
-        lead_id=datos.lead_id,
-    )
-    db.add(nueva_tarea)
-    db.flush()
-
-    auditoria.registrar(
-        db,
-        usuario,
-        auditoria.CREAR,
-        auditoria.TAREA,
-        nueva_tarea.id,
-        f"Creó la tarea {nueva_tarea.titulo}",
-    )
-
+    nueva_tarea = registrar_tarea(db, datos, usuario)
     db.commit()
     db.refresh(nueva_tarea)
     return nueva_tarea
@@ -1132,13 +1083,14 @@ def actualizar_tarea(
     Solo modifica los campos enviados en el body.
     Devuelve 404 si la tarea no existe.
     """
-    tarea = db.query(models.Tarea).filter(models.Tarea.id == tarea_id).first()
-    if not tarea:
-        raise HTTPException(status_code=404, detail="Tarea no encontrada")
+    tarea = obtener_tarea_permitida(db, tarea_id, usuario)
 
     antes = auditoria.instantanea(tarea, auditoria.TAREA)
 
     campos = datos.model_dump(exclude_unset=True)
+
+    if "lead_id" in campos:
+        validar_cliente_tarea(db, campos["lead_id"], usuario)
 
     if any(campo in campos for campo in ("lead_id", "titulo", "descripcion", "estado")):
         _verificar_tarea_no_repetida(
@@ -1185,9 +1137,7 @@ def eliminar_tarea(
     Elimina una tarea por su ID.
     Devuelve 404 si la tarea no existe.
     """
-    tarea = db.query(models.Tarea).filter(models.Tarea.id == tarea_id).first()
-    if not tarea:
-        raise HTTPException(status_code=404, detail="Tarea no encontrada")
+    tarea = obtener_tarea_permitida(db, tarea_id, usuario)
 
     titulo = tarea.titulo
 
@@ -1339,7 +1289,21 @@ def estado_ia():
     )
 
 
-def _agrupar_consumo(db: Session, columna, etiqueta_por_defecto: str = "sin dato"):
+def _fuente_consumo(db):
+    analisis = db.query(
+        models.AnalisisIA.id.label('id'), models.AnalisisIA.tipo.label('tipo'), models.AnalisisIA.modelo.label('modelo'),
+        models.AnalisisIA.tokens_entrada.label('tokens_entrada'), models.AnalisisIA.tokens_salida.label('tokens_salida'),
+        models.AnalisisIA.costo_estimado_usd.label('costo_estimado_usd'), models.AnalisisIA.fecha_creacion.label('fecha_creacion'),
+    )
+    chat = db.query(
+        models.PropuestaTareaChat.id, literal('tarea_chat').label('tipo'), models.PropuestaTareaChat.modelo,
+        models.PropuestaTareaChat.tokens_entrada, models.PropuestaTareaChat.tokens_salida,
+        models.PropuestaTareaChat.costo_estimado_usd, models.PropuestaTareaChat.fecha_creacion,
+    )
+    return analisis.union_all(chat).subquery()
+
+
+def _agrupar_consumo(db: Session, fuente, columna, etiqueta_por_defecto: str = "sin dato"):
     """
     Agrupa el consumo de los análisis por la columna indicada.
 
@@ -1349,12 +1313,12 @@ def _agrupar_consumo(db: Session, columna, etiqueta_por_defecto: str = "sin dato
     filas = (
         db.query(
             columna.label("etiqueta"),
-            func.count(models.AnalisisIA.id).label("cantidad"),
-            func.coalesce(func.sum(models.AnalisisIA.tokens_entrada), 0).label("entrada"),
-            func.coalesce(func.sum(models.AnalisisIA.tokens_salida), 0).label("salida"),
-            func.coalesce(func.sum(models.AnalisisIA.costo_estimado_usd), 0.0).label("costo"),
+            func.count(fuente.c.id).label("cantidad"),
+            func.coalesce(func.sum(fuente.c.tokens_entrada), 0).label("entrada"),
+            func.coalesce(func.sum(fuente.c.tokens_salida), 0).label("salida"),
+            func.coalesce(func.sum(fuente.c.costo_estimado_usd), 0.0).label("costo"),
         )
-        .filter(models.AnalisisIA.costo_estimado_usd.isnot(None))
+        .filter(fuente.c.costo_estimado_usd.isnot(None))
         .group_by(columna)
         .order_by(columna)
         .all()
@@ -1372,6 +1336,30 @@ def _agrupar_consumo(db: Session, columna, etiqueta_por_defecto: str = "sin dato
     ]
 
 
+def _historico_mobilita(db):
+    # Se suman costos guardados, sin recalcularlos con el precio actual. Se incluyen
+    # propuestas canceladas e inválidas: descartar una tarea no devuelve consumo.
+    chat = models.PropuestaTareaChat
+    fila = db.query(
+        func.count(chat.id).label('total'),
+        func.count(chat.costo_estimado_usd).label('con_costo'),
+        func.sum(chat.costo_estimado_usd).label('costo'),
+        func.coalesce(func.sum(chat.tokens_entrada), 0).label('entrada'),
+        func.coalesce(func.sum(chat.tokens_salida), 0).label('salida'),
+        func.coalesce(func.sum(case(
+            ((chat.tokens_entrada.is_(None) | chat.tokens_salida.is_(None)), 1), else_=0)), 0).label('sin_tokens'),
+        func.min(chat.fecha_creacion).label('primera'),
+        func.max(chat.fecha_creacion).label('ultima'),
+    ).one()
+    return schemas.ConsumoHistoricoMobilita(
+        total_solicitudes=fila.total, solicitudes_con_costo=fila.con_costo,
+        solicitudes_sin_costo=fila.total-fila.con_costo, solicitudes_sin_tokens=int(fila.sin_tokens),
+        tokens_entrada=int(fila.entrada), tokens_salida=int(fila.salida),
+        costo_total_usd=float(fila.costo) if fila.costo is not None else None,
+        primera_solicitud=fila.primera, ultima_solicitud=fila.ultima,
+    )
+
+
 @router_privado.get("/ia/consumo", response_model=schemas.ConsumoIARespuesta)
 def consumo_ia(
     db: Session = Depends(database.obtener_db),
@@ -1386,16 +1374,17 @@ def consumo_ia(
     Los análisis sin consumo registrado se informan por separado en lugar de contarse
     como gasto cero: son los que se generaron antes de que se empezara a registrar.
     """
+    fuente = _fuente_consumo(db)
     totales = db.query(
-        func.count(models.AnalisisIA.id).label("cantidad"),
-        func.coalesce(func.sum(models.AnalisisIA.tokens_entrada), 0).label("entrada"),
-        func.coalesce(func.sum(models.AnalisisIA.tokens_salida), 0).label("salida"),
-        func.coalesce(func.sum(models.AnalisisIA.costo_estimado_usd), 0.0).label("costo"),
-    ).filter(models.AnalisisIA.costo_estimado_usd.isnot(None)).one()
+        func.count(fuente.c.id).label("cantidad"),
+        func.coalesce(func.sum(fuente.c.tokens_entrada), 0).label("entrada"),
+        func.coalesce(func.sum(fuente.c.tokens_salida), 0).label("salida"),
+        func.coalesce(func.sum(fuente.c.costo_estimado_usd), 0.0).label("costo"),
+    ).filter(fuente.c.costo_estimado_usd.isnot(None)).one()
 
     sin_consumo = (
-        db.query(func.count(models.AnalisisIA.id))
-        .filter(models.AnalisisIA.costo_estimado_usd.is_(None))
+        db.query(func.count(fuente.c.id))
+        .filter(fuente.c.costo_estimado_usd.is_(None))
         .scalar()
     )
 
@@ -1415,6 +1404,7 @@ def consumo_ia(
         tokens_salida=int(totales.salida),
         costo_total_usd=costo_total,
         costo_promedio_usd=promedio,
+        mobilita_historico=_historico_mobilita(db),
         presupuesto_usd=ia.PRESUPUESTO_USD,
         configuracion=schemas.ConfiguracionIA(
             modelo=ia.MODELO or None,
@@ -1424,9 +1414,9 @@ def consumo_ia(
             envia_temperatura=ia.TEMPERATURA is not None,
         ),
         porcentaje_usado=porcentaje,
-        por_tipo=_agrupar_consumo(db, models.AnalisisIA.tipo),
-        por_modelo=_agrupar_consumo(db, models.AnalisisIA.modelo, "sin modelo"),
-        por_dia=_agrupar_consumo(db, func.date(models.AnalisisIA.fecha_creacion)),
+        por_tipo=_agrupar_consumo(db, fuente, fuente.c.tipo),
+        por_modelo=_agrupar_consumo(db, fuente, fuente.c.modelo, "sin modelo"),
+        por_dia=_agrupar_consumo(db, fuente, func.date(fuente.c.fecha_creacion)),
     )
 
 
@@ -1768,4 +1758,5 @@ def listar_auditoria(
 
 # Los routers se registran al final, cuando ya tienen todos sus endpoints
 app.include_router(router_auth)
+router_privado.include_router(router_chat)
 app.include_router(router_privado)

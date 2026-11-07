@@ -4,6 +4,7 @@ import Icono from './Iconos';
 const NOMBRES_TIPO = {
   resumen: 'Resumen', recomendacion: 'Siguiente acción', mensaje: 'Borrador de seguimiento',
   preguntas: 'Preguntas de perfil', registro_llamada: 'Notas de llamada',
+  tarea_chat: 'Mobilita',
 };
 
 /**
@@ -33,6 +34,10 @@ function montoUSD(valor, decimalesMin = 4, decimalesMax = 6) {
 
 function numero(valor) {
   return (valor ?? 0).toLocaleString('es-CL');
+}
+
+function fechaHistorica(valor) {
+  return valor ? new Date(valor).toLocaleDateString('es-CL', { timeZone: 'America/Santiago' }) : '—';
 }
 
 function ConsumoIA({ consumo, cargando, error, alRecargar }) {
@@ -71,6 +76,7 @@ function ConsumoIA({ consumo, cargando, error, alRecargar }) {
   } = consumo;
 
   const restante = presupuesto != null ? presupuesto - costoTotal : null;
+  const historico = consumo.mobilita_historico;
 
   // Con el presupuesto y el costo promedio se puede estimar cuántos análisis más
   // entran. Es la cifra más útil para decidir si el agente es viable.
@@ -82,12 +88,37 @@ function ConsumoIA({ consumo, cargando, error, alRecargar }) {
 
   return (
     <>
+      <div className="panel consumo-origen">
+        <div className="panel-encabezado">
+          <span className="panel-titulo">Consumo registrado en el CRM</span>
+          <button type="button" className="btn-secondary" onClick={alRecargar}>Actualizar</button>
+        </div>
+      </div>
+      {historico && <section className="panel consumo-mobilita" aria-labelledby="consumo-mobilita-titulo">
+        <div className="panel-encabezado"><span id="consumo-mobilita-titulo" className="panel-titulo">Mobilita · histórico registrado</span></div>
+        <div className="panel-cuerpo">
+          <div className="consumo-mobilita-cifras">
+            <div><span>Gasto acumulado estimado</span><strong>{historico.costo_total_usd == null ? 'Sin costo informado' : montoUSD(historico.costo_total_usd)}</strong>
+              <small>{numero(historico.solicitudes_con_costo)} solicitudes con costo informado</small></div>
+            <div><span>Solicitudes registradas</span><strong>{numero(historico.total_solicitudes)}</strong><small>Incluye propuestas canceladas y respuestas inválidas registradas</small></div>
+            <div><span>Tokens registrados</span><strong>{numero(historico.tokens_entrada + historico.tokens_salida)}</strong>
+              <small>{numero(historico.tokens_entrada)} de entrada · {numero(historico.tokens_salida)} de salida</small></div>
+          </div>
+          <p className="consumo-mobilita-periodo">{historico.total_solicitudes
+            ? `Registros conservados: ${fechaHistorica(historico.primera_solicitud)} a ${fechaHistorica(historico.ultima_solicitud)}.`
+            : 'Aún no hay solicitudes de Mobilita registradas.'}</p>
+          {(historico.solicitudes_sin_costo > 0 || historico.solicitudes_sin_tokens > 0) && <p className="consumo-mobilita-incompleto" role="status">
+            Solicitudes sin costo informado: {numero(historico.solicitudes_sin_costo)}. Con tokens incompletos: {numero(historico.solicitudes_sin_tokens)}. El total puede ser parcial; no se consideran gratuitas.
+          </p>}
+          <p className="nota-prioridad">Sólo incluye el chat de Mobilita conservado en esta base de datos. Los análisis desde la ficha del lead se incluyen en el total del CRM de abajo. No identifica una clave concreta ni incluye usos externos o registros eliminados. OpenAI no está sincronizado.</p>
+        </div>
+      </section>}
       {/* ── Indicadores ── */}
       <div className="kpi-grid">
         <div className="kpi-card">
           <div className="kpi-encabezado">
             <Icono nombre="tendencia" tamano={13} />
-            <span className="kpi-label">Gastado</span>
+            <span className="kpi-label">Gasto estimado del CRM</span>
           </div>
           <div className="kpi-numero">{montoUSD(costoTotal)}</div>
           <div className="kpi-detalle">
@@ -100,7 +131,7 @@ function ConsumoIA({ consumo, cargando, error, alRecargar }) {
         <div className="kpi-card">
           <div className="kpi-encabezado">
             <Icono nombre="baseDatos" tamano={13} />
-            <span className="kpi-label">Disponible</span>
+            <span className="kpi-label">Margen del presupuesto</span>
           </div>
           <div className="kpi-numero">
             {restante != null ? montoUSD(restante, 2, 4) : '—'}
@@ -115,7 +146,7 @@ function ConsumoIA({ consumo, cargando, error, alRecargar }) {
         <div className="kpi-card">
           <div className="kpi-encabezado">
             <Icono nombre="panel" tamano={13} />
-            <span className="kpi-label">Análisis</span>
+            <span className="kpi-label">Con costo registrado</span>
           </div>
           <div className="kpi-numero">{numero(total)}</div>
           <div className="kpi-detalle">
@@ -145,8 +176,7 @@ function ConsumoIA({ consumo, cargando, error, alRecargar }) {
             <Icono nombre="tendencia" tamano={20} />
             <span className="vacio-titulo">Todavía no hay consumo registrado</span>
             <span className="vacio-detalle">
-              Las cifras aparecen a medida que se generan resúmenes y recomendaciones
-              desde la ficha de un lead.
+              Las cifras aparecen al usar el asistente desde las fichas o el chat de Mobilita.
             </span>
           </div>
         </div>
@@ -222,9 +252,6 @@ function ConsumoIA({ consumo, cargando, error, alRecargar }) {
         <div className="panel">
           <div className="panel-encabezado">
             <span className="panel-titulo">Gasto por día</span>
-            <button className="btn-secondary" onClick={alRecargar}>
-              Actualizar
-            </button>
           </div>
           <div className="panel-cuerpo">
             <div className="distribucion-lista">
@@ -282,19 +309,18 @@ function ConsumoIA({ consumo, cargando, error, alRecargar }) {
                   </span>
                 </span>
               </div>
-              <div className="ficha-dato">
+              {config.envia_temperatura && <div className="ficha-dato">
                 <span className="ficha-dato-label">Envía temperatura</span>
                 <span className="ficha-dato-valor">
-                  <span>{config.envia_temperatura ? 'sí' : 'no'}</span>
+                  <span>Sí</span>
                 </span>
-              </div>
+              </div>}
             </div>
 
             <p className="nota-prioridad">
-              Los costos son estimaciones calculadas con los precios configurados en el
-              backend. El valor que manda es el del panel de facturación del proveedor.
-              La configuración se lee al arrancar el servidor: si se cambia el archivo
-              .env hay que reiniciarlo para que tome efecto.
+              Cada respuesta conserva el costo estimado con los precios vigentes al generarla.
+              Cambiar los precios no recalcula el histórico. Para cargos, saldo y límites reales,
+              consulta el panel del proveedor.
             </p>
           </div>
         </div>

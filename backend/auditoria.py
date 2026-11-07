@@ -38,8 +38,9 @@ INTERES = "interes"
 ANALISIS = "analisis"
 OPORTUNIDAD = "oportunidad"
 VISITA = "visita"
+PROPUESTA_TAREA = "propuesta_tarea"
 
-ENTIDADES = (LEAD, PROPIEDAD, OPORTUNIDAD, VISITA, TAREA, INTERACCION, INTERES, ANALISIS)
+ENTIDADES = (LEAD, PROPIEDAD, OPORTUNIDAD, VISITA, TAREA, INTERACCION, INTERES, ANALISIS, PROPUESTA_TAREA)
 
 # Campos que se comparan al actualizar, por entidad. Se listan explícitamente para
 # no registrar columnas internas ni los campos calculados que se agregan al objeto.

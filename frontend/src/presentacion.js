@@ -2,6 +2,17 @@ export function textoBusqueda(valor) {
   return String(valor ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es').trim();
 }
 
+export function fotoPrincipal(propiedad) {
+  const fotos = [propiedad.foto_principal, ...(Array.isArray(propiedad.fotografias) ? propiedad.fotografias : [])];
+  return fotos.find(url => {
+    try { return ['http:', 'https:'].includes(new URL(url).protocol); } catch { return false; }
+  }) || null;
+}
+
+export function fotoReferencial(url) {
+  try { return new URL(url).hash === '#referencial'; } catch { return false; }
+}
+
 export function coincideBusqueda(termino, ...valores) {
   const consulta = textoBusqueda(termino);
   return !consulta || valores.some((valor) => textoBusqueda(valor).includes(consulta));

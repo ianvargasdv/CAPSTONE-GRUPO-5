@@ -4,6 +4,255 @@ Sistema de gestión para ejecutivos inmobiliarios: prospectos (leads), catálogo
 propiedades, historial de contacto, tareas de seguimiento y propiedades de interés
 de cada lead.
 
+## Lectura de los listados
+
+### Renovación del escenario académico
+
+Desde backend, `python renovar_escenario.py` muestra el alcance; `--aplicar` guarda
+los cambios. Usa la fecha local de Santiago y sólo selecciona leads con `es_demo`
+y correo del dominio reservado `example.test`. Renueva tareas, próximas acciones,
+visitas y cierres de sus negocios; disponibilidad de propiedades `PRUEBA-CRM-*` y
+fechas de interacciones identificadas por los textos originales del cargador.
+Conserva fotos, usuarios, fechas de ingreso, notas manuales, análisis y consumo de IA
+y auditoría histórica. Las actividades siguen siendo simuladas, no gestiones reales.
+
+Antes de guardar crea un respaldo de los campos afectados en `.codex-temp/respaldos/`
+(ignorado por Git). Una marca de auditoría impide repetir la renovación el mismo día.
+No se ejecuta automáticamente: las tareas podrán volver a vencer con el tiempo.
+Las respuestas históricas de IA conservan su fecha y no se regeneran ni se cobran.
+
+### Navegación del catálogo
+
+El catálogo muestra miniaturas de 108 × 80 px: fotografía principal o primera URL
+HTTP/HTTPS válida. Pulsar una miniatura abre la imagen a mayor tamaño en otra pestaña.
+La ficha conserva su galería. Hay estados Sin foto y Foto no disponible, carga diferida
+y ausencia de envío del referente al servidor de imágenes.
+
+El catálogo académico recibió enlaces referenciales de Pexels el 4/11. No son fotos
+reales de esos inmuebles; se eligieron por tipo y algunas se reutilizan. Se identifican
+mediante el fragmento `#referencial` de la URL y el texto alternativo accesible;
+por solicitud del usuario no se muestra un rótulo bajo las fotografías.
+La selección y licencia están en `backend/recursos/fotos_catalogo.json`; cada número
+corresponde a `https://www.pexels.com/photo/NUMERO/`. Licencia:
+https://www.pexels.com/license/ . La base conserva URLs en los campos existentes
+`fotografias` y `foto_principal`, sin archivos binarios ni migración nueva. Los enlaces
+dependen del proveedor externo; pueden sustituirse por fotografías reales desde Editar.
+
+Para revisar propiedades sin fotos: `python fotos_catalogo.py` desde backend.
+`python fotos_catalogo.py --aplicar` verifica los enlaces y completa sólo propiedades
+de los tipos incluidos que no tengan galería ni fotografía principal; no reemplaza
+fotos existentes. Guarda la actualización y su auditoría en una sola transacción.
+Esta carga administrativa registra autor nulo, sin atribuirla a la sesión de una persona.
+No se ejecuta automáticamente al iniciar el CRM.
+
+Leads, Propiedades, Tareas, Negocios (vista Tabla) y Visitas (vista Lista) muestran
+10 registros por página, con selector de 10, 25 o 50 y controles Anterior/Siguiente.
+La búsqueda y los filtros se aplican antes de paginar y reinician la página. La
+paginación es local sobre los datos ya recibidos; no reduce la carga de la API.
+Actividad solicita páginas de 10 registros al servidor, conservando sus filtros.
+
+En Leads, correo y perfil de búsqueda se despliegan en Datos de contacto y búsqueda.
+Negocios comienza en Abiertos; Cerrados y Todos los negocios permiten consultar el
+resto sin borrarlo. Los indicadores superiores corresponden al conjunto completo,
+no al filtro visible. Las tarjetas muestran lead, propiedad, monto y probabilidad;
+Detalles y acciones contiene la fecha, el cambio de etapa, edición y eliminación.
+Cada etapa muestra cinco tarjetas inicialmente y permite ver las restantes. El
+tablero desplaza sus columnas dentro del panel, con botones para recorrerlas y
+la alternativa Tabla. Visitas conserva la agenda semanal y su vista Lista.
+
+En pantallas de hasta 640 px, Menú abre la navegación con nombres completos y las
+opciones correspondientes al rol. Negocios utiliza tarjetas verticales paginadas,
+con filtros de estado y etapa, búsqueda y acciones desplegables. El resumen muestra
+abiertos y concretados; Ver montos despliega los valores por moneda. El botón de
+Mobilita se reduce a un icono. La ficha del inmueble abre en un panel lateral con
+datos agrupados, dos columnas cuando caben y galería ampliable.
+
+## Mobilita: asistente del CRM
+
+La concurrencia se comprobó el 4/11 directamente en PostgreSQL de Supabase,
+sin Docker. `python verificar_concurrencia_postgres.py --ejecutar` crea un esquema
+aleatorio `qa_mobilita_*`, traduce las cinco tablas de prueba hacia ese esquema y
+ejecuta dos transacciones desde conexiones independientes. Luego retira únicamente
+las tablas y el esquema creados por esa ejecución. Requiere permisos de crear
+esquemas; no usa ni limpia las tablas del CRM y no llama al proveedor de IA.
+Sin `--ejecutar` no conecta ni modifica datos. No ejecutar Python con optimización
+(`-O`), porque las comprobaciones usan assert.
+
+Pasaron cuatro casos: rechazo de resumen general a ejecutivo; propuesta sin guardado
+automático; misma propuesta confirmada simultáneamente con una sola tarea y una sola
+auditoría de creación; dos propuestas del mismo seguimiento con un guardado y un
+rechazo 409. El lead conservó su estado. Evidencia:
+`backend/evidencias/mobilita_postgres_20261104_135257.json`.
+Es una prueba acotada de integración, no una prueba de carga ni garantía de seguridad
+completa. Las evaluaciones anteriores con SQLite conservan sus límites originales.
+
+Las propiedades consultadas se presentan en tarjetas: tres visibles al inicio,
+resto desplegable hasta el límite de diez de la consulta y acceso al catálogo completo.
+El precio usa separación de miles y conserva CLP/UF; la operación se muestra sólo
+si está registrada. Los identificadores internos no se muestran en las tarjetas.
+Las respuestas largas se posicionan al comienzo para mantener visible el resumen.
+
+El chat comparte la tipografía Inter y los colores de texto, botones, fondos y bordes
+del CRM. El acento azul se limita al personaje y a la actividad del asistente.
+
+La cabecera reúne **Nuevo chat**, ampliar/reducir y minimizar.
+El acceso flotante se oculta al abrir el panel y vuelve al minimizarlo o pulsar Escape,
+conservando el borrador. El panel ocupa el espacio inferior que deja libre el botón.
+Las consultas sugeridas rellenan el mensaje sin enviarlo. **Enter** envía y
+**Mayús + Enter** añade una línea.
+Si hay texto o una tarea propuesta sin guardar, Nuevo chat pide elegir entre conservar
+ese trabajo o descartarlo expresamente. El consumo se consulta desde el panel de
+administración; no se muestran costos ni detalles técnicos en el chat. Los resultados
+de consultas muestran su fecha. La vista móvil mantiene
+la entrada fija y el desplazamiento dentro de la conversación.
+
+Los desplegables del frontend mantienen su funcionamiento nativo y de teclado,
+con etiquetas subrayadas y sin triángulos decorativos. En la lista de leads,
+la acción de abrir el cliente aparece como **Ver ficha**.
+
+Mientras el proveedor responde, se muestra la solicitud enviada y un indicador de
+espera con puntos, actividad en cabecera y avatar. Al terminar o fallar, se retira.
+Las entradas de mensajes, sugerencias y propuestas tienen transiciones breves.
+No se simula una respuesta por partes ni un porcentaje de avance. Por decisión del
+proyecto, las animaciones de Mobilita permanecen activadas, incluso con movimiento
+reducido del sistema; no hay selector. Las demás pantallas conservan su comportamiento.
+El acceso tiene un personaje animado y un saludo estático, sin consultar al modelo:
+«¡Hola! Soy Mobilita. Te ayudo a revisar tu cartera, consultar pendientes y preparar
+tareas». Abrir el chat o cerrar el saludo lo oculta durante esa sesión del navegador.
+
+Mobilita responde preguntas sobre las funciones existentes del CRM: leads,
+propiedades, negocios, visitas, seguimiento y uso de la IA. Recibe contexto funcional
+interno y datos del proyecto enviados por el servidor: es un MVP académico en desarrollo,
+Mobilita es el asistente integrado y el modelo se toma de la configuración vigente.
+Ese contexto no es un manual publicado; no se envían claves ni credenciales al modelo.
+Para datos vigentes puede solicitar las consultas
+cerradas descritas a continuación; no dispone de consulta libre de fichas ni datos
+reservados. Para otras preguntas orienta a la pantalla correspondiente.
+
+### Consultas de datos reales
+
+Ejemplos: «¿Cuántos leads tengo asignados?», «¿Qué tareas vencidas tiene mi cartera?»
+y «¿Qué propiedades están disponibles?». El modelo propone una de cinco herramientas:
+`cartera_resumen`, `tareas_pendientes`, `tareas_vencidas`, `propiedades_disponibles`
+y `ejecutivos_disponibles`.
+`backend/consultas_mobilita.py`, función `ejecutar_consulta()`, comprueba el alcance
+y ejecuta consultas predeterminadas con SQLAlchemy. No acepta SQL, tablas, URLs ni
+un usuario elegido por el modelo.
+
+Si se rechaza la confirmación de una tarea en Mobilita, el aviso aparece junto al
+botón de confirmar, recibe el foco y queda visible dentro del chat. La propuesta
+y sus campos se conservan para corregirlos o descartarlos. Un aviso fuera de la
+zona visible no debe confundirse con un guardado exitoso.
+Los duplicados se identifican por el código de error del backend, sin comparar el
+texto del mensaje. Se muestran en ámbar con «Esta tarea ya existe» y «Ver tarea
+existente». Antes de abrirla se vuelve a consultar el listado autorizado. La
+propuesta se conserva y el botón Confirmar reaparece si se cambia el título o lead.
+
+La cartera propia se obtiene de la sesión. El alcance general requiere administración;
+una palabra clave o un rol escrito en el chat no cambian los permisos. Las tareas de
+una cartera son las asociadas a sus leads: la tabla de tareas no tiene un responsable
+propio. Vencidas excluye hoy, tareas completadas y ausencia de fecha; usa America/Santiago.
+La misma restricción se aplica en la API de Tareas: los ejecutivos sólo listan,
+crean, editan, completan o eliminan tareas vinculadas a sus leads asignados.
+Administración conserva el acceso general, incluidas las tareas sin lead. El
+formulario de tareas ofrece al ejecutivo sólo su cartera y exige asociar un lead.
+Mobilita filtra sus coincidencias por esa misma cartera y vuelve a comprobarla
+al confirmar o reintentar. Reasignar el lead cambia los permisos sobre sus tareas;
+no se cambia la sesión ni se crea un responsable adicional en la tabla de tareas.
+Los listados devuelven como máximo diez filas y el total. Propiedades disponibles
+consulta el catálogo compartido, sin seleccionar propietario ni captador.
+
+Administración también puede preguntar «¿Qué ejecutivos hay?». La consulta
+`ejecutivos_disponibles` devuelve hasta diez ejecutivos activos ordenados por nombre,
+su cantidad de leads asignados y el total de ejecutivos. Incluye ejecutivos sin
+cartera con cero y cuenta todos sus leads, incluidos los cerrados. El identificador
+permanece en los datos de la respuesta, sin mostrarse en el texto. Excluye administradores e inactivos y no selecciona
+correos ni hashes de contraseña. El backend rechaza la consulta para ejecutivos
+con cualquiera de los alcances. No modifica roles ni reasigna leads.
+
+Los resultados se redactan en el backend, se muestran con fecha de consulta y se
+conservan en el registro del turno. No se envían al proveedor de IA, tampoco al
+continuar el historial. Son resultados del momento de consulta; una respuesta antigua
+no se actualiza sola. El chat no incorpora borrados, ni siquiera para administradores.
+
+Esta conexión utiliza funciones internas de la API existente: **no es un servidor MCP**.
+La restricción se aplica en la capa del backend; no se ha creado un usuario PostgreSQL
+independiente con permisos de sólo lectura. Para conectarlo a otro CRM haría falta
+un adaptador y autorización por usuario en ese sistema. MCP es una opción futura para
+exponer estas herramientas; no se afirma integración externa ya comprobada.
+
+Pruebas del 4/11: 99 del backend, 44 del frontend y compilación aprobadas. Otro lote
+autorizado de cuatro llamadas reales comprobó cartera propia, vencidas, propiedades
+y resumen general para admin, con datos ficticios y SQLite temporal: US$0,0008322
+estimados. Evidencia: `backend/evidencias/mobilita_consultas_real_20261104_4b7f8aab.json`.
+No acredita todos los posibles enunciados ni concurrencia en PostgreSQL. No requiere
+otra migración ni modificó Supabase durante la prueba.
+
+Las preguntas ajenas al CRM reciben un rechazo breve. El límite de tema se indica
+al modelo y la API sustituye las respuestas clasificadas como ajenas por un texto
+fijo. No se afirma que un LLM clasifique correctamente todas las entradas posibles.
+El modelo no recibe acceso a internet, SQL ni herramientas para acciones arbitrarias.
+
+La conversación puede retomar hasta seis turnos previos propios, recuperados desde
+el servidor con el usuario autenticado. No se acepta un historial enviado por el
+navegador. Si un turno vence a los 30 minutos, inicia una **Nueva conversación**.
+Una respuesta informativa o aclaración permite seguir escribiendo y no puede
+confirmarse como tarea. El historial visible se limita a los últimos 20 mensajes.
+
+Para preparar una tarea, pulsa **Mobilita**, abajo a la derecha, y escribe el nombre del lead y el trabajo
+que necesitas registrar. Se abre una ventana de chat disponible desde los listados
+del CRM. Puedes minimizarla sin perder el borrador o la propuesta al navegar.
+El modelo interpreta la solicitud y
+el backend busca las coincidencias. Si hay varios leads, elige la ficha correcta.
+Revisa el título y la descripción, elige prioridad y fecha cuando corresponda y
+pulsa **Confirmar y crear tarea**. La nueva tarea aparece en la lista.
+
+Escape minimiza el chat y devuelve el foco al botón. La ventana se adapta a móvil.
+Se oculta al abrir una ficha,
+un formulario lateral o una confirmación para no superponer controles; al cerrar
+ese panel recupera la conversación de la sesión actual.
+
+Preparar registra la solicitud y el consumo de IA, sin crear una tarea.
+Descartar no modifica el seguimiento. Sólo el autor puede confirmar la propuesta,
+que vence a los 30 minutos. Una confirmación repetida devuelve la misma tarea,
+incluso si se perdió la respuesta del primer guardado. Una tarea eliminada no se
+recrea al reintentar. El asistente no cambia el estado del lead ni envía mensajes.
+Se muestran las tareas pendientes del cliente. Desde el chat no se puede crear
+otra pendiente con el mismo título, aunque cambie la descripción; se normalizan
+espacios, mayúsculas y tildes. Si es una acción distinta, hay que usar un título
+específico. No se afirma detectar equivalencias semánticas entre títulos distintos.
+
+Se incorpora `propuestas_tarea_chat`, relacionada con `usuarios` y, tras confirmar,
+con `tareas`. Conserva solicitud, salida original, datos confirmados y consumo.
+El modelo no recibe credenciales ni acceso directo a la base de datos. El panel
+administrativo suma estas propuestas a los análisis existentes, incluidas las
+respuestas inválidas cuyo consumo fue informado.
+
+Antes de usar esta versión contra la base compartida, ejecutar `python migrar.py`
+desde `backend`. La migración se entrega preparada; no acredita que se haya aplicado
+en Supabase. El arranque existente de la API también crea las tablas ausentes.
+
+Pruebas sin costo: `python -m unittest prueba_chat_tareas` desde `backend` y
+`node --test src/chatTareas.test.js` desde `frontend`. Las pruebas usan un LLM
+simulado y SQLite; no acreditan calidad del modelo real ni concurrencia real en
+PostgreSQL. Las once situaciones del evaluador anterior no incluyen aún el chat.
+
+El 4/11 se comprobaron cuatro solicitudes con el proveedor real y datos ficticios:
+creación confirmada, homónimos, cliente ausente y acción de borrado no admitida.
+La revisión técnica fue satisfactoria en esa muestra, con US$0,0003863 estimados.
+Las respuestas y comprobaciones están en
+`backend/evidencias/chat_tareas_real_20261104_fc515416.json`. La base usada para esas
+acciones fue SQLite temporal. Se verificó en modo de sólo lectura que la tabla
+migrada existe en Supabase; falta comprobar el recorrido en el CRM habitual.
+
+Después de ampliar el chat el 4/11 se ejecutó otro lote autorizado de cuatro llamadas:
+consulta de uso del CRM, clima, intento de ignorar las reglas y aclaración de cliente
+para una tarea. Las cuatro comprobaciones de la muestra fueron satisfactorias,
+con US$0,000760 estimados. Evidencia:
+`backend/evidencias/mobilita_general_real_20261104_52dcc123.json`.
+Las acciones se comprobaron en SQLite temporal; no se crearon tareas en Supabase.
+La ampliación reutiliza el JSON de propuestas y no requiere otra migración.
+
 ## Cartera de clientes · avance local del 29/10/2026
 
 En **Leads**, el selector **Cartera** permite alternar entre **Todos los clientes**
@@ -309,53 +558,14 @@ frontend/src/
 
 ## Cómo levantar el proyecto
 
-### Publicación con Cloudflare Pages y Render
+### Ejecución local y demostración
 
-La interfaz se publica en Cloudflare Pages y la API de Python en Render. Supabase
-continúa alojando la base. Con ambos servicios publicados, los visitantes sólo
-necesitan navegador e internet; no dependen de este computador.
+La interfaz y el backend se ejecutan localmente. La base de datos continúa
+alojada en Supabase y las funciones de IA consultan al proveedor configurado.
+Por tanto, la demostración local requiere conexión a esos servicios.
 
-1. Publica en Git la versión que se vaya a desplegar. En Render, crea un Blueprint
-   desde este repositorio utilizando `render.yaml`. El archivo propone el plan
-   gratuito y desactiva las publicaciones automáticas por cada commit. Define
-   `DATABASE_URL` con la conexión de Supabase y `CORS_ORIGINS` con el dominio final
-   de Pages, por ejemplo `https://NOMBRE-DEL-PROYECTO.pages.dev`. La clave de sesión
-   se genera en Render. Para habilitar la IA, configura allí su dirección, clave y
-   modelo; las claves nunca se copian al frontend. `IA_TEMPERATURA` queda vacía.
-   Puedes configurar también los precios y presupuesto indicados en
-   `backend/.env.example` para mostrar las estimaciones de consumo.
-2. Espera a que la API esté disponible y guarda su URL HTTPS. Si la conexión
-   directa de Supabase no es compatible con la red del alojamiento, usa su
-   conexión de pooler de sesión. No cambies las tablas ni vuelvas a cargar datos
-   para publicar. La aplicación conserva su comportamiento de inicialización
-   existente; el script de publicación no ejecuta migraciones ni cargas.
-3. En PowerShell, desde la raíz del repositorio, inicia sesión en Cloudflare:
-
-   ```powershell
-   npx.cmd --yes wrangler@4 login
-   ```
-
-4. Publica la interfaz sustituyendo ambos valores por los reales:
-
-   ```powershell
-   .\publicar-web.ps1 -ApiUrl "https://TU-BACKEND.onrender.com" -Proyecto "TU-PROYECTO" -CrearProyecto
-   ```
-
-   El nombre del proyecto va en minúsculas, con números o guiones. Si el proyecto
-   de Pages ya existe, omite `-CrearProyecto`. El script comprueba `/health` y el
-   permiso del dominio antes de compilar. Sólo sube `frontend/dist`; no sube el
-   backend, documentos ni archivos `.env`. No usa la IA para comprobar el servicio.
-   Al terminar muestra la dirección `https://TU-PROYECTO.pages.dev`.
-
-Para compilar sin publicar ni consultar el backend, añade `-SoloPreparar` y omite
-`-CrearProyecto`. Ese modo no confirma que el servidor público esté disponible.
-La primera ejecución de Wrangler puede descargar su herramienta desde npm.
-Un enlace alojado no garantiza disponibilidad: el plan gratuito de Render puede
-suspender el servicio por inactividad y tardar en responder al volver a abrirlo.
-
-Comprobación local sin red: desde `backend`, ejecuta `python prueba_publicacion.py`.
-Se conserva la ejecución local con `localhost:3000`; `CORS_ORIGINS` sólo añade
-dominios concretos y no sustituye la autenticación por sesión.
+Para la presentación se grabará el recorrido desde el entorno local con datos
+ficticios. No se deben mostrar archivos de configuración ni claves durante la grabación.
 
 Hacen falta dos terminales, una para el backend y otra para el frontend.
 
@@ -492,11 +702,19 @@ tareas         id, titulo, descripcion, estado, prioridad, fecha_limite, lead_id
 intereses      id, lead_id, propiedad_id, nivel_interes, notas, fecha_creacion
 analisis_ia    id, lead_id, usuario_id, tipo, entrada, salida, modelo,
                tokens_entrada, tokens_salida, costo_estimado_usd, fecha_creacion
+propuestas_tarea_chat
+               id, usuario_id, solicitud, salida_original, propuesta, estado,
+               tarea_id, confirmacion, modelo, tokens_entrada, tokens_salida,
+               costo_estimado_usd, fecha_creacion
 auditoria      id, usuario_id, usuario_email, accion, entidad, entidad_id,
                descripcion, detalle, fecha_creacion
 ```
 
 Sobre las relaciones:
+
+- Las propuestas de tareas pertenecen a un usuario. Tras confirmar, se vinculan
+  con la tarea creada. Al eliminar esa tarea se conserva la propuesta y su vínculo
+  queda nulo; confirmar de nuevo no la vuelve a crear.
 
 - Al borrar un lead se borran sus interacciones, sus intereses y sus análisis, porque
   no tienen sentido sin él.
@@ -637,6 +855,22 @@ de análisis, por modelo y por día, y cuánto queda del presupuesto declarado e
 `IA_PRESUPUESTO_USD`. También muestra la configuración vigente del proceso, porque
 la configuración se lee al arrancar: si se cambia el `.env` hay que reiniciar el
 servidor para que tome efecto.
+
+**Mobilita · histórico registrado** separa el consumo del chat: solicitudes,
+costos estimados guardados, tokens y primera/última fecha de registro. Incluye
+propuestas canceladas y respuestas inválidas conservadas en propuestas_tarea_chat.
+Los costos desconocidos se cuentan aparte; el gasto queda sin informar cuando no
+hay ningún costo registrado. Cambiar precios no recalcula las cifras anteriores.
+Confirmar una propuesta varias veces no duplica el gasto.
+
+El histórico no distingue claves anteriores ni recupera usos externos, registros
+eliminados o pruebas realizadas en otras bases. No requiere migración adicional.
+El presupuesto configurado no es el saldo ni el límite real de OpenAI. Por solicitud
+del usuario se retiraron del panel el párrafo explicativo y el enlace al consumo
+oficial. No hay sincronización administrativa con OpenAI. Esa integración requiere
+una credencial administrativa separada y definir
+el proyecto o identificador de clave que debe consultarse; no se usa la clave de
+generación para atribuir cargos oficiales.
 
 Se guarda la entrada además de la salida para poder verificar de dónde salió cada
 resumen. La ficha permite desplegar esa información, y el texto siempre aparece

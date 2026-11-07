@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Icono from './Iconos';
+import Drawer from './Drawer';
 
 /**
  * Navegación lateral principal de la aplicación.
@@ -53,8 +54,21 @@ const SECCIONES = [
 ];
 
 function Sidebar({ vistaActiva, alCambiarVista, contadores, usuario, alCerrarSesion }) {
-  return (
-    <aside className="sidebar">
+  const [menuAbierto, setMenuAbierto] = useState(false);
+
+  useEffect(() => {
+    const pantalla = window.matchMedia('(max-width: 640px)');
+    const cerrarEnEscritorio = () => { if (!pantalla.matches) setMenuAbierto(false); };
+    pantalla.addEventListener('change', cerrarEnEscritorio);
+    return () => pantalla.removeEventListener('change', cerrarEnEscritorio);
+  }, []);
+
+  const cambiarVista = (id) => {
+    alCambiarVista(id);
+    setMenuAbierto(false);
+  };
+
+  const contenido = <>
       <div className="sidebar-marca">
         <div className="marca-logo">CRM</div>
         <div className="marca-texto">
@@ -79,7 +93,7 @@ function Sidebar({ vistaActiva, alCambiarVista, contadores, usuario, alCerrarSes
                 <button
                   key={item.id}
                   className={`nav-item ${vistaActiva === item.id ? 'activo' : ''}`}
-                  onClick={() => alCambiarVista(item.id)}
+                  onClick={() => cambiarVista(item.id)}
                   aria-current={vistaActiva === item.id ? 'page' : undefined}
                   aria-label={item.etiqueta}
                   title={item.etiqueta}
@@ -120,7 +134,23 @@ function Sidebar({ vistaActiva, alCambiarVista, contadores, usuario, alCerrarSes
           <span>Sesión iniciada</span>
         </div>
       </div>
-    </aside>
+    </>;
+
+  return (
+    <>
+      <div className="navegacion-movil">
+        <span className="marca-logo" aria-hidden="true">CRM</span>
+        <span>Gestión Inmobiliaria</span>
+        <button type="button" className="btn-secondary" aria-expanded={menuAbierto}
+          aria-haspopup="dialog" onClick={() => setMenuAbierto(true)}>
+          <Icono nombre="menu" />Menú
+        </button>
+      </div>
+      <aside className="sidebar">{contenido}</aside>
+      <Drawer abierto={menuAbierto} titulo="Menú del CRM" alCerrar={() => setMenuAbierto(false)}>
+        <div className="menu-movil-contenido">{contenido}</div>
+      </Drawer>
+    </>
   );
 }
 

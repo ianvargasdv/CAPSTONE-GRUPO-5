@@ -1,13 +1,19 @@
 """Orígenes de publicación: base temporal, sin red ni proveedor de IA."""
-import os
 import unittest
 
-os.environ['CORS_ORIGINS'] = 'https://crm-publicacion.example.test'
 from prueba_catalogo import ClientePruebas
+import main
 from origenes import cargar_origenes
 
 
 class PublicacionTest(unittest.TestCase):
+    def setUp(self):
+        # La aplicación puede estar importada por otra suite. Configuramos el
+        # origen en la lista usada por su middleware real y lo restauramos después.
+        anteriores = main.ORIGENES_PERMITIDOS[:]
+        main.ORIGENES_PERMITIDOS[:] = cargar_origenes('https://crm-publicacion.example.test')
+        self.addCleanup(lambda: main.ORIGENES_PERMITIDOS.__setitem__(slice(None), anteriores))
+
     def test_conserva_el_desarrollo_local(self):
         self.assertEqual(cargar_origenes(), ['http://localhost:3000', 'http://127.0.0.1:3000'])
 
@@ -21,7 +27,7 @@ class PublicacionTest(unittest.TestCase):
         self.assertIn('https://dos.example.test:8443', resultado)
 
     def test_rechaza_comodines_rutas_credenciales_y_urls_invalidas(self):
-        for valor in ['*', 'https://*.pages.dev', 'https://example.test/api',
+        for valor in ['*', 'https://*.example.test', 'https://example.test/api',
                       'https://cuenta:clave-ficticia@example.test', 'https://example.test?token=ficticio',
                       'https://example.test#fragmento', 'ftp://example.test', 'https://',
                       'https://example.test:puerto', 'https://exa mple.test']:

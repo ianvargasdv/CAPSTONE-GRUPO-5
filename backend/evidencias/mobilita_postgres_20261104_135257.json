@@ -1,0 +1,13 @@
+{
+  "fecha": "2026-11-04T13:52:49.744261+00:00",
+  "motor": "PostgreSQL",
+  "datos": "Ficticios en esquema aislado",
+  "llamadas_ia": 0,
+  "casos": {
+    "ejecutivo_sin_resumen_general": "aprobado",
+    "propuesta_sin_guardado_automatico": "aprobado",
+    "misma_propuesta_dos_confirmaciones_una_tarea": "aprobado",
+    "propuestas_distintas_mismo_seguimiento_sin_duplicar": "aprobado"
+  },
+  "esquema_temporal_eliminado": true
+}

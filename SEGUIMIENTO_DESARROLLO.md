@@ -1,6 +1,626 @@
 # Seguimiento del desarrollo
 
-Actualizado: 29/10/2026. Este archivo es un control de trabajo, no un acta de reunión.
+Actualizado: 7/11/2026. Este archivo es un control de trabajo, no un acta de reunión.
+
+## Ajuste móvil de Negocios y navegación · 7/11/2026
+
+Tras solicitar recargar el CRM y comprobar la vista de 390 px con su sesión,
+Bryan respondió «ya listo». Se registró esta confirmación en SCRUM-44. No se
+recibió una captura nueva ni un detalle adicional de ese recorrido.
+
+La revisión de Bryan a 390 px mostró poco espacio por la barra lateral, los cuatro
+indicadores apilados y el tablero horizontal. Se incorporó Menú con el Drawer
+existente a 640 px o menos, conservando las opciones según el rol. Negocios muestra
+dos contadores, montos desplegables y una lista vertical con búsqueda, filtros por
+estado y etapa, paginación y las mismas acciones. Mobilita usa un botón compacto.
+La ficha del inmueble aprovecha dos columnas a 390 px y una a 360 px o menos.
+
+Pasaron 53 pruebas existentes y la compilación. En navegador, con los componentes
+reales y datos ficticios aislados, se comprobaron anchos de 320 y 390 px sin
+desbordamiento de página; búsqueda vacía, filtros de etapa y estado, cambio de
+etapa, apertura del formulario, paginación 10/25, montos, menú por rol, ficha del
+inmueble y apertura/minimización de Mobilita. A 1366 px se comprobó el regreso al
+tablero y Tabla, y el cierre del menú al ampliar. No se usaron Supabase ni la IA.
+La confirmación posterior del usuario se registra al inicio de este apartado.
+
+Los archivos auxiliares del frontend y el servidor temporal de prueba se retiraron.
+La captura de referencia está en .codex-temp/movil-qa-20261107/Negocios_390.png,
+ignorada por Git. Cambio de presentación de SCRUM-44, que continúa En revisión.
+Código local, pendiente de commit y push.
+
+## Reprogramación de pendientes ficticios · 7/11/2026
+
+Bryan confirmó con capturas que la ficha de Valentina muestra la visita Programada
+para el 9/11 a las 13:00, el próximo seguimiento del 11/11 y las dos llamadas
+conservadas. Se añadió esta comprobación visual a SCRUM-45.
+
+Bryan autorizó reprogramar tareas y visitas vencidas del escenario. Se seleccionaron
+sólo registros de leads con es_demo y correo example.test. Se guardó el respaldo
+.codex-temp/respaldos/fechas_antes_20261107_113742_187813.json y se actualizaron ocho
+tareas al 9–13/11, seis visitas al 9/11 y ocho fechas de próxima acción vinculadas
+por título y fecha a esas tareas. Se comprobaron cruces de agenda por ejecutivo.
+Cada cambio se auditó dentro de la misma transacción.
+
+La lectura posterior confirmó las fechas, cero tareas pendientes vencidas y cero
+visitas pendientes anteriores al inicio del 7/11 en el escenario seleccionado.
+Las visitas actualizadas pasaron el esquema del backend. El corte diario no prueba
+que todas las horas del propio 7/11 sigan siendo futuras. No se modificaron títulos,
+estados ni llamadas. Se registró en SCRUM-45, que sigue En revisión. Sin llamadas de IA.
+
+## Ficha del inmueble y datos del departamento 803A · 7/11/2026
+
+Bryan confirmó la paginación de Negocios en Todos y Tabla: Siguiente cambia
+los registros con 10 por página y elegir 25 muestra los 23 negocios en una página.
+Se registró en SCRUM-44. La presentación en pantalla estrecha sigue pendiente.
+
+En Negocios, la captura de Bryan muestra 19 abiertos de 23. Después confirmó
+cuatro cerrados, 23 al seleccionar Todos y registros visibles en Tabla. Se
+registró el resultado en SCRUM-44, manteniendo En revisión. Queda comprobar
+la paginación de Tabla y el tablero en una pantalla estrecha.
+
+Bryan comprobó en Actividad la apertura del detalle en una ventana centrada,
+su cierre y el paso a la segunda página de registros. Se registró el recorrido
+en SCRUM-44, que sigue En revisión. La captura no verifica textos de gran longitud
+ni la presentación móvil.
+
+Se registraron en Jira la corrección del panel en SCRUM-44 y la carga adicional
+de datos ficticios en SCRUM-45, con sus comprobaciones y pendientes. Se verificó
+la descripción guardada y ambas actividades continúan En revisión.
+
+Después, Bryan solicitó completar todas las fichas existentes. Se rellenaron 102
+campos vacíos en las 25 propiedades, incluidos los datos administrativos. Se
+conservaron los valores existentes. Cada actualización quedó registrada en
+Actividad como carga de datos ficticios. Los correos generados usan example.test.
+La lectura posterior confirmó las 25 fichas válidas según el esquema de respuesta
+y ningún vacío en los 18 campos comerciales, técnicos y administrativos revisados.
+
+La ficha del catálogo abre un panel lateral con información comercial, datos técnicos,
+descripción, características y galería. Las fotografías de la galería se pueden ampliar.
+Pasaron 53 pruebas del frontend y la compilación. La comprobación visual quedó pendiente
+por un bloqueo del control del navegador.
+
+Por solicitud de Bryan se completaron 15 campos de la propiedad 1 con datos ficticios
+de demostración. Se configuró arriendo por 620.000 CLP, dos dormitorios, dos baños,
+55 m² útiles, 60 m² totales, estacionamiento, bodega y gastos comunes de 85.000 CLP.
+Se verificó la lectura posterior en Supabase y la validación del esquema de respuesta.
+La procedencia ficticia y los valores anteriores quedaron registrados en Actividad,
+dentro de la misma transacción. Estos datos no proceden de un aviso inmobiliario real.
+
+## Validación del filtro de cartera · 6/11/2026
+
+El 7/11 Bryan confirmó con su cuenta ejecutiva que buscar Valentina muestra su
+ficha, un término sin coincidencias devuelve cero resultados y limpiar recupera
+la ficha. Se registró en SCRUM-40, manteniendo En revisión.
+
+- SCRUM-40. Validación manual del 6/11/2026. Con la sesión de ejecutivo, Mi cartera mostró únicamente el lead asignado (1 de 1). Con la sesión de administrador, filtrar por ese mismo ejecutivo mostró el mismo lead (1 de 1). Ambas vistas mostraron dos tareas asociadas.
+
+## Validación de notas de llamada · 6/11/2026
+
+El 7/11 Bryan preparó otra propuesta, reemplazó su texto y confirmó la llamada.
+La captura posterior muestra dos contactos, la llamada anterior conservada y una
+nueva llamada del 7/11 a las 11:34 con el texto editado exacto. Se registró en
+SCRUM-39. Con este recorrido queda comprobado manualmente el guardado del texto
+revisado. La historia permanece En revisión hasta la aceptación final del sprint.
+
+El 7/11 Bryan preparó y descartó una propuesta con datos ficticios, tras autorizar
+una generación. Las capturas anterior y posterior conservan un contacto y la misma
+llamada del 6/11. Se registró en SCRUM-39. No se verificó el costo con estas capturas.
+El guardado del texto editado se comprobó después, como se registra arriba.
+
+Bryan probó las notas con IA en un lead de prueba. Seguimiento mostró una sola
+llamada, con los tres dormitorios, dos estacionamientos y la acción acordada de
+revisar propiedades compatibles. Se registró el resultado en SCRUM-39.
+
+## Validación del flujo de duplicados · 6/11/2026
+
+En su sesión de ejecutivo, Bryan intentó confirmar una tarea pendiente con el
+mismo título. Mobilita mostró «Esta tarea ya existe» y abrió la tarea correcta
+desde «Ver tarea existente». La captura confirma el título y el estado Pendiente.
+Una consulta de sólo lectura en Supabase confirmó dos tareas visibles para su
+cuenta y una sola coincidencia con el título probado. Se registró el caso en
+SCRUM-43, que continúa En revisión.
+
+## Aviso visible al rechazar una confirmación en Mobilita · 5/11/2026
+
+El flujo final de duplicados usa ámbar, «Esta tarea ya existe», el nombre del lead
+y «Ver tarea existente». El backend responde 409 con código tarea_duplicada y los
+identificadores de tarea y lead ya autorizados; el frontend no deduce el tipo de
+error a partir de su texto. App vuelve a cargar las tareas permitidas antes de abrir
+el formulario de edición. Si cambió el acceso o no existe la tarea, muestra el error.
+No hay guardado automático al abrir. Confirmar queda oculto durante el duplicado y
+reaparece al cambiar el título o el lead; los demás campos se conservan.
+
+Pasaron 68 pruebas del backend (chat y permisos), 53 del frontend y compilación.
+Se probó en navegador con API simulada el aviso visible, el botón y la apertura de
+la tarea ficticia indicada por el rechazo. La integración de la apertura en la
+sesión habitual queda pendiente de comprobación por Bryan. Sin Supabase ni IA real
+en esta prueba. Auxiliares del frontend retirados y servidores de prueba detenidos.
+
+Bryan detectó que pulsar Confirmar en una propuesta duplicada no mostraba un aviso
+en la parte visible del chat. El error se renderizaba antes de toda la propuesta,
+fuera de la zona visible al estar junto al botón. Se movió el aviso al formulario,
+antes de Confirmar, con role alert, foco y desplazamiento dentro del chat.
+Los errores sin propuesta conservan su ubicación general y reciben el mismo foco.
+
+Por petición posterior de Bryan se acortó el rechazo de duplicados a «Esta tarea ya
+existe para este lead. Revisa la tarea pendiente.». El aviso junto al botón añade
+un icono, título «No se pudo confirmar», separación y borde visible con foco. Se
+comprobó otra vez en navegador con 409 simulado que el texto completo queda visible
+y enfocado. Pasaron la regresión de duplicados y la compilación tras este ajuste.
+
+En navegador se comprobó con un cliente ficticio y una API local simulada que
+responde 409: aviso completo visible, foco en el mensaje, un solo aviso tras dos
+intentos y título y descripción conservados. No se usaron Supabase ni el proveedor.
+Se retiraron los dos archivos temporales del frontend y se detuvieron los servidores
+de prueba. El auxiliar restante está en .codex-temp, ignorado por Git.
+
+Pasaron las 58 pruebas del chat, incluida una regresión de 409 con detalle y propuesta
+pendiente conservada al reintentar, 52 pruebas del frontend y compilación. No se
+modificó la regla de duplicados. Falta el reintento de Bryan en su sesión habitual.
+Se registra en SCRUM-43 como corrección de presentación del rechazo, sin cerrar
+la historia. Cambios locales, sin commit, push ni llamadas pagadas.
+
+## Tareas limitadas a la cartera del ejecutivo · 4/11/2026
+
+Durante la aceptación funcional, la cuenta ejecutiva veía 27 tareas aunque tenía
+un solo lead. listar_tareas() devolvía el listado general, mientras las consultas
+de Mobilita sí filtraban la cartera. Se corrigieron listado, creación, edición,
+finalización y eliminación en main.py y tareas_servicio.py. Administración conserva
+el acceso general y las tareas sin lead; el ejecutivo debe asociar un lead propio.
+Las operaciones no autorizadas se rechazan antes de modificar o auditar una tarea.
+
+Mobilita filtra candidatos por la cartera y vuelve a comprobar la asignación al
+confirmar, también en reintentos de una propuesta ya confirmada. Los bloqueos del
+lead y de la tarea conservan la comprobación durante la escritura. El formulario
+sólo ofrece leads propios al ejecutivo. No cambia el acceso de los demás módulos.
+La prueba de concurrencia aislada se adaptó para asignar su lead ficticio al usuario;
+esa comprobación PostgreSQL no se repitió en esta sesión.
+
+Pasaron 102 pruebas del backend (10 nuevas de permisos), 52 del frontend, compilación
+y las 62 verificaciones de auditoría. Todo con SQLite temporal y proveedor simulado.
+Después se repitieron las diez regresiones tras el ajuste de bloqueos. Una lectura
+de Supabase con la nueva función confirmó dos tareas visibles para la cuenta
+ejecutiva, un lead asignado y las 27 tareas generales conservadas. No se modificaron
+datos comerciales, no hubo llamadas pagadas ni migraciones. Falta la comprobación
+visual del usuario tras recargar. Cambio local, sin commit ni push. Se registra
+como corrección del alcance de permisos de SCRUM-43, manteniendo En revisión.
+
+## Consulta administrativa de ejecutivos en Mobilita · 4/11/2026
+
+Tras la prueba manual, el texto del directorio se ajustó para mostrar el nombre
+y el número de leads asignados, en lugar del identificador «Usuario». El identificador
+permanece sólo en los datos estructurados. Se conservan ejecutivos con cero leads;
+el conteo incluye todos los estados y cambia con la asignación vigente. Se añadieron
+dos regresiones para contar leads sin multiplicarlos por sus tareas, conservar ceros
+y comprobar la reasignación. Esta ampliación no modifica usuarios ni asignaciones.
+
+Bryan pidió consultar los ejecutivos desde el chat como administrador. Se añadió
+ejecutivos_disponibles en consultas_mobilita.py, con comprobación del rol de sesión
+antes de consultar usuarios, tanto para alcance mia como general. Selecciona sólo
+id y nombre de ejecutivos activos, excluye administradores e inactivos y devuelve
+hasta diez ordenados por nombre e identificador, además del total. No reasigna leads,
+modifica roles ni muestra correos, hashes o credenciales. No requiere migración.
+
+Se actualizaron el contexto funcional y las instrucciones del modelo. Pasaron las
+55 pruebas del chat, incluidos cinco casos nuevos y la ampliación del rechazo de
+SQL. Cubren permisos aunque el LLM proponga la herramienta, suplantación en el mensaje,
+lista vacía, límite, homónimos y exclusión de resultados del historial enviado al
+proveedor. SQLite temporal y modelo simulado; no hubo llamadas pagadas ni cambios
+en los datos comerciales de Supabase. Falta probar la selección de la herramienta
+con el modelo real desde la cuenta administradora. Se añadió el alcance y los
+resultados a SCRUM-43, manteniendo En revisión y 8 puntos. Cambios locales, sin commit
+ni push. La actualización de la evidencia de criterios en Drive queda pendiente
+cuando se confirme el flujo; no se editaron los informes 2.4 y 2.6.
+
+## Registro de las últimas mejoras en Jira · 4/11/2026
+
+Después de actualizar la Daily se registraron los cambios en Jira. SCRUM-43 conserva
+8 puntos y En revisión; se añadieron los resultados de PostgreSQL de Supabase y los
+ajustes de contexto del asistente. Se actualizó la épica SCRUM-38 manteniendo la
+planificación original y distinguiendo el alcance añadido durante el sprint.
+
+Se crearon y comprobaron:
+- SCRUM-44, Historia: Organizar los listados y facilitar la revisión del catálogo,
+  5 puntos. Incluye paginación, tablero y fotografías.
+- SCRUM-45, Tarea: Renovar el escenario de demostración con seguimientos vigentes,
+  2 puntos. Incluye respaldo, renovación y comprobaciones.
+
+Ambas asignadas a Bryan, informador Bryan, épica SCRUM-38, sprint 6, inicio 4/11
+y vencimiento 6/11. Se pasaron a En revisión, no a Finalizado. Los 5 y 2 puntos
+son estimaciones de seguimiento registradas después de implementar el trabajo;
+no se presentan como estimaciones iniciales ni como horas. No se alteraron fechas
+de creación ni sprints cerrados.
+
+Verificación actual: 38 historias y tareas, 32 Finalizado, 6 En revisión, 207 puntos.
+Sprint 6 activo del 2 al 9/11: SCRUM-39 (8), SCRUM-40 (5), SCRUM-43 (8), SCRUM-44 (5)
+y SCRUM-45 (2), total 28 puntos, todos En revisión. Se conserva la línea base de 13;
+SCRUM-43 añadió 8 el 2/11 y SCRUM-44/45 añadieron 7 el 4/11.
+
+Pendiente trasladar estas referencias al Product Backlog, Sprint Backlog, Planning,
+Scrumboard y Burndown; renovar las exportaciones de historias y épicas. La Daily del
+4/11 puede referir SCRUM-43, SCRUM-44 y SCRUM-45. No se editaron archivos de Drive,
+informes 2.4/2.6, ni se hizo commit, push o cierre del sprint.
+
+## Verificación en PostgreSQL de Supabase · 4/11/2026
+
+Por indicación de Bryan se utilizó PostgreSQL en Supabase sin Docker. Se verificó
+permiso para un esquema aislado y aislamiento READ COMMITTED. El comprobador creó
+un esquema qa_mobilita con identificador aleatorio y cinco tablas aisladas, sin
+importar main ni ejecutar migraciones del CRM. SQLAlchemy tradujo todas las tablas
+del ejercicio a ese esquema. Se usaron usuarios y leads ficticios, sin LLM.
+
+Pasaron cuatro casos: ejecutivo sin acceso a resumen general; preparar propuesta
+sin guardar una tarea; dos confirmaciones simultáneas de la misma propuesta con un
+único registro y una única auditoría de creación; dos propuestas distintas del mismo
+seguimiento con resultados 200 y 409, sin duplicar. Se sincronizaron dos conexiones
+PostgreSQL independientes antes de adquirir el bloqueo. El estado del lead no cambió.
+El esquema y sus tablas se retiraron al terminar y se comprobó su ausencia.
+
+Evidencia: backend/evidencias/mobilita_postgres_20261104_135257.json.
+Comprobador: backend/verificar_concurrencia_postgres.py, ejecución explícita con
+--ejecutar; no ejecutarlo con -O. No se tocaron tablas comerciales del CRM, no hubo
+consumo de IA, Docker, commit ni push. La prueba no acredita carga masiva ni todas
+las variantes de entrada. SCRUM-43 conserva la revisión funcional pendiente; no se
+cambió su estado en Jira.
+
+Esta comprobación resuelve el pendiente de concurrencia señalado más abajo en la
+verificación parcial. Docker no es un requisito ni un impedimento del proyecto.
+En la Daily del 4/11 se puede añadir la comprobación PostgreSQL y reemplazar ese
+pendiente por la actualización de Jira y evidencias. Si se registró Docker como
+impedimento, aclarar que se resolvió usando Supabase; no inventar que se inició Docker.
+
+## Verificación final parcial de Mobilita · 4/11/2026
+
+Se repitieron las 77 pruebas del chat y del asistente con SQLite temporal y modelo
+simulado; todas pasaron. Cubren restricciones de ejecutivo, confirmación explícita,
+reintento sin duplicación, propuestas ajenas y separación entre datos e instrucciones.
+No son una nueva evaluación del modelo real. La concurrencia en PostgreSQL sigue
+pendiente: Docker está instalado, pero su motor local no está en ejecución. No se
+intentó esa prueba sobre la base compartida ni se modificó Supabase durante esta
+verificación. No se marcaron historias finalizadas ni se hizo commit o push.
+
+## Renovación del escenario académico · 4/11/2026
+
+Bryan solicitó renovar los datos envejecidos y diversificar las tareas para la
+demostración. La auditoría inicial encontró 26 tareas pendientes vencidas y numerosos
+títulos repetidos. Se preparó renovar_escenario.py, con vista previa, respaldo previo,
+una transacción y bloqueo de reejecución durante el mismo día. No borra registros.
+
+Se aplicó en Supabase a los 29 leads identificados con flag de prueba y correo
+example.test: 26 tareas, 11 visitas, 23 negocios, fechas de disponibilidad de 18
+propiedades del cargador y fechas de 23 contactos reconocidos como simulados.
+Las fechas de ingreso originales se conservaron para mantener coherencia con la
+auditoría y los análisis previos. No se cambiaron notas de contactos manuales,
+usuarios, fotografías, historial de asignaciones, auditoría previa ni consumo de IA.
+
+Verificación posterior por consultas de sólo lectura: 26 títulos distintos;
+13 tareas Pendiente, 9 En Progreso y 4 Completada; cero pendientes vencidas y tres
+para hoy. Fechas entre 3 y 13 de noviembre (el 3 corresponde a tareas completadas).
+Nueve visitas futuras y ninguna Programada/Confirmada en pasado. Se conservaron
+las 25 fotos principales. Una segunda ejecución respondió ya_aplicado sin cambios.
+Pasaron ocho pruebas de renovación y cargador con SQLite temporal; cubren conservación
+de registros no ficticios, respaldo, variedad, fechas, visitas y repetición segura.
+
+Respaldo local ignorado por Git: .codex-temp/respaldos/escenario_antes_20261104_072612_786438.json.
+No contiene claves ni usuarios; conserva los campos comerciales afectados para recuperar
+la versión anterior. No se hicieron llamadas pagadas ni se generaron nuevas respuestas
+de IA. Los análisis antiguos siguen siendo históricos; no se presentan como actualizados.
+No hay cambios de esquema ni necesidad de renovar el modelo relacional.
+
+Pendiente de gestión: incorporar la preparación de datos al alcance de demostración
+del sprint 6 y a la Daily del 4/11, con evidencia de las cifras anteriores. No registrar
+como desarrollo de funciones nuevas ni cambiar sprints ya cerrados. No se modificaron
+Jira, Drive ni los informes 2.4/2.6. Código local, sin commit ni push.
+
+## Fotografías del catálogo · 4/11/2026
+
+Por solicitud de Bryan se añadieron miniaturas de 108 × 80 px al catálogo, con acceso
+a la imagen de mayor tamaño, galería existente y respaldo para imagen ausente o rota.
+Se consultó el catálogo real en modo de lectura: las 25 propiedades no tenían fotos.
+Después de verificar 14 imágenes de Pexels se guardaron enlaces en las 25 propiedades,
+seleccionando según Casa o Departamento y reutilizando algunas. No se afirma que
+correspondan a sus direcciones, distribución o equipamiento reales. Se etiquetan
+como imágenes de muestra mediante la marca `#referencial` en los enlaces guardados
+y el texto alternativo. Por solicitud posterior de Bryan se retiraron los rótulos
+visibles de las miniaturas y la galería. La licencia permite
+uso en aplicaciones: https://www.pexels.com/license/ .
+
+La carga modificó Supabase: fotografias, foto_principal y un registro de auditoría
+por propiedad, sin cambiar el modelo ni agregar columnas. Los enlaces de las dos
+columnas suman 5664 bytes; esta cifra no incluye auditoría ni sobrecarga de PostgreSQL.
+La auditoría identifica una carga referencial sin atribuir usuario humano. La utilidad
+fotos_catalogo.py no reemplaza fotos existentes y, por defecto, sólo informa candidatas.
+Una consulta posterior confirmó 25 principales guardadas y cero propiedades pendientes.
+
+Pasaron 52 pruebas del frontend, dos pruebas de carga con SQLite temporal y compilación.
+Se verificó en navegador la carga de diez miniaturas iniciales, estados sin imagen y
+enlace roto y ausencia de desbordamiento de página a 390 px. Los casos negativos se
+añadieron sólo al entorno visual temporal, sin insertarlos en Supabase. Se eliminaron
+esos auxiliares y se detuvo el servidor de revisión. Sin commit, push ni llamadas de IA.
+
+Añadir este alcance al seguimiento de organización del catálogo del 4/11: Daily,
+actividad de Jira pendiente de registro y evidencias del sprint 6. No marcar una
+aceptación del usuario ni inventar estimaciones acordadas. La estructura de la base
+permanece igual, por lo que no requiere rehacer el diagrama relacional.
+
+## Organización de listados · 4/11/2026
+
+Bryan solicitó reducir la saturación de Leads, Negocios, Visitas, Propiedades,
+Tareas y Actividad y resolver el recorte del tablero. Se incorporaron páginas de
+10 registros (selector 10/25/50) en los listados; Actividad usa 10 por petición.
+Leads despliega sus datos secundarios. Negocios separa abiertos/cerrados/todos,
+limita inicialmente a cinco tarjetas por etapa y agrupa detalles y acciones.
+Se acotó el ancho del tablero y se añadieron botones para recorrer sus columnas.
+No se cambiaron permisos, registros, estructura de Supabase ni funciones del backend.
+
+Referencias consultadas: soporte de Inmovilla, Búsquedas y filtros
+(https://inmovilla.freshdesk.com/support/solutions/folders/103000130135), y HubSpot,
+Customize the board view for objects with pipelines
+(https://knowledge.hubspot.com/object-settings/select-properties-to-show-on-records-in-board-view).
+Se adaptaron patrones de filtrado y reducción de información visible; no se copiaron
+plantillas ni se afirma una evaluación con ejecutivos reales.
+
+Verificación: 49 pruebas del frontend y compilación aprobadas. En navegador se
+usaron 23 registros ficticios para revisar paginación de Leads, Tareas, Propiedades,
+Visitas en Lista y Negocios en Tabla; reinicio al buscar un lead, apertura de datos
+secundarios, expansión de tarjetas y acceso a sus acciones. A 390 px se comprobó
+que la página no desborda horizontalmente y que los botones desplazan el tablero.
+Actividad se revisó en código, sin una comprobación visual nueva de su API real.
+La paginación local no sustituye paginación de servidor para grandes volúmenes.
+
+Seguimiento pendiente (sin modificar los informes 2.4 y 2.6 entregados):
+- Jira: registrar esta mejora de interfaz como alcance añadido el 4/11 al sprint 6
+  (2–9/11), separada de SCRUM-43. Propuesta de estimación: 5 puntos Fibonacci,
+  por las seis vistas, navegación y revisión adaptable; pendiente de acuerdo del
+  equipo, no representa horas ni una estimación original del sprint. Estado de
+  revisión hasta comprobar el CRM habitual; no marcar aceptación por el usuario.
+- Daily: Bryan, 4/11, reorganización de listados y pruebas. Siguiente: validación
+  habitual y actualización de evidencias; no inventar un bloqueo actual.
+- Impedimentos: registrar el recorte del tablero como incidencia corregida si
+  corresponde a ese registro, sin inventar fechas anteriores ni indisponibilidad.
+- Product Backlog, Sprint Backlog, Planning y Scrumboard: añadir el alcance y su
+  identificador cuando exista; conservar la incorporación del 4/11.
+- Burndown: registrar el aumento de alcance cuando se acuerde la estimación; no
+  alterar los puntos iniciales ni inventar cierres diarios. Review, retrospectiva
+  y Release: incorporar resultados y aprendizajes después de la aceptación.
+- Gantt y mapas: revisar sólo si cambian hitos o recorrido; la organización visual
+  no requiere un nuevo modelo de datos. Renovar exportaciones de Jira si se añade
+  la actividad. Drive no se auditó ni se modificó durante este ajuste.
+
+Cambios locales, sin commit, push, despliegue ni llamadas pagadas. Se eliminaron
+los archivos auxiliares utilizados para la revisión visual.
+
+## Contexto del proyecto y del asistente · 4/11/2026
+
+Se corrigió la falta de información que llevaba a Mobilita a confundir el CRM con
+el asistente y a desconocer que el proyecto es un MVP. El servidor ahora aporta
+la etapa del proyecto, el alcance del asistente y el nombre del modelo configurado,
+sin enviar claves ni direcciones del proveedor. Las instrucciones aclaran que el
+contexto funcional es interno, no un manual publicado, y que los datos del servidor
+prevalecen sobre respuestas anteriores incorrectas.
+Se ajustó también el tono: se indica «Uso el modelo» al identificar el modelo y
+se evitan referencias femeninas al asistente.
+
+Pasaron 77 pruebas del chat y del asistente con SQLite temporal y proveedor simulado.
+Incluyen configuración cambiante o ausente, exclusión de credenciales y rechazo de
+metadatos aportados desde el navegador. Esto verifica el contexto y los controles;
+queda comprobar la redacción con el proveedor real. Sin llamadas pagadas ni cambios
+de estructura en Supabase. Cambios locales, sin commit ni push.
+
+## Limpieza de controles del frontend · 4/11/2026
+
+Se retiraron Detalles de la última respuesta y los costos de la ventana de Mobilita,
+conservando el registro de consumo y el panel administrativo. El pie mantiene la
+revisión de propuestas y Mayús+Enter. Se eliminaron las flechas decorativas del chat
+y el icono de abrir ficha de leads se reemplazó por texto. Los desplegables usan
+texto subrayado sin marcadores de triángulo; propiedades cambia a Mostrar menos
+al desplegar el resto.
+
+Pasaron 46 pruebas del frontend y la compilación. Se comprobó en navegador la
+ausencia de detalles de consumo, la apertura/cierre con Enter sin marcador y
+el acceso Ver ficha. QA con SQLite temporal y proveedor simulado; sin llamadas
+pagadas, cambios en Supabase, commit ni push.
+
+## Presentación de propiedades en Mobilita · 4/11/2026
+
+La consulta de propiedades devuelve datos estructurados y el chat presenta tres
+tarjetas iniciales, sin identificadores visibles y con precios formateados en CLP/UF.
+El resto de las primeras diez se despliega; Ver catálogo completo abre Propiedades.
+La operación Compra se presenta como Venta, igual que en el catálogo existente.
+Las respuestas largas dejan visible el comienzo en vez de saltar al final.
+
+Pasaron 74 pruebas del backend, 46 del frontend y compilación. Se comprobó con
+18 propiedades ficticias: tres tarjetas iniciales, despliegue de las diez, formato
+móvil sin desbordamiento y navegación al catálogo con los 18 registros. Sólo SQLite
+temporal y proveedor simulado; sin migración, llamadas pagadas, commit ni push.
+
+## Histórico de consumo de Mobilita · 4/11/2026
+
+Se añadió al panel administrativo el histórico del chat: costo estimado acumulado,
+solicitudes, tokens y período conservado. Incluye propuestas canceladas y respuestas
+inválidas con consumo informado; separa costos y tokens desconocidos. No recalcula
+costos antiguos ni duplica el gasto al repetir una confirmación.
+
+Se diferenció el presupuesto configurado del saldo o límite real de OpenAI. Se añadió
+un enlace al panel oficial. La sincronización de facturación requiere credencial
+administrativa y alcance de proyecto/clave; no está implementada ni se afirma que
+el total local incluya llamadas externas o registros eliminados.
+
+Pasaron 73 pruebas del backend, incluida la protección exclusiva para admin, y la
+compilación del frontend. Se revisó en navegador un histórico ficticio con costos
+parciales, Actualizar y el diseño a 390 px. Sólo SQLite temporal; sin llamadas
+pagadas, cambios en Supabase, migración adicional, commit ni push.
+
+## Interfaz de Mobilita · 4/11/2026
+
+El acceso flotante se oculta mientras el panel está abierto y reaparece al minimizar
+con el control de cabecera o Escape. Se verificó en navegador la conservación del
+borrador, el retorno del foco al botón y los márgenes del panel a 390 px.
+
+Se unificaron los colores y la tipografía con el CRM: botones casi negros, superficies
+blancas, bordes neutros y textos con los estilos compartidos. El azul quedó en el
+personaje y los indicadores de actividad. Se aumentó la legibilidad del saludo,
+respuestas y textos secundarios, con revisión del acceso y panel en escritorio y
+del ancho y tipografía a 390 px. No cambia las funciones del asistente.
+
+Posteriormente, Bryan solicitó dejar las animaciones siempre activas y retirar el
+selector. Se reemplazó el acceso anterior por un personaje animado con saludo estático
+que invita a revisar cartera, pendientes y tareas. Abrir el chat o cerrar el saludo
+lo oculta durante esa sesión. Se comprobó la persistencia de ese cierre tras recargar,
+la ausencia de ajustes, las animaciones activas con movimiento reducido del navegador
+y los márgenes del chat a 390 px. Pasaron 44 pruebas del frontend y compilación.
+El saludo no consulta al proveedor de IA.
+
+Al informar que no se veían las animaciones, se identificaron dos reglas de movimiento
+reducido: una global reducía su duración a 0,01 ms y otra las desactivaba en el chat.
+Se incorporó una preferencia local: Sistema, Activadas o Reducidas. Activadas excluye
+únicamente el chat de esas restricciones. Se comprobó en navegador con movimiento
+reducido activo que los puntos recuperan su duración de 1,15 s y se desplazan, que
+los otros modos detienen el movimiento y que la elección persiste al recargar.
+
+Se añadieron animaciones de apertura y entrada de mensajes, sugerencias y propuesta.
+La espera incluye puntos, actividad en cabecera, avatar y botón de envío. La solicitud
+se muestra de inmediato sin duplicarse al recibir la respuesta. El indicador depende
+de la petición real; no simula escritura progresiva ni porcentajes. Se respeta la
+preferencia de movimiento reducido.
+
+Se reorganizó el chat tomando como referencia los patrones documentados de Breeze
+Assistant e Intercom Copilot: acciones de conversación en cabecera, sugerencias de
+consulta, entrada fija, detalles de consumo separados y tarjeta de tarea pendiente
+de confirmación. Nuevo chat protege texto y propuestas sin guardar; se puede ampliar
+la ventana para leer listados. No cambia permisos ni herramientas del backend.
+
+Se comprobó en navegador con SQLite temporal y proveedor simulado: sugerencias sin
+envío automático, Enter para enviar, Mayús + Enter para salto de línea, conservación
+y descarte explícito de una propuesta, confirmación de una tarea y ajuste móvil a
+390 px. Se corrigió un desbordamiento horizontal detectado en esa revisión. Sin
+llamadas pagadas, cambios en Supabase, commit ni push por este ajuste de interfaz.
+
+## Consultas restringidas de Mobilita · 4/11/2026
+
+Se amplió SCRUM-43 con cuatro herramientas: resumen de cartera, tareas sin completar,
+tareas vencidas y propiedades disponibles. La sesión determina la cartera propia y
+el resumen general requiere rol admin comprobado por el backend. Los listados se
+limitan a diez registros, con total y fecha de consulta. Las propiedades sólo exponen
+columnas comerciales. Las tareas corresponden a los leads de la cartera, porque no
+tienen un responsable propio en el modelo actual.
+
+El LLM elige una herramienta permitida; no recibe los resultados de la base ni puede
+proponer SQL o identidades para la consulta. Los resultados tampoco se envían como
+historial al proveedor. Se conserva el guardado de tareas con confirmación y no se
+incorporan borrados, tampoco mediante palabras clave de administración.
+
+Pasaron 99 pruebas del backend, 44 del frontend y la compilación. Se probaron alcance
+propio y general, cambio de responsable, tareas sin lead, límites, fechas, datos
+reservados, herramientas desconocidas y consultas manipuladas.
+
+Se autorizaron cuatro llamadas reales con datos ficticios y hasta US$0,05 estimados.
+Cartera propia, vencidas, propiedades y resumen general admin dieron los resultados
+esperados en SQLite temporal: US$0,0008322 estimados. Evidencia:
+backend/evidencias/mobilita_consultas_real_20261104_4b7f8aab.json.
+
+No requiere migración adicional. No se modificó Supabase en estas pruebas. No se
+implementó un servidor MCP ni una cuenta PostgreSQL de sólo lectura: se usa una
+capa de funciones restringidas sobre la API existente. Conectarlo a otro CRM requiere
+adaptador y autorización en ese CRM. SCRUM-43 sigue En revisión; falta la prueba
+funcional en el CRM habitual y concurrencia en PostgreSQL. Sin commit ni push.
+
+## Conversación sobre el CRM con Mobilita · 4/11/2026
+
+Por solicitud de Bryan se amplió SCRUM-43: Mobilita explica funciones existentes
+del CRM y permite continuar después de una respuesta o aclaración. Se incorporó
+una guía del producto; las consultas generales no reciben fichas completas ni
+datos reservados de la base. Los temas ajenos se rechazan brevemente cuando el
+modelo los clasifica fuera de alcance. La API usa un texto fijo para ese rechazo.
+Sólo se mantiene la escritura de tareas, con revisión y confirmación.
+
+El servidor recupera hasta seis turnos propios y comprueba su autor y vigencia.
+No admite un historial proporcionado por el navegador. El contexto usa el JSON
+de propuestas_tarea_chat: no requiere otra migración.
+
+Pasaron 91 pruebas del backend, 44 del frontend y la compilación. Se comprobaron
+en navegador la consulta, el rechazo breve, la continuación de la conversación,
+la preparación y confirmación de una tarea y el inicio de una conversación nueva,
+con proveedor simulado y SQLite temporal.
+
+Se autorizaron otras cuatro llamadas con datos ficticios y US$0,05 estimados como
+máximo. La consulta del CRM, el clima, un intento de saltarse los límites y la
+aclaración de una tarea dieron los resultados esperados: US$0,000760 estimados.
+Evidencia: backend/evidencias/mobilita_general_real_20261104_52dcc123.json.
+Es una muestra pequeña; no acredita rechazo perfecto de todas las entradas ni
+concurrencia en PostgreSQL. No se modificó Supabase durante estas comprobaciones.
+SCRUM-43 conserva En revisión. Sin commit, push ni despliegue.
+
+## Comprobación real del asistente de tareas · 4/11/2026
+
+La interfaz pasó a una ventana flotante llamada Mobilita, disponible desde los
+listados del CRM. Conserva el borrador y la propuesta al minimizar y navegar,
+permite cerrar con Escape y adapta el tamaño a móvil. Se comprobó el guardado
+desde el chat, la conservación al abrir y cerrar un formulario y la ausencia de
+desbordamiento a 390 px, con SQLite y proveedor simulado. No se generaron nuevas
+respuestas pagadas por este cambio de interfaz.
+
+Bryan compartió la salida de migrar.py con 53 instrucciones aprobadas. Después se
+comprobó directamente, en modo de sólo lectura, la presencia de propuestas_tarea_chat
+en Supabase y que aún no contenía propuestas.
+
+Se autorizó un lote de hasta cuatro llamadas y US$0,05 estimados con datos ficticios.
+Se ejecutaron cuatro con el proveedor real por US$0,0003863 estimados. Las respuestas
+se probaron a través de la API en memoria con SQLite temporal: tarea para el cliente
+correcto y confirmación repetida sin duplicar, dos homónimos y cancelación, solicitud
+sin cliente y rechazo de una orden de borrado. Las cuatro comprobaciones técnicas
+fueron satisfactorias; se leyeron también las respuestas originales.
+
+La evidencia está en backend/evidencias/chat_tareas_real_20261104_fc515416.json.
+Este lote no agregó registros en Supabase. Quedan la prueba funcional del usuario
+en su CRM habitual y la comprobación de concurrencia en PostgreSQL. No se acredita
+precisión general del modelo a partir de cuatro casos. SCRUM-43 sigue En revisión.
+Sin commit, push ni despliegue.
+
+## Asistente para crear tareas · 2/11/2026
+
+Se incorporó SCRUM-43 al sprint 6, bajo Seguimiento comercial asistido y asignada
+a Bryan: 8 puntos, inicio el 2/11 y objetivo de entrega el viernes 6/11. El sprint
+se inició en Jira y conserva su período del 2 al 9 de noviembre. El alcance nuevo
+se distingue del trabajo adelantado de SCRUM-39 y SCRUM-40.
+
+Desde Tareas se interpreta una solicitud escrita, se resuelve el nombre del lead
+y se prepara una tarea revisable. Los homónimos requieren selección. Confirmar
+registra la tarea; cancelar no modifica el seguimiento. Se comprueban autor,
+vigencia, campos y duplicados. Repetir la confirmación devuelve la misma tarea.
+El título «Contactado» no modifica el estado del lead.
+
+Se preparó la tabla propuestas_tarea_chat y su migración, sin aplicarlas a Supabase.
+El consumo se integra al panel administrativo y los eventos se auditan. Las pruebas
+y el navegador usaron SQLite temporal y un proveedor simulado: se comprobó la
+selección entre dos leads del mismo nombre y el guardado del texto revisado.
+La exclusión mutua entre peticiones simultáneas en PostgreSQL no se probó.
+Pasaron 82 pruebas de chat y funciones relacionadas, 72 regresiones adicionales,
+43 pruebas de frontend, 62 verificaciones de auditoría y la compilación. Los
+evaluadores que comprueban aislamiento se ejecutaron en procesos separados.
+SCRUM-43 quedó En revisión; no se registra aceptación funcional del equipo.
+Queda validar las respuestas del proveedor real y el entorno compartido; no se
+reutiliza una autorización anterior de llamadas pagadas.
+
+También se retiró la configuración del alojamiento usado para la demostración.
+La presentación se preparará con ejecución y grabación locales; Supabase y el
+proveedor de IA siguen siendo servicios externos. Los cambios de código siguen
+locales, sin commit ni push. Los informes 2.4 y 2.6 no se modificaron.
+
+## Revisión de la ficha del cliente · 30/10/2026
+
+La ficha se organizó en Resumen, Asistente, Seguimiento y Propiedades. El selector
+del asistente reúne las cinco funciones; modelo, consumo y contexto se consultan
+en detalles desplegables. Se conservaron notas y borradores al cambiar de sección.
+Se revisaron escritorio, móvil y navegación por teclado.
+
+La comprobación del navegador usó una base temporal y proveedor simulado: preparar
+no creó contactos, confirmar guardó una llamada con el texto editado y reabrir la
+ficha conservó ese registro. Un fallo simulado mantuvo las notas sin crear contactos.
+Pasaron 35 pruebas de frontend, 13 de llamadas y 10 de cartera, y la compilación.
+No hubo llamadas pagadas, cambios en Supabase ni modificación de estados en Jira.
+La reorganización sigue local, sin commit ni push. SCRUM-39, 40 y 41 siguen en
+revisión; el sprint 6 continúa futuro, previsto del 2 al 9 de noviembre.
 
 ## Integración del avance · 29/10/2026
 

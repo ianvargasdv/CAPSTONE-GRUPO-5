@@ -12,6 +12,11 @@ import React from 'react';
  */
 
 const TRAZOS = {
+  menu: <path d="M4 6h16M4 12h16M4 18h16" />,
+  minimizar: <path d="M5 12h14" />,
+  ampliar: <><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5" /><path d="M3 3l6 6M21 3l-6 6M21 21l-6-6M3 21l6-6" /></>,
+  reducir: <><path d="M3 9h6V3M21 9h-6V3M15 21v-6h6M9 21v-6H3" /></>,
+  enviar: <><path d="M12 19V5M5 12l7-7 7 7" /></>,
   panel: (
     <>
       <path d="M3 3h7v7H3z" />
@@ -123,7 +128,6 @@ const TRAZOS = {
       <path d="M20 11v6c0 1.66-3.58 3-8 3s-8-1.34-8-3v-6" />
     </>
   ),
-  chevron: <path d="M9 18l6-6-6-6" />,
   tendencia: (
     <>
       <path d="M3 3v18h18" />

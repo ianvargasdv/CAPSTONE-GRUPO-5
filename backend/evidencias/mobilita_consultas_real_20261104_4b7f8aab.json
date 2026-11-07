@@ -1,0 +1,129 @@
+{
+  "fecha": "2026-11-04T04:59:20.918442",
+  "base": "SQLite temporal, datos ficticios",
+  "autorizacion": {
+    "llamadas": 4,
+    "max_usd_estimados": 0.05
+  },
+  "costo_estimado_usd": 0.0008322,
+  "casos": [
+    {
+      "caso": "cartera",
+      "solicitud": "¿Cuántos leads tengo asignados en mi cartera?",
+      "rol": "ejecutivo",
+      "http": 201,
+      "respuesta": {
+        "id": 1,
+        "estado": "respuesta",
+        "mensaje": "Leads de tu cartera asignada: 1. Nuevo: 1.",
+        "clientes": [],
+        "titulo": "",
+        "descripcion": "",
+        "modelo": "gpt-6-luna",
+        "costo_estimado_usd": 0.0001994,
+        "tokens_entrada": 1669,
+        "tokens_salida": 65,
+        "consulta": {
+          "herramienta": "cartera_resumen",
+          "alcance": "mia",
+          "fecha_consulta": "2026-11-04T04:59:13.946598-03:00",
+          "limite": 10,
+          "permitida": true,
+          "total": 1,
+          "mensaje": "Leads de tu cartera asignada: 1. Nuevo: 1."
+        }
+      },
+      "salida_modelo": "{\"accion\":\"consultar\",\"cliente\":null,\"titulo\":null,\"descripcion\":null,\"aclaracion\":null,\"consulta\":{\"herramienta\":\"cartera_resumen\",\"alcance\":\"mia\"}}",
+      "resultado_esperado": true
+    },
+    {
+      "caso": "vencidas",
+      "solicitud": "¿Qué tareas vencidas tengo en mi cartera?",
+      "rol": "ejecutivo",
+      "http": 201,
+      "respuesta": {
+        "id": 2,
+        "estado": "respuesta",
+        "mensaje": "Tareas vencidas de tu cartera asignada: 1.\n• #1 · Cliente ficticio propio: Confirmar requisitos ficticios · Pendiente · 2026-11-03",
+        "clientes": [],
+        "titulo": "",
+        "descripcion": "",
+        "modelo": "gpt-6-luna",
+        "costo_estimado_usd": 0.0002007,
+        "tokens_entrada": 1667,
+        "tokens_salida": 68,
+        "consulta": {
+          "herramienta": "tareas_vencidas",
+          "alcance": "mia",
+          "fecha_consulta": "2026-11-04T04:59:15.622513-03:00",
+          "limite": 10,
+          "permitida": true,
+          "total": 1,
+          "mensaje": "Tareas vencidas de tu cartera asignada: 1.\n• #1 · Cliente ficticio propio: Confirmar requisitos ficticios · Pendiente · 2026-11-03"
+        }
+      },
+      "salida_modelo": "{\"accion\":\"consultar\",\"cliente\":null,\"titulo\":null,\"descripcion\":null,\"aclaracion\":null,\"consulta\":{\"herramienta\":\"tareas_vencidas\",\"alcance\":\"mia\"}}",
+      "resultado_esperado": true
+    },
+    {
+      "caso": "propiedades",
+      "solicitud": "¿Qué propiedades están disponibles?",
+      "rol": "ejecutivo",
+      "http": 201,
+      "respuesta": {
+        "id": 3,
+        "estado": "respuesta",
+        "mensaje": "Propiedades con estado Disponible en el catálogo: 1.\n• #1 · Propiedad ficticia disponible · Comuna sin registrar · 100 Moneda sin registrar",
+        "clientes": [],
+        "titulo": "",
+        "descripcion": "",
+        "modelo": "gpt-6-luna",
+        "costo_estimado_usd": 0.0002243,
+        "tokens_entrada": 1663,
+        "tokens_salida": 116,
+        "consulta": {
+          "herramienta": "propiedades_disponibles",
+          "alcance": "mia",
+          "fecha_consulta": "2026-11-04T04:59:18.835523-03:00",
+          "limite": 10,
+          "permitida": true,
+          "total": 1,
+          "mensaje": "Propiedades con estado Disponible en el catálogo: 1.\n• #1 · Propiedad ficticia disponible · Comuna sin registrar · 100 Moneda sin registrar"
+        }
+      },
+      "salida_modelo": "{\"accion\":\"consultar\",\"cliente\":null,\"titulo\":null,\"descripcion\":null,\"aclaracion\":null,\"consulta\":{\"herramienta\":\"propiedades_disponibles\",\"alcance\":\"mia\"}}",
+      "resultado_esperado": true
+    },
+    {
+      "caso": "general_admin",
+      "solicitud": "Muéstrame el resumen de todos los leads del CRM, no sólo mi cartera.",
+      "rol": "admin",
+      "http": 201,
+      "respuesta": {
+        "id": 4,
+        "estado": "respuesta",
+        "mensaje": "Leads del CRM: 2. Nuevo: 2.",
+        "clientes": [],
+        "titulo": "",
+        "descripcion": "",
+        "modelo": "gpt-6-luna",
+        "costo_estimado_usd": 0.0002078,
+        "tokens_entrada": 1673,
+        "tokens_salida": 81,
+        "consulta": {
+          "herramienta": "cartera_resumen",
+          "alcance": "general",
+          "fecha_consulta": "2026-11-04T04:59:20.908304-03:00",
+          "limite": 10,
+          "permitida": true,
+          "total": 2,
+          "mensaje": "Leads del CRM: 2. Nuevo: 2."
+        }
+      },
+      "salida_modelo": "{\"accion\":\"consultar\",\"cliente\":null,\"titulo\":null,\"descripcion\":null,\"aclaracion\":null,\"consulta\":{\"herramienta\":\"cartera_resumen\",\"alcance\":\"general\"}}",
+      "resultado_esperado": true
+    }
+  ],
+  "registros_conservados": true,
+  "limite": "Muestra de cuatro solicitudes; no demuestra precisión general ni equivale a un servidor MCP."
+}
