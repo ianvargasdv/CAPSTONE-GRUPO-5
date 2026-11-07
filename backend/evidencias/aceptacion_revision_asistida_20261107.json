@@ -1,0 +1,43 @@
+{
+  "fecha": "2026-11-07",
+  "tipo": "aceptacion_de_revision_asistida",
+  "archivo_original": "evaluacion_real_20261029.json",
+  "ejecucion_id": "203d54dc-a17b-4b73-90b8-c5cc5ba99dc9",
+  "alcance": "Aceptación de Bryan de la revisión asistida de los once resultados originales y los dos posteriores a la corrección. No acredita evaluación humana independiente ni precisión general. Se conservan los originales y la aceptación individual previa.",
+  "resultados": [
+    {
+      "caso": "resumen_visita_pasada",
+      "decision": "aprobado",
+      "evaluador": "Asistente de desarrollo",
+      "aceptado_por": "Bryan Vargas",
+      "base_aceptacion": "Tras mostrar el caso y su valoración favorable, Bryan respondió: si tu consideras que si, si, sino no.",
+      "observacion": "Distingue una visita programada en una fecha pasada de una visita realizada. No inventa asistencia, compra ni conversaciones."
+    }
+  ],
+  "aceptacion_balance": {
+    "fecha_utc": "2026-11-07T16:07:28.207524+00:00",
+    "aceptado_por": "Bryan Vargas",
+    "confirmacion": "Sí, en respuesta a aceptar el balance conservando el fallo original como rechazado.",
+    "lotes": [
+      {
+        "original": "evaluacion_real_20261029.json",
+        "sha256_original": "b76469daf0fb90640a3c10ebfdf013d975f72df4117fe861cc2676a37f01c765",
+        "archivo_revisado": "evaluacion_real_revisada_20261107.json",
+        "resultados": {
+          "aprobado": 10,
+          "rechazado": 1
+        }
+      },
+      {
+        "original": "evaluacion_regresion_disponibilidad_20261029.json",
+        "sha256_original": "3deaacc68a89a5f6556bc838b3c689117af233f146efeac5ca469bf13398d496",
+        "archivo_revisado": "evaluacion_regresion_revisada_20261107.json",
+        "resultados": {
+          "aprobado": 2,
+          "rechazado": 0
+        }
+      }
+    ],
+    "llamadas_nuevas": 0
+  }
+}

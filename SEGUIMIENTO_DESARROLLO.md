@@ -2,6 +2,26 @@
 
 Actualizado: 7/11/2026. Este archivo es un control de trabajo, no un acta de reunión.
 
+## Finalización de actividades y revisión de respuestas · 7/11/2026
+
+El código del avance quedó en main y GitHub mediante el commit 510e439. En la
+comprobación final aprobaron 136 pruebas del backend, 53 del frontend y la
+compilación. El evaluador se ejecutó en proceso separado. No hubo llamadas pagadas.
+SCRUM-39, 40, 43, 44 y 45 quedaron Finalizadas en Jira, conservando 28 puntos.
+El sprint 6 permanece activo; su término previsto es el 9/11.
+
+Se revisaron también las once respuestas reales originales y las dos posteriores
+a SCRUM-42. Bryan aceptó el balance mostrado: diez originales aprobadas y una
+rechazada; las dos respuestas repetidas quedaron aprobadas. La aceptación se basa
+en revisión asistida, no en una evaluación humana independiente. Se preservaron
+los originales y se comprobaron sus huellas. Las copias revisadas conservan
+decisión, observación, autor y fecha por caso en backend/evidencias/.
+
+SCRUM-41 quedó Finalizado con cinco puntos, sin sprint asignado. No suma puntos
+al sprint 6. No se generaron nuevas respuestas ni se modificó Supabase. Las nuevas
+evidencias se versionan junto con esta actualización documental. Los registros
+anteriores conservan el estado que tenían en cada fecha.
+
 ## Ajuste móvil de Negocios y navegación · 7/11/2026
 
 Tras solicitar recargar el CRM y comprobar la vista de 390 px con su sesión,
