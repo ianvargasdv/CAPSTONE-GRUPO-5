@@ -3,32 +3,36 @@
 Este roadmap ordena el desarrollo por valor operativo. Cada módulo debe poder
 probarse y demostrarse por separado antes de pasar al siguiente.
 
-## Próxima etapa · 29/10/2026
+## Estado actual · 8/11/2026
 
-Sprint 6 Seguimiento con IA programado para el 2–9/11/2026, todavía sin iniciar.
-Incluye SCRUM-39 (8 puntos propuestos) y SCRUM-40 (5). SCRUM-41 permanece en el
-backlog. No se atribuye una reunión o estimación de equipo no realizada.
+El sprint 6 Seguimiento con IA está activo del 2 al 9/11. Sus cinco actividades
+finalizaron el 7/11, con 28 puntos completados:
 
-- SCRUM-39: preparación de notas de llamada implementada localmente el 29/10,
-  antes del sprint. Permite revisar y confirmar una interacción; no modifica
-  automáticamente el perfil ni crea tareas. Verificada con IA simulada; falta
-  comprobar las respuestas del proveedor real y revisar el flujo en el CRM habitual.
-- SCRUM-40: vista de cartera implementada y comprobada localmente el 29/10,
-  antes del sprint. Mi cartera toma la identidad de la sesión; administración
-  puede filtrar por responsable activo o clientes sin asignar. Conserva la
-  visibilidad de Todos y no reasigna actividades. Pendiente de revisión en el CRM habitual.
-- SCRUM-41: herramienta preparada localmente el 29/10 para planificar y ejecutar
-  lotes reales con confirmación, límites y registro parcial. Se ejecutó un lote
-  autorizado de once casos para cinco funciones, por US$0,0013079 estimados.
-  La revisión asistida detectó un hallazgo en un borrador; la revisión humana
-  permanece pendiente. La historia continúa fuera del alcance del sprint 6.
-- SCRUM-42: corregidas localmente la atribución de datos del cliente al inmueble
-  y las reglas sobre disponibilidad. Se reforzó el contexto y el caso de prueba,
-  con 145 comprobaciones sin costo aprobadas. Un segundo lote autorizado de dos
-  casos cumplió los criterios en revisión técnica asistida; corrección comprobada
-  en esa muestra. La tarea se cierra técnicamente, sin afirmar precisión general.
+| Referencia | Funcionalidad | Puntos |
+|---|---|---:|
+| SCRUM-39 | Preparar notas de llamada con IA | 8 |
+| SCRUM-40 | Consultar cartera y filtrar por responsable | 5 |
+| SCRUM-43 | Consultar el CRM y preparar tareas con Mobilita | 8 |
+| SCRUM-44 | Organizar listados, fichas y vista móvil | 5 |
+| SCRUM-45 | Renovar el escenario ficticio de demostración | 2 |
 
-Los apartados fechados de octubre que siguen conservan el contexto de sus entregas.
+La línea base fue de 13 puntos. SCRUM-43 añadió ocho el 2/11 y SCRUM-44 y
+SCRUM-45 añadieron siete el 4/11. Se conservan las fechas del desarrollo previo
+de SCRUM-39 y SCRUM-40, registrado el 29/10.
+
+SCRUM-41 está finalizada, con cinco puntos y sin sprint asignado. Bryan aceptó
+la revisión asistida de once respuestas originales y dos posteriores al ajuste:
+diez originales aprobadas, una rechazada y las dos posteriores aprobadas.
+SCRUM-42 conserva el defecto original y su corrección, con dos puntos y sin sprint.
+Estas actividades no aumentan los 28 puntos del sprint 6.
+
+El código del avance está publicado en `510e439` y la revisión aceptada en
+`7ae691a`. Hasta iniciar el próximo sprint no se modificará el backend.
+Quedan preparar la grabación local y registrar el cierre del sprint 6.
+Las ampliaciones siguientes se planificarán antes de implementarlas.
+
+Los apartados fechados de octubre conservan el estado de sus entregas. Sus
+pendientes son históricos; el estado actual se resume en este apartado.
 
 ## Criterio común de terminado
 
@@ -146,20 +150,23 @@ Los apartados fechados de octubre que siguen conservan el contexto de sus entreg
 
 - Coincidencia por presupuesto, comuna, tipo y dormitorios.
 - Explicación de por qué una propiedad coincide o no.
-- Alertas cuando ingresa una propiedad compatible.
+- La consulta muestra las coincidencias con el catálogo disponible. Las alertas
+  automáticas por nuevas propiedades quedan como una ampliación futura.
 - La regla base es determinista; la IA solo resume o explica.
 
 ### M6. Catálogo inmobiliario completo
 
-**Estado: MVP implementado localmente; pendiente migración y demostración sobre PostgreSQL.**
+**Estado: implementado y comprobado en el CRM con PostgreSQL de Supabase.**
 
 - Código interno, venta/arriendo, moneda y estado de publicación.
 - Superficie, dormitorios, baños, estacionamiento y bodega.
 - Gastos comunes, disponibilidad, características y fotografías.
 - Datos del propietario/captador con permisos apropiados.
 
-Las fotografías se registran por enlace y el captador como texto. No incluye
-almacenamiento de archivos ni asignación de cartera (M7).
+La migración del catálogo se aplicó y comprobó durante las pruebas. El 7/11 se
+revisaron el panel de la ficha y los datos ficticios de las 25 propiedades.
+Las fotografías se registran por enlace y el captador como texto. El MVP no
+almacena archivos de imagen; la asignación de leads corresponde a M7.
 
 ### M7. Equipo y asignación de cartera
 
@@ -171,17 +178,22 @@ inactivos, modificaciones sin permisos y cambios desde una ficha desactualizada.
 Esto no completa todo M7. Se mantienen pendientes:
 
 - Reasignación coordinada de tareas y oportunidades junto con el lead.
-- Extender la vista de cartera a tareas, visitas y oportunidades. El listado de
-  clientes ya cuenta con Mi cartera y filtros administrativos en SCRUM-40.
+- Extender las vistas de cartera a visitas y oportunidades. El listado de
+  clientes cuenta con Mi cartera y filtros administrativos en SCRUM-40; Tareas
+  limita al ejecutivo a los leads que tiene asignados.
 - Gestión de activación/desactivación de usuarios desde la interfaz.
 
 ### M8. Automatizaciones y notificaciones
+
+Propuestas para un sprint posterior; no forman parte del alcance terminado.
 
 - Crear próxima tarea al cambiar de etapa.
 - Alertas por tareas vencidas, leads sin contacto y visitas próximas.
 - Reglas configurables, sin envíos automáticos irreversibles por defecto.
 
 ### M9. Reportería comercial
+
+Propuestas para ampliar los indicadores actuales de Inicio y Negocios.
 
 - Tiempo hasta primer contacto y leads sin próxima acción.
 - Conversión entre etapas, tasa de cierre y ciclo promedio.
@@ -190,15 +202,21 @@ Esto no completa todo M7. Se mantienen pendientes:
 
 ### M10. Comunicaciones
 
+Mobilita ya funciona como asistente dentro del CRM. La mensajería externa y
+las capacidades siguientes requieren planificación e integración adicionales.
+
 - Acciones rápidas para llamada, correo y WhatsApp.
 - Copiloto que redacta respuestas y plantillas usando solo información registrada.
 - Revisión humana obligatoria antes de enviar en la primera versión.
 - Registro automático o asistido de la comunicación en el historial.
 - Consentimiento, plantillas aprobadas, límites de frecuencia y baja de mensajes.
 - Derivación a un ejecutivo ante visita, negociación, reclamo o baja confianza.
-- Chatbot web como canal inicial; WhatsApp Business como integración posterior.
+- Integrar un canal de atención para clientes, distinto del chat interno Mobilita;
+  WhatsApp Business queda como posibilidad posterior.
 
 ### M11. Documentos y cierre
+
+Propuestas de gestión documental comercial, distintas de los informes académicos.
 
 - Archivos asociados a oportunidad y propiedad.
 - Checklist documental por operación.
@@ -207,10 +225,14 @@ Esto no completa todo M7. Se mantienen pendientes:
 
 ### M12. Producción y seguridad
 
+Trabajo futuro para una publicación estable. El MVP actual se demuestra localmente.
+
 - Cookies seguras o estrategia equivalente para sesiones.
 - Límite de intentos de acceso y recuperación de contraseña.
-- CORS configurable, migraciones versionadas y copias de seguridad.
-- Monitoreo, paginación general y política de retención de auditoría.
+- Ampliar las migraciones y copias de seguridad para operación en producción;
+  CORS ya se configura mediante `CORS_ORIGINS`.
+- Monitoreo, paginación desde el servidor para los listados que todavía reciben
+  el conjunto completo y política de retención de auditoría.
 
 ## Orden recomendado para las próximas demostraciones
 

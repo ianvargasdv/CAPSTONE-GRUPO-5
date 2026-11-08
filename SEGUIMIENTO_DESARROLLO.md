@@ -1,6 +1,35 @@
 # Seguimiento del desarrollo
 
-Actualizado: 7/11/2026. Este archivo es un control de trabajo, no un acta de reunión.
+Actualizado: 8/11/2026. Control de avances y comprobaciones del proyecto.
+
+## Revisión documental · 8/11/2026
+
+Se actualizaron README y Roadmap con las finalizaciones del 7/11 y los commits
+510e439 y 7ae691a. Se corrigieron referencias a migración y evaluación pendientes,
+se distinguieron las propuestas futuras y se aclaró la secuencia de aceptación
+de SCRUM-41. La revisión de Drive del 7/11 confirmó los ajustes de estados y
+resúmenes; el cambio de colores del User Story Mapping queda a cargo del compañero.
+
+El sprint 6 sigue activo hasta su término previsto del 9/11. El backend se mantiene
+sin cambios hasta el próximo sprint. Esta revisión sólo modifica documentación
+y se versiona junto con README, Roadmap y el balance de respuestas.
+
+## Restricción de cambios y revisión documental · 7/11/2026
+
+Bryan indicó que no se pueden realizar más cambios en el backend hasta iniciar
+el próximo sprint. Durante este intervalo se mantiene el código del backend,
+sin nuevas funciones, migraciones ni renovaciones de datos. Corresponde mantener
+las evidencias y documentos, preparar la grabación local cuando Bryan lo decida
+y registrar el cierre del sprint 6. El siguiente sprint aún no está planificado.
+
+La revisión de Jira confirmó las cinco actividades del sprint 6 Finalizadas,
+con 28 puntos y el sprint activo hasta su término previsto del 9/11. SCRUM-41
+también está Finalizado, con cinco puntos y sin sprint asignado. Las épicas
+SCRUM-18 y SCRUM-38 se finalizaron al comprobar que todos sus hijos están
+Finalizados. Esta actualización no cierra el sprint ni declara terminado todo
+el proyecto. La revisión inicial encontró textos y resúmenes desactualizados en
+Drive. Se corrigieron y su guardado se comprobó posteriormente, salvo el cambio
+de colores del User Story Mapping que realizará el compañero.
 
 ## Finalización de actividades y revisión de respuestas · 7/11/2026
 
@@ -22,11 +51,16 @@ al sprint 6. No se generaron nuevas respuestas ni se modificó Supabase. Las nue
 evidencias se versionan junto con esta actualización documental. Los registros
 anteriores conservan el estado que tenían en cada fecha.
 
-## Ajuste móvil de Negocios y navegación · 7/11/2026
+## Historial de comprobaciones
 
-Tras solicitar recargar el CRM y comprobar la vista de 390 px con su sesión,
-Bryan respondió «ya listo». Se registró esta confirmación en SCRUM-44. No se
-recibió una captura nueva ni un detalle adicional de ese recorrido.
+Los apartados siguientes conservan el estado al realizar cada prueba. Las
+finalizaciones y publicaciones posteriores figuran en el resumen anterior;
+un pendiente histórico no significa que siga abierto.
+
+### Ajuste móvil de Negocios y navegación · 7/11/2026
+
+Bryan confirmó la revisión del ajuste móvil en su sesión. Se registró en SCRUM-44
+como confirmación informada, sin una captura nueva del recorrido.
 
 La revisión de Bryan a 390 px mostró poco espacio por la barra lateral, los cuatro
 indicadores apilados y el tablero horizontal. Se incorporó Menú con el Drawer
@@ -41,7 +75,8 @@ desbordamiento de página; búsqueda vacía, filtros de etapa y estado, cambio d
 etapa, apertura del formulario, paginación 10/25, montos, menú por rol, ficha del
 inmueble y apertura/minimización de Mobilita. A 1366 px se comprobó el regreso al
 tablero y Tabla, y el cierre del menú al ampliar. No se usaron Supabase ni la IA.
-La confirmación posterior del usuario se registra al inicio de este apartado.
+La comprobación con datos aislados y la confirmación del usuario se registran
+por separado.
 
 Los archivos auxiliares del frontend y el servidor temporal de prueba se retiraron.
 La captura de referencia está en .codex-temp/movil-qa-20261107/Negocios_390.png,

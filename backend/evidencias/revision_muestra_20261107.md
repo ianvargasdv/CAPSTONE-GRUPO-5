@@ -4,7 +4,7 @@ Fecha: 7/11/2026. Actividad: SCRUM-41.
 
 Se compararon las once respuestas originales y las dos posteriores a la corrección con las entradas y los criterios guardados en cada caso. No se consultó al proveedor ni se modificó la base de datos.
 
-Esta es una revisión técnica del asistente de desarrollo. Bryan aceptó el primer caso después de verlo en el chat, basándose en esa valoración. No se atribuye su aprobación a los otros doce resultados.
+La revisión fue asistida. Bryan aceptó primero el caso mostrado y después el balance completo el 7/11/2026, incluyendo conservar el fallo original como rechazado. Las decisiones y sus límites se detallan al final.
 
 ## Lote original
 

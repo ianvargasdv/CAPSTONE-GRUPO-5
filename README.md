@@ -4,6 +4,22 @@ Sistema de gestión para ejecutivos inmobiliarios: prospectos (leads), catálogo
 propiedades, historial de contacto, tareas de seguimiento y propiedades de interés
 de cada lead.
 
+## Estado al 8/11/2026
+
+El sprint 6 está activo, con término previsto para el 9/11. Sus cinco actividades
+están finalizadas y suman 28 puntos. SCRUM-41 también está finalizada, con cinco
+puntos y sin sprint asignado. El código del avance está en el commit `510e439` y
+la revisión aceptada de las respuestas de IA en `7ae691a`.
+
+La última comprobación, realizada el 7/11, aprobó 136 pruebas del backend, 53 del
+frontend y la compilación. Las pruebas automáticas usan datos temporales y un
+proveedor simulado. Las respuestas reales y sus revisiones se guardan por separado
+en `backend/evidencias/`.
+
+Hasta iniciar el próximo sprint no se modificará el backend. Quedan la grabación
+local, el cierre del sprint y el mantenimiento de las evidencias. Los apartados
+fechados conservan las comprobaciones realizadas en cada etapa.
+
 ## Lectura de los listados
 
 ### Renovación del escenario académico
@@ -30,8 +46,8 @@ y ausencia de envío del referente al servidor de imágenes.
 
 El catálogo académico recibió enlaces referenciales de Pexels el 4/11. No son fotos
 reales de esos inmuebles; se eligieron por tipo y algunas se reutilizan. Se identifican
-mediante el fragmento `#referencial` de la URL y el texto alternativo accesible;
-por solicitud del usuario no se muestra un rótulo bajo las fotografías.
+mediante el fragmento `#referencial` de la URL y el texto alternativo accesible.
+El listado muestra las fotografías sin un rótulo adicional.
 La selección y licencia están en `backend/recursos/fotos_catalogo.json`; cada número
 corresponde a `https://www.pexels.com/photo/NUMERO/`. Licencia:
 https://www.pexels.com/license/ . La base conserva URLs en los campos existentes
@@ -228,9 +244,10 @@ El modelo no recibe credenciales ni acceso directo a la base de datos. El panel
 administrativo suma estas propuestas a los análisis existentes, incluidas las
 respuestas inválidas cuyo consumo fue informado.
 
-Antes de usar esta versión contra la base compartida, ejecutar `python migrar.py`
-desde `backend`. La migración se entrega preparada; no acredita que se haya aplicado
-en Supabase. El arranque existente de la API también crea las tablas ausentes.
+La migración de `propuestas_tarea_chat` se aplicó y su presencia en Supabase quedó
+verificada durante las comprobaciones de noviembre. En otra base existente,
+ejecutar `python migrar.py` desde `backend` antes de usar esta versión.
+El arranque de la API crea tablas ausentes, pero no agrega columnas a las existentes.
 
 Pruebas sin costo: `python -m unittest prueba_chat_tareas` desde `backend` y
 `node --test src/chatTareas.test.js` desde `frontend`. Las pruebas usan un LLM
@@ -253,7 +270,7 @@ con US$0,000760 estimados. Evidencia:
 Las acciones se comprobaron en SQLite temporal; no se crearon tareas en Supabase.
 La ampliación reutiliza el JSON de propuestas y no requiere otra migración.
 
-## Cartera de clientes · avance local del 29/10/2026
+## Cartera de clientes
 
 En **Leads**, el selector **Cartera** permite alternar entre **Todos los clientes**
 y **Mi cartera**. Mi cartera usa el usuario de la sesión y la asignación vigente,
@@ -271,7 +288,7 @@ reserva los de responsable y sin asignar a administración. No requiere migraci�
 Pruebas sin costo: `python prueba_cartera.py` desde `backend` y
 `node --test src/cartera.test.js` desde `frontend`.
 
-## Notas de llamada con IA · avance local del 29/10/2026
+## Notas de llamada con IA
 
 En la ficha del cliente, abre **Asistente** y selecciona **Notas de una llamada**.
 Introduce notas de una llamada que ya realizaste y solicita
@@ -285,10 +302,11 @@ guarda un contacto ni modifica requisitos, tareas o visitas. Las propuestas prev
 se consultan en el mismo bloque y no acreditan por sí solas una llamada registrada.
 La función usa `analisis_ia` e `interacciones` existentes: no requiere migración.
 
-Comprobación sin costo desde `backend`: `python prueba_llamada.py`. Se validaron
-el flujo y los errores con un proveedor simulado y SQLite temporal. La calidad de
-las respuestas reales de esta nueva función sigue pendiente de evaluación; no se
-reutiliza la autorización de llamadas pagadas de octubre.
+Comprobación sin costo desde `backend`: `python prueba_llamada.py`. El flujo y los
+errores se comprueban con un proveedor simulado y SQLite temporal. Los casos reales
+de notas de llamada forman parte de la muestra revisada en SCRUM-41. El 7/11 se
+comprobaron también el descarte y el guardado del texto editado en el CRM habitual.
+Una nueva ejecución con el proveedor requiere una autorización de gasto nueva.
 
 ## Evaluación del asistente
 
@@ -386,13 +404,24 @@ de aclarar. Este segundo lote costó US$0,0004061 estimados.
 
 Resultados originales: `backend/evidencias/evaluacion_real_20261029.json`.
 Observaciones separadas: `backend/evidencias/revision_asistida_20261029.json`.
-La revisión asistida no sustituye la humana: las once respuestas originales
-permanecen pendientes de esa revisión. La muestra no acredita precisión general.
 La regresión y sus observaciones se conservan en
 `backend/evidencias/evaluacion_regresion_disponibilidad_20261029.json` y
-`backend/evidencias/revision_asistida_regresion_20261029.json`, también sin registrar
-una aprobación humana. Entre ambos lotes se hicieron trece llamadas autorizadas
+`backend/evidencias/revision_asistida_regresion_20261029.json`. Entre ambos lotes se hicieron trece llamadas autorizadas
 por US$0,0017140 estimados.
+
+### Revisión aceptada · 7/11/2026
+
+Bryan aceptó el balance de la revisión asistida: diez respuestas originales
+aprobadas y una rechazada; las dos respuestas posteriores a la corrección quedaron
+aprobadas. Se conserva el fallo original y sólo se repitieron esos dos casos.
+La aceptación no fue una evaluación independiente ni demuestra precisión general.
+
+Las decisiones, observaciones, autor y fecha están en
+`backend/evidencias/evaluacion_real_revisada_20261107.json` y
+`backend/evidencias/evaluacion_regresion_revisada_20261107.json`. El balance y la
+aceptación se conservan en `revision_muestra_20261107.md` y
+`aceptacion_revision_asistida_20261107.json`, dentro de la misma carpeta.
+Los originales permanecen intactos. SCRUM-41 está finalizada y fuera del sprint 6.
 
 ## Comprobación del asistente · 16/10/2026
 
@@ -965,11 +994,13 @@ un historial que se puede alterar no sirve como historial.
   existen. Para eso está `migrar.py`, que aplica los cambios de estructura con
   `IF NOT EXISTS` y se puede correr las veces que sea necesario. Hay que ejecutarlo
   después de traer cambios que agreguen columnas a una tabla existente.
-- CORS está limitado a `localhost:3000`. Al desplegar hay que agregar el dominio en
-  `backend/main.py`.
+- Los orígenes permitidos del navegador incluyen `localhost:3000` y
+  `127.0.0.1:3000`. Las direcciones adicionales se configuran en `CORS_ORIGINS`;
+  no se admiten comodines ni URLs con rutas o credenciales.
 - La reasignación de leads no reasigna sus tareas, visitas ni oportunidades.
-  La vista de cartera se limita al listado de clientes; no hay gestión de cuentas
-  desde la interfaz. Esas ampliaciones del módulo M7 siguen pendientes.
+  Mi cartera organiza el listado de clientes y Tareas restringe el acceso del
+  ejecutivo a los leads que tiene asignados. Quedan por extender las vistas de
+  cartera de visitas y oportunidades y la gestión de cuentas desde la interfaz.
 - No hay cambio de contraseña desde la interfaz.
 - El registro de actividad y el historial de responsables están paginados. Los demás
   listados traen todo, porque su tamaño lo acota la operación del negocio.
@@ -1002,7 +1033,8 @@ Implementado: leads con perfil comercial 360, oportunidades y pipeline, agenda d
 visitas, matching explicable, catálogo ampliado de propiedades, interacciones, tareas, propiedades de interés,
 autenticación con roles, priorización de leads, asistente con IA (resumen,
 recomendación, borrador y preguntas), preparación revisable de notas de llamada,
-cartera por responsable, seguimiento del consumo, registro de actividad y vista de inicio.
+cartera por responsable, Mobilita para consultas y tareas con confirmación,
+seguimiento del consumo, registro de actividad y vista de inicio.
 
 El catálogo permite registrar código interno, superficies, estacionamientos, bodega,
 gastos comunes en CLP, disponibilidad, descripción y características. Admite hasta
@@ -1017,6 +1049,7 @@ Antes de usar estos campos sobre una base PostgreSQL existente, ejecutar
 `python migrar.py` desde `backend`, con la conexión configurada. Las pruebas del
 catálogo usan SQLite temporal: no aplican esa migración sobre Supabase.
 
-Pendiente: equipo, automatizaciones, reportería,
-comunicaciones, documentos y las mejoras de producción
-detalladas en el roadmap.
+Posibles ampliaciones: gestión de cuentas desde la interfaz, vistas de cartera
+para visitas y oportunidades, automatizaciones, reportería, comunicaciones y
+documentos comerciales. Se describen en el roadmap como propuestas para planificar,
+no como compromisos del sprint actual.
