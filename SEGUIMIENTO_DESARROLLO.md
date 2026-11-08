@@ -2,6 +2,23 @@
 
 Actualizado: 8/11/2026. Control de avances y comprobaciones del proyecto.
 
+## Cierre del sprint 6 · 8/11/2026
+
+Bryan solicitó cerrar el sprint al comprobar que el alcance estaba terminado.
+Jira registró el cierre el 8/11, conservando el período planificado del 2 al 9/11.
+Las cinco actividades estaban Finalizadas, con 28 puntos y ningún trabajo que
+trasladar. SCRUM-41 conserva cinco puntos y no pertenece al sprint.
+
+Se verificaron las cinco épicas y las 38 historias y tareas existentes como
+Finalizadas. No se abrió otro sprint. El cierre quedó registrado en SCRUM-38.
+El código está en 510e439, las evidencias en 7ae691a y la revisión documental
+anterior en 566ff6b. Esta anotación se versiona junto con README y Roadmap.
+
+La nueva imagen de User Story Mapping ya muestra las tres tarjetas finalizadas
+en amarillo. Se comprobaron las anotaciones de cierre guardadas en los documentos
+de Drive, incluida la corrección final de Release. La grabación local sigue pendiente y el backend no se modifica hasta
+el próximo sprint. El cierre no equivale a la entrega final del proyecto.
+
 ## Revisión documental · 8/11/2026
 
 Se actualizaron README y Roadmap con las finalizaciones del 7/11 y los commits
@@ -10,9 +27,9 @@ se distinguieron las propuestas futuras y se aclaró la secuencia de aceptación
 de SCRUM-41. La revisión de Drive del 7/11 confirmó los ajustes de estados y
 resúmenes; el cambio de colores del User Story Mapping queda a cargo del compañero.
 
-El sprint 6 sigue activo hasta su término previsto del 9/11. El backend se mantiene
-sin cambios hasta el próximo sprint. Esta revisión sólo modifica documentación
-y se versiona junto con README, Roadmap y el balance de respuestas.
+Esta revisión se realizó antes del cierre del sprint. El backend se mantiene sin
+cambios hasta el próximo sprint. Sólo se modificó documentación, versionada junto
+con README, Roadmap y el balance de respuestas en 566ff6b.
 
 ## Restricción de cambios y revisión documental · 7/11/2026
 

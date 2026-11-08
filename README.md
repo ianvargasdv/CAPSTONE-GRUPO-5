@@ -6,9 +6,9 @@ de cada lead.
 
 ## Estado al 8/11/2026
 
-El sprint 6 está activo, con término previsto para el 9/11. Sus cinco actividades
-están finalizadas y suman 28 puntos. SCRUM-41 también está finalizada, con cinco
-puntos y sin sprint asignado. El código del avance está en el commit `510e439` y
+El sprint 6 se cerró el 8/11, con sus cinco actividades finalizadas y 28 puntos
+completados. El término planificado se conserva en el 9/11. SCRUM-41 está finalizada,
+con cinco puntos y sin sprint asignado. El código del avance está en el commit `510e439` y
 la revisión aceptada de las respuestas de IA en `7ae691a`.
 
 La última comprobación, realizada el 7/11, aprobó 136 pruebas del backend, 53 del
@@ -17,7 +17,7 @@ proveedor simulado. Las respuestas reales y sus revisiones se guardan por separa
 en `backend/evidencias/`.
 
 Hasta iniciar el próximo sprint no se modificará el backend. Quedan la grabación
-local, el cierre del sprint y el mantenimiento de las evidencias. Los apartados
+local y el mantenimiento de las evidencias. Los apartados
 fechados conservan las comprobaciones realizadas en cada etapa.
 
 ## Lectura de los listados

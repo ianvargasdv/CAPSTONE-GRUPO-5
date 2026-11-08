@@ -5,8 +5,8 @@ probarse y demostrarse por separado antes de pasar al siguiente.
 
 ## Estado actual · 8/11/2026
 
-El sprint 6 Seguimiento con IA está activo del 2 al 9/11. Sus cinco actividades
-finalizaron el 7/11, con 28 puntos completados:
+El sprint 6 Seguimiento con IA se cerró el 8/11. Se conserva el período planificado
+del 2 al 9/11. Sus cinco actividades finalizaron el 7/11, con 28 puntos completados:
 
 | Referencia | Funcionalidad | Puntos |
 |---|---|---:|
@@ -28,7 +28,7 @@ Estas actividades no aumentan los 28 puntos del sprint 6.
 
 El código del avance está publicado en `510e439` y la revisión aceptada en
 `7ae691a`. Hasta iniciar el próximo sprint no se modificará el backend.
-Quedan preparar la grabación local y registrar el cierre del sprint 6.
+El cierre ya está reflejado en los documentos de Drive. Queda preparar la grabación local.
 Las ampliaciones siguientes se planificarán antes de implementarlas.
 
 Los apartados fechados de octubre conservan el estado de sus entregas. Sus
