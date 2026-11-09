@@ -1,3 +1,4 @@
+import EstadoCarga from './EstadoCarga';
 import React, { useMemo, useState } from 'react';
 import Icono from './Iconos';
 import ListadoPaginado from './ListadoPaginado';
@@ -50,7 +51,7 @@ function AgendaVisitas({ visitas, cargando, error, alEditar, alEliminar, alCambi
     });
   }, [referencia]);
 
-  if (cargando) return <div className="state-message">Cargando agenda...</div>;
+  if (cargando) return <EstadoCarga>Cargando agenda...</EstadoCarga>;
   if (error) return <div className="panel-cuerpo"><div className="alert-error"><Icono nombre="alerta" />{error}</div></div>;
 
   const filtradas = visitas.filter((v) => filtroEstado === 'Todos' || v.estado === filtroEstado);

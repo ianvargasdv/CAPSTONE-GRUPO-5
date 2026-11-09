@@ -1,3 +1,4 @@
+import EstadoCarga from './EstadoCarga';
 import React, { useState } from 'react';
 import Icono from './Iconos';
 import ListadoPaginado from './ListadoPaginado';
@@ -45,7 +46,7 @@ function TablaTareas({
   }, {});
 
   if (cargando) {
-    return <div className="state-message">Cargando tareas...</div>;
+    return <EstadoCarga>Cargando tareas...</EstadoCarga>;
   }
 
   if (error) {

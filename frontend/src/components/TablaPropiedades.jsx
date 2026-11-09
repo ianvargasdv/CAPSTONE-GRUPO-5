@@ -1,3 +1,4 @@
+import EstadoCarga from './EstadoCarga';
 import React, { useState } from 'react';
 import Icono from './Iconos';
 import ListadoPaginado from './ListadoPaginado';
@@ -40,7 +41,7 @@ function TablaPropiedades({ propiedades, cargando, error, alEditar, alPedirElimi
   const [fichaId, setFichaId] = useState(null);
 
   if (cargando) {
-    return <div className="state-message">Cargando catálogo...</div>;
+    return <EstadoCarga>Cargando catálogo...</EstadoCarga>;
   }
 
   if (error) {

@@ -91,7 +91,8 @@ function Login({ alIniciarSesion, aviso }) {
             />
           </div>
 
-          <button type="submit" className="btn-primary btn-bloque" disabled={cargando}>
+          <button type="submit" className="btn-primary btn-bloque" disabled={cargando} aria-busy={cargando}>
+            {cargando && <span className="boton-carga" aria-hidden="true" />}
             {cargando ? 'Verificando...' : 'Ingresar'}
           </button>
         </form>

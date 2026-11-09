@@ -1,3 +1,4 @@
+import EstadoCarga from './EstadoCarga';
 import React from 'react';
 import Icono from './Iconos';
 
@@ -42,7 +43,7 @@ function fechaHistorica(valor) {
 
 function ConsumoIA({ consumo, cargando, error, alRecargar }) {
   if (cargando) {
-    return <div className="state-message">Cargando consumo del agente...</div>;
+    return <EstadoCarga>Cargando consumo del agente...</EstadoCarga>;
   }
 
   if (error) {

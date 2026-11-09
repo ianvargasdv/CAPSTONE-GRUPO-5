@@ -1,3 +1,4 @@
+import EstadoCarga from './EstadoCarga';
 import React, { useRef, useState } from 'react';
 import Icono from './Iconos';
 import ListadoPaginado from './ListadoPaginado';
@@ -48,7 +49,7 @@ function PipelineOportunidades({ oportunidades, cargando, error, alEditar, alEli
   const [expandidas, setExpandidas] = useState({});
   const tablero = useRef(null);
 
-  if (cargando) return <div className="state-message">Cargando negocios...</div>;
+  if (cargando) return <EstadoCarga>Cargando negocios...</EstadoCarga>;
   if (error) return <div className="panel-cuerpo"><div className="alert-error"><Icono nombre="alerta" />{error}</div></div>;
 
   const termino = busqueda.toLowerCase().trim();

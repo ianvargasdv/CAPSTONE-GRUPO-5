@@ -1,3 +1,4 @@
+import EstadoCarga from './EstadoCarga';
 import React from 'react';
 import Icono from './Iconos';
 import { clienteDeTarea } from '../presentacion';
@@ -46,7 +47,7 @@ function fechaCorta(iso) {
 
 function Dashboard({ leads, propiedades, tareas, oportunidades = [], visitas = [], cargando, alVerFicha, alEditarTarea, alIrA }) {
   if (cargando) {
-    return <div className="state-message">Cargando resumen...</div>;
+    return <EstadoCarga>Cargando resumen...</EstadoCarga>;
   }
 
   const hoy = new Date();

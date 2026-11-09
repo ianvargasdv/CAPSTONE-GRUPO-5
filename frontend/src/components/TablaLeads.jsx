@@ -1,3 +1,4 @@
+import EstadoCarga from './EstadoCarga';
 import React, { useEffect, useState } from 'react';
 import Icono from './Iconos';
 import ListadoPaginado from './ListadoPaginado';
@@ -99,7 +100,7 @@ function TablaLeads({
   };
 
   if (cargando) {
-    return <div className="state-message">Cargando leads...</div>;
+    return <EstadoCarga>Cargando leads...</EstadoCarga>;
   }
 
   if (error) {
@@ -302,6 +303,7 @@ function TablaLeads({
                         <button className="btn-icono" onClick={() => alEditar(lead)} title="Editar">
                           <Icono nombre="editar" />
                         </button>
+                        {usuario?.rol === 'admin' && (
                         <button
                           className="btn-icono peligro"
                           onClick={() => alPedirEliminar(lead)}
@@ -309,6 +311,7 @@ function TablaLeads({
                         >
                           <Icono nombre="eliminar" />
                         </button>
+                        )}
                       </div>
                     </td>
                   </tr>

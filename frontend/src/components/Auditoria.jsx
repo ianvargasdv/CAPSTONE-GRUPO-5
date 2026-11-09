@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Icono from './Iconos';
+import EstadoCarga from './EstadoCarga';
 import { obtenerAuditoria, obtenerFiltrosAuditoria } from '../api';
 
 /**
@@ -46,6 +47,7 @@ const ETIQUETA_ENTIDAD = {
   interes: 'Interés',
   analisis: 'Análisis de IA',
   propuesta_tarea: 'Mobilita',
+  solicitud_archivo: 'Solicitud de archivo',
 };
 
 // El color comunica el riesgo de la acción: lo que se borra no se recupera
@@ -258,7 +260,7 @@ function Auditoria() {
       )}
 
       {!error && cargando && !datos && (
-        <div className="state-message">Cargando el registro de actividad...</div>
+        <EstadoCarga>Cargando el registro de actividad...</EstadoCarga>
       )}
 
       {!error && datos && total === 0 && (
