@@ -2805,10 +2805,7 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible, [tabindex]:focus
 .mobilita[hidden], .mobilita-ventana[hidden], .mobilita-lanzador[hidden] { display: none; }
 .mobilita-lanzador { position: relative; display: flex; gap: 10px; align-items: center; min-height: 64px; padding: 8px 17px 8px 9px; border: 1px solid var(--primario); border-radius: 18px; background: var(--primario); color: #fff; font: inherit; font-weight: 600; box-shadow: 0 5px 18px #18181b1a; cursor: pointer; transition: background 150ms, transform 150ms, box-shadow 180ms; }
 .mobilita-personaje { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border-radius: 13px; background: #ffffff0d; color: #c4d7ed; }
-.mobilita-personaje svg { width: 43px; height: 43px; }
-.mobilita-ojos { transform-box: fill-box; transform-origin: center; animation: mobilita-parpadear 6s ease-in-out infinite; }
 .mobilita-personaje.saludando { animation: mobilita-balanceo 2.4s ease-in-out 3; }
-.mobilita-personaje.saludando .mobilita-boca { transform-box: fill-box; transform-origin: center; animation: mobilita-hablar 850ms ease-in-out 6; }
 .mobilita-lanzador-texto { display: flex; flex-direction: column; gap: 3px; text-align: left; }
 .mobilita-lanzador-texto strong { font-size: 14px; line-height: 1.3; }
 .mobilita-lanzador-texto small { font-size: 11px; font-weight: 400; color: #d4d4d8; }
@@ -2828,9 +2825,7 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible, [tabindex]:focus
 .mobilita-ventana.ampliada { width: min(720px, calc(100vw - 48px)); }
 .mobilita-encabezado { position: relative; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 14px 16px; background: var(--superficie); color: var(--primario); flex-shrink: 0; border-top: 3px solid var(--primario); }
 .mobilita-encabezado.trabajando::after { content: ''; position: absolute; bottom: 0; left: 0; width: 32%; height: 2px; background: var(--mobilita-acento); border-radius: 3px; animation: mobilita-recorrido 2s ease-in-out infinite alternate; }
-.mobilita-encabezado.trabajando .mobilita-avatar { animation: mobilita-avatar 2s ease-in-out infinite; }
 .mobilita-identidad { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.mobilita-avatar { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; background: var(--mobilita-acento); color: #fff; font-weight: 700; font-size: 18px; flex-shrink: 0; }
 .mobilita-identidad h2 { margin: 0; font-size: 16px; font-weight: 600; line-height: 1.4; }
 .mobilita-identidad p { margin: 2px 0 0; color: var(--texto-medio); font-size: 11px; }
 .mobilita-acciones { display: flex; align-items: center; gap: 3px; }
@@ -2845,7 +2840,6 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible, [tabindex]:focus
 .mobilita-alcance { padding: 8px 16px; margin: 0; background: var(--superficie-alt); color: var(--texto-medio); font-size: 11px; border-block: 1px solid var(--borde); flex-shrink: 0; }
 .mobilita-cuerpo { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 20px 18px; background: var(--superficie); scrollbar-gutter: stable; }
 .mobilita-inicio { padding: 12px 3px; }
-.mobilita-inicio-icono { display: grid; place-items: center; width: 48px; height: 48px; color: var(--primario); background: var(--superficie-hover); border-radius: 14px; margin-bottom: 18px; }
 .mobilita-inicio h3 { font-size: 20px; font-weight: 600; line-height: 1.3; margin: 0 0 8px; color: var(--texto); letter-spacing: -.3px; }
 .mobilita-inicio p { margin: 0 0 24px; font-size: 13px; color: var(--texto-medio); line-height: 1.7; max-width: 350px; }
 .mobilita-sugerencias { display: grid; gap: 8px; }
@@ -2856,7 +2850,6 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible, [tabindex]:focus
 .mobilita-sugerencias button:nth-child(2) { animation-delay: 65ms; }
 .mobilita-sugerencias button:nth-child(3) { animation-delay: 130ms; }
 .mobilita-sugerencias button:hover:not(:disabled) { transform: translateX(3px); }
-.mobilita-inicio-icono { animation: mobilita-saludar 500ms ease-out; }
 .mobilita-sugerencias button:disabled { opacity: .5; cursor: default; }
 .mobilita-inicio > small { display: block; font-size: 11px; color: var(--texto-medio); margin-top: 13px; line-height: 1.6; }
 .mobilita-mensaje { background: var(--superficie); color: var(--texto); border: 0; border-radius: 10px; padding: 4px 0; font-size: 14px; line-height: 1.75; margin: 0 0 22px; overflow-wrap: anywhere; }
@@ -2880,7 +2873,6 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible, [tabindex]:focus
 .mobilita-fuente svg { margin-top: 2px; flex-shrink: 0; }
 .mobilita-fuente.denegada { color: var(--alerta); }
 .mobilita-escribiendo { display: flex; gap: 10px; align-items: flex-start; padding: 12px; border: 1px solid var(--borde); border-radius: 12px; background: var(--superficie-alt); animation: mobilita-aparecer 220ms ease-out; }
-.mobilita-mini-avatar { display: grid; place-items: center; width: 28px; height: 28px; flex-shrink: 0; border-radius: 9px; background: var(--mobilita-acento-suave); color: var(--mobilita-acento); font-weight: 700; font-size: 12px; }
 .mobilita-escribiendo strong { display: block; margin-bottom: 7px; font-size: 11px; color: var(--texto); }
 .mobilita-espera { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 11px; color: var(--texto-medio); }
 .mobilita-puntos { display: inline-flex; gap: 4px; align-items: center; height: 14px; }
@@ -3009,4 +3001,171 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible, [tabindex]:focus
 
 @media (max-width: 360px) {
   .inmueble-datos { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Propuestas y solicitudes: una acción principal, espacio entre decisiones. */
+.mobilita-plan { padding: 16px; background: var(--superficie); border: 1px solid var(--borde); border-radius: 12px; font-size: 13px; line-height: 1.55; animation: mobilita-aparecer 240ms ease-out both; }
+.mobilita-plan-cabecera { display: flex; gap: 10px; align-items: center; padding-bottom: 12px; }
+.mobilita-plan-icono { display: grid; place-items: center; width: 36px; height: 36px; flex-shrink: 0; background: #edf3f8; color: #52749a; border-radius: 10px; }
+.mobilita-plan-cabecera h3 { font-size: 12px; font-weight: 500; color: var(--texto-medio); margin: 0 0 2px; }
+.mobilita-plan-cabecera strong { font-size: 15px; color: var(--texto); overflow-wrap: anywhere; }
+.mobilita-plan-intro { color: var(--texto-medio); margin: 0 0 16px; font-size: 12px; }
+.mobilita-plan-lista { display: grid; gap: 12px; }
+.mobilita-plan-accion { min-width: 0; border: 1px solid var(--borde); border-radius: 10px; overflow: hidden; background: var(--superficie); animation: mobilita-aparecer 260ms ease-out both; animation-delay: calc(var(--orden, 0) * 45ms); }
+.mobilita-plan-accion-titulo { display: flex; gap: 8px; align-items: center; padding: 12px; background: var(--superficie-alt); border-bottom: 1px solid var(--borde); }
+.mobilita-plan-accion-titulo > span { display: grid; place-items: center; width: 22px; height: 22px; flex-shrink: 0; border: 1px solid var(--borde-fuerte); border-radius: 50%; color: var(--texto-medio); background: var(--superficie); font-size: 11px; }
+.mobilita-plan-accion h4 { margin: 0; font-size: 12px; font-weight: 600; }
+.mobilita-plan-referencia { padding: 10px 12px 0; font-size: 12px; color: var(--texto-medio); overflow-wrap: anywhere; }
+.mobilita-plan-accion dl { margin: 0; }
+.mobilita-plan-dato { padding: 10px 12px; border-bottom: 1px solid #f0f0f2; }
+.mobilita-plan-dato:last-child { border-bottom: 0; }
+.mobilita-plan-dato dt { font-size: 11px; font-weight: 500; color: var(--texto-medio); margin: 0 0 4px; }
+.mobilita-plan-dato dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.mobilita-plan-dato dd small { display: block; color: var(--texto-medio); font-size: 11px; margin-bottom: 4px; }
+.mobilita-plan-dato dd > span { font-weight: 600; }
+.mobilita-plan-nota { margin: 0; padding: 10px 12px; color: var(--texto-medio); font-size: 11px; background: var(--superficie-alt); border-top: 1px solid var(--borde); }
+.mobilita-plan .chat-tareas-pendientes { padding: 12px; margin: 0 0 16px; border: 1px solid var(--alerta-borde); border-radius: 8px; font-size: 12px; }
+.mobilita-plan .chat-tareas-pendientes ul { margin: 8px 0; padding-left: 18px; }
+.mobilita-plan-pie { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--borde); display: grid; gap: 10px; }
+.mobilita-plan-pie > p { font-size: 11px; color: var(--texto-medio); text-align: center; margin: 0 0 2px; }
+.mobilita-plan-pie > .btn-primary { width: 100%; min-height: 44px; justify-content: center; }
+.mobilita-plan-secundarias { display: flex; flex-wrap: wrap; gap: 10px; }
+.mobilita-plan-secundarias > button { flex: 1 1 130px; min-height: 40px; justify-content: center; white-space: normal; }
+.mobilita-accion-discreta { appearance: none; border: 1px solid transparent; border-radius: var(--radio); background: transparent; color: var(--texto-medio); font: inherit; font-size: 12px; padding: 10px 12px; cursor: pointer; line-height: 1.4; }
+.mobilita-accion-discreta:hover:not(:disabled) { color: var(--texto); background: var(--superficie-hover); }
+.mobilita-accion-discreta:disabled { opacity: .5; cursor: default; }
+.mobilita-accion-discreta:focus-visible, .mobilita-agenda summary:focus-visible, .buzon-ayuda summary:focus-visible { outline: 2px solid var(--foco); outline-offset: 3px; }
+.mobilita-plan button, .mobilita-agenda button, .buzon-solicitudes button { transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease; }
+.mobilita-plan button:hover:not(:disabled), .mobilita-elegir-cliente button:hover:not(:disabled), .solicitud-botones .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 3px 8px #18181b0d; }
+.mobilita-plan button:active:not(:disabled), .mobilita-agenda button:active:not(:disabled), .buzon-solicitudes button:active:not(:disabled) { transform: translateY(0) scale(.985); }
+
+.mobilita-agenda { padding: 14px; margin: 10px 0 16px; border: 1px solid var(--borde); background: #f7f9fb; border-radius: 10px; animation: mobilita-aparecer 220ms ease-out both; }
+.mobilita-avance { display: flex; gap: 5px; margin-bottom: 10px; }
+.mobilita-avance > span { height: 4px; flex: 1; border-radius: 3px; background: var(--borde-fuerte); transition: background-color 260ms ease; }
+.mobilita-avance > .estado-guardado { background: var(--exito); }
+.mobilita-avance > .estado-pendiente { background: #d5b16b; }
+.mobilita-agenda summary { font-weight: 600; cursor: pointer; font-size: 12px; padding: 4px 0; }
+.mobilita-agenda ol { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 12px; }
+.mobilita-agenda li { display: flex; align-items: flex-start; gap: 10px; overflow-wrap: anywhere; }
+.mobilita-agenda li > div { flex: 1; min-width: 0; }
+.mobilita-agenda li strong { display: block; font-size: 12px; }
+.mobilita-agenda li[aria-current="step"] strong { color: #385d83; }
+.mobilita-agenda small { display: block; color: var(--texto-medio); font-size: 11px; line-height: 1.5; margin-top: 4px; }
+.mobilita-paso-numero { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--borde-fuerte); background: var(--superficie); flex-shrink: 0; font-size: 11px; }
+.mobilita-estado { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 10px; margin-top: 4px; color: var(--texto-medio); background: #eaecef; transition: color 200ms, background-color 200ms; }
+.mobilita-estado.estado-guardado { color: var(--exito); background: var(--exito-bg); }
+.mobilita-estado.estado-pendiente { color: var(--alerta); background: var(--alerta-bg); }
+.mobilita-agenda-acciones { display: grid; gap: 10px; padding-top: 12px; margin-top: 12px; border-top: 1px solid var(--borde); }
+.mobilita-agenda-acciones > button { width: 100%; min-height: 40px; justify-content: center; white-space: normal; }
+.mobilita-elegir-cliente { display: grid; gap: 10px; margin-top: 16px; }
+.mobilita-elegir-cliente > p { font-size: 12px; font-weight: 600; }
+.mobilita-elegir-cliente button { display: block; text-align: left; white-space: normal; padding: 12px; min-height: 48px; background: var(--superficie); }
+
+.buzon-solicitudes { padding: 0; max-width: 960px; overflow: hidden; }
+.buzon-cabecera { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 24px 24px 18px; }
+.buzon-cabecera h2 { font-size: 20px; letter-spacing: -.3px; margin: 4px 0 0; }
+.buzon-antetitulo { color: var(--texto-medio); font-size: 12px; }
+.buzon-cabecera button { flex-shrink: 0; min-height: 40px; }
+.buzon-ayuda { margin: 0 24px 20px; color: var(--texto-medio); font-size: 12px; }
+.buzon-ayuda summary { cursor: pointer; width: fit-content; }
+.buzon-ayuda p { margin-top: 8px; max-width: 650px; line-height: 1.6; }
+.buzon-filtros { padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; gap: 16px; background: var(--superficie-alt); border-block: 1px solid var(--borde); }
+.buzon-filtros label { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--texto-medio); }
+.buzon-filtros select { width: 170px; min-height: 40px; }
+.buzon-filtros > span { font-size: 12px; color: var(--texto-medio); }
+.buzon-lista { display: grid; gap: 16px; padding: 20px 24px; }
+.buzon-lista:empty { padding: 0; }
+.solicitud-archivo { border: 1px solid var(--borde); border-radius: 10px; padding: 20px; background: var(--superficie); animation: solicitud-entrada 260ms ease-out both; transition: border-color 180ms, box-shadow 180ms; }
+.solicitud-archivo:hover { border-color: var(--borde-fuerte); box-shadow: 0 4px 16px #18181b06; }
+.solicitud-archivo header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.solicitud-archivo h3 { margin: 0 0 4px; font-size: 15px; overflow-wrap: anywhere; }
+.solicitud-autor { color: var(--texto-medio); font-size: 12px; }
+.solicitud-estado { display: inline-flex; padding: 4px 9px; border-radius: 5px; font-size: 11px; font-weight: 500; flex-shrink: 0; background: var(--superficie-hover); color: var(--texto-medio); }
+.solicitud-estado-pendiente { color: var(--alerta); background: var(--alerta-bg); }
+.solicitud-estado-aprobada { color: var(--exito); background: var(--exito-bg); }
+.solicitud-motivo { margin: 18px 0; padding: 14px 16px; background: var(--superficie-alt); border: 1px solid var(--borde); border-radius: 8px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.solicitud-motivo > span { display: block; color: var(--texto-medio); font-size: 11px; margin-bottom: 6px; }
+.solicitud-motivo p { margin: 0; line-height: 1.6; }
+.solicitud-resolucion { padding: 0 0 4px; font-size: 12px; line-height: 1.6; }
+.solicitud-resolucion strong { display: block; margin-bottom: 4px; }
+.solicitud-acciones { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px 24px; padding-top: 4px; }
+.solicitud-botones { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.solicitud-botones button, .solicitud-acciones > button { min-height: 40px; }
+.solicitud-rechazar { color: var(--peligro); }
+.solicitud-decision { padding-top: 18px; border-top: 1px solid var(--borde); animation: solicitud-entrada 220ms ease-out both; }
+.solicitud-decision h4 { margin-bottom: 8px; font-size: 14px; }
+.solicitud-decision > p { font-size: 12px; line-height: 1.6; color: var(--texto-medio); margin-bottom: 18px; }
+.solicitud-decision label { display: grid; gap: 8px; margin-bottom: 18px; font-size: 12px; font-weight: 500; }
+.solicitud-decision textarea { width: 100%; resize: vertical; min-height: 96px; font-weight: 400; }
+.buzon-vacio { display: grid; justify-items: center; padding: 48px 24px; text-align: center; animation: solicitud-entrada 260ms ease-out both; }
+.buzon-vacio > span { display: grid; place-items: center; width: 54px; height: 54px; background: var(--superficie-alt); border: 1px solid var(--borde); border-radius: 50%; color: #52749a; margin-bottom: 16px; }
+.buzon-vacio h3 { font-size: 15px; margin-bottom: 6px; }
+.buzon-vacio p, .buzon-pie { font-size: 12px; color: var(--texto-medio); }
+.buzon-pie { padding: 16px 24px; margin: 0; border-top: 1px solid var(--borde); }
+.buzon-solicitudes > .alert-error { margin: 20px 24px; }
+.aviso-solicitudes { display: flex; gap: 12px 24px; justify-content: space-between; align-items: center; flex-wrap: wrap; padding: 16px 20px; border: 1px solid #cedbe8; background: #f3f7fb; border-radius: 10px; margin-bottom: 20px; animation: solicitud-entrada 240ms ease-out both; }
+.aviso-solicitudes button { min-height: 40px; }
+@keyframes solicitud-entrada { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 640px) {
+  .buzon-cabecera { padding: 20px 16px 16px; align-items: flex-start; }
+  .buzon-cabecera h2 { font-size: 18px; }
+  .buzon-ayuda { margin-inline: 16px; }
+  .buzon-filtros { padding-inline: 16px; flex-wrap: wrap; }
+  .buzon-filtros select { width: 145px; font-size: 16px; }
+  .buzon-lista { padding: 16px; }
+  .solicitud-archivo { padding: 16px; }
+  .solicitud-acciones { align-items: stretch; gap: 14px; }
+  .solicitud-acciones > button, .solicitud-acciones > .solicitud-botones { width: 100%; }
+  .solicitud-botones { gap: 12px; }
+  .solicitud-botones > button { flex: 1 1 120px; min-height: 44px; justify-content: center; }
+  .solicitud-acciones > button, .mobilita-plan-secundarias > button, .mobilita-agenda-acciones > button { min-height: 44px; }
+  .solicitud-decision textarea { font-size: 16px; }
+  .buzon-pie { padding-inline: 16px; }
+}
+
+/* Respuesta visual común: movimiento breve; los datos permanecen estables. */
+.btn-primary, .btn-secondary, .btn-icono, .nav-item, .mobilita-control, .mobilita-nuevo, .mobilita-enviar {
+  transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-primary:active:not(:disabled), .btn-secondary:active:not(:disabled), .btn-icono:active:not(:disabled), .mobilita-control:active:not(:disabled), .mobilita-enviar:active:not(:disabled) { transform: scale(.97); }
+.btn-primary:focus-visible, .btn-secondary:focus-visible, .btn-icono:focus-visible, .nav-item:focus-visible { outline: 2px solid var(--foco); outline-offset: 3px; }
+.form-input, .form-select, .form-textarea, .form-group input, .form-group select, .form-group textarea { transition: border-color 160ms ease, box-shadow 160ms ease; }
+.nav-item svg { transition: transform 160ms ease; }
+.panel { animation: aparecer 180ms ease-out; }
+.kpi-card, .login-caja { animation: crm-entrada 220ms ease-out both; }
+.kpi-grid > :nth-child(2) { animation-delay: 25ms; }
+.kpi-grid > :nth-child(3) { animation-delay: 50ms; }
+.kpi-grid > :nth-child(4) { animation-delay: 75ms; }
+.kpi-grid > :nth-child(5) { animation-delay: 100ms; }
+.kpi-grid > :nth-child(6) { animation-delay: 125ms; }
+.kpi-card, .pipeline-card { transition: border-color 160ms ease, box-shadow 160ms ease; }
+.leads-table tbody tr, .tabla tbody tr { transition: background-color 140ms ease; }
+.catalogo-miniatura .catalogo-foto { transition: transform 220ms ease; }
+.drawer-overlay, .alert-error, .alert-success { animation: aparecer 160ms ease-out; }
+.estado-carga { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.estado-carga-indicador, .boton-carga { display: inline-block; width: 18px; height: 18px; flex-shrink: 0; border: 2px solid var(--borde-fuerte); border-top-color: var(--texto-medio); border-radius: 50%; animation: mobilita-girar 750ms linear infinite; }
+.boton-carga { width: 14px; height: 14px; border-color: #ffffff55; border-top-color: #fff; }
+.mobilita-mascota { display: inline-grid; place-items: center; position: relative; width: 38px; height: 38px; flex: 0 0 auto; border-radius: 12px; vertical-align: middle; }
+.mobilita-mascota img { display: block; width: 100%; height: 100%; object-fit: contain; user-select: none; }
+.mobilita-mascota-mini { width: 24px; height: 24px; border-radius: 8px; }
+.mobilita-mascota-pequeno { width: 30px; height: 30px; border-radius: 9px; }
+.mobilita-mascota-grande { width: 66px; height: 66px; margin-bottom: 16px; border-radius: 20px; }
+.mobilita-mascota.saludando { animation: mobilita-saludar 450ms ease-out both; }
+.mobilita-mascota.pensando::after { content: ''; position: absolute; inset: -3px; border: 1.5px solid transparent; border-top-color: var(--mobilita-acento, #52749a); border-right-color: var(--mobilita-acento, #52749a); border-radius: 50%; animation: mobilita-girar 1.8s linear infinite; pointer-events: none; }
+.mobilita-lanzador .mobilita-mascota { width: 44px; height: 44px; background: var(--superficie); border-radius: 13px; }
+.mobilita-saludo-identidad { display: flex; align-items: center; gap: 8px; padding-right: 10px; }
+.mobilita-mensaje-identidad { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
+.mobilita-mensaje .mobilita-mensaje-identidad strong { margin: 0; }
+.mobilita-identidad .mobilita-mascota { background: var(--superficie-alt); }
+@keyframes crm-entrada { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@media (hover: hover) and (pointer: fine) {
+  .btn-primary:hover:not(:disabled), .btn-secondary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 3px 8px #18181b12; }
+  .btn-icono:hover:not(:disabled) { transform: translateY(-1px); }
+  .nav-item:hover svg { transform: translateX(2px); }
+  .kpi-clicable:hover, .pipeline-card:hover { box-shadow: 0 3px 12px #18181b0a; }
+  .catalogo-miniatura a:hover .catalogo-foto { transform: scale(1.035); }
+}
+@media (max-width: 640px) {
+  .mobilita-lanzador .mobilita-mascota { width: 40px; height: 40px; }
 }

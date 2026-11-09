@@ -160,6 +160,22 @@ CAMBIOS = [
         )""",
     ),
     ("propuestas_tarea_chat: índice por autor", "CREATE INDEX IF NOT EXISTS ix_propuestas_tarea_chat_usuario_id ON propuestas_tarea_chat (usuario_id)"),
+    ('leads: archivo sin eliminar historial', 'ALTER TABLE leads ADD COLUMN IF NOT EXISTS archivado BOOLEAN NOT NULL DEFAULT FALSE'),
+    ('solicitudes_archivo: buzón de administración', '''CREATE TABLE IF NOT EXISTS solicitudes_archivo (
+        id SERIAL PRIMARY KEY,
+        lead_id INTEGER REFERENCES leads(id) ON DELETE SET NULL,
+        lead_nombre VARCHAR(100) NOT NULL,
+        autor_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+        autor_nombre VARCHAR(100) NOT NULL,
+        motivo TEXT NOT NULL,
+        estado VARCHAR(20) NOT NULL DEFAULT 'Pendiente',
+        resolucion TEXT,
+        resuelto_por_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+        resuelto_por_nombre VARCHAR(100),
+        fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        fecha_resolucion TIMESTAMPTZ
+    )'''),
+    ('solicitudes_archivo: una pendiente por lead', "CREATE UNIQUE INDEX IF NOT EXISTS ux_solicitud_archivo_pendiente ON solicitudes_archivo (lead_id) WHERE estado = 'Pendiente'"),
 ]
 
 

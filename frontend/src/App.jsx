@@ -48,6 +48,8 @@ import TablaLeads from './components/TablaLeads';
 import TablaPropiedades from './components/TablaPropiedades';
 import TablaTareas from './components/TablaTareas';
 import Mobilita from './components/Mobilita';
+import BuzonSolicitudes from './components/BuzonSolicitudes';
+import { obtenerSolicitudesArchivo } from './api';
 import PipelineOportunidades from './components/PipelineOportunidades';
 import AgendaVisitas from './components/AgendaVisitas';
 import FormularioLead from './components/FormularioLead';
@@ -69,6 +71,7 @@ import { prepararTareaDesdeIA, pendientesDelLead, seleccionarTareaPendiente, fir
 
 /** Configuración de cada vista: título de la barra superior y su acción principal. */
 const VISTAS = {
+  solicitudes: { titulo: 'Solicitudes', subtitulo: 'Revisión de archivos de leads' },
   inicio: { titulo: 'Inicio', subtitulo: 'Resumen de la operación' },
   leads: { titulo: 'Leads', accion: 'Nuevo lead', entidad: 'lead' },
   propiedades: { titulo: 'Propiedades', accion: 'Nueva propiedad', entidad: 'propiedad' },
@@ -145,6 +148,24 @@ function App() {
   // verificandoSesion evita que aparezca el login por un instante mientras se
   // comprueba si el token guardado sigue siendo válido.
   const [usuario, setUsuario] = useState(null);
+  const [solicitudes, setSolicitudes] = useState([]);
+  const [errorSolicitudes, setErrorSolicitudes] = useState('');
+  const usuarioSolicitudes = useRef(null);
+  const cargarSolicitudes = async () => {
+    const id = usuario?.id;
+    try {
+      const datos = await obtenerSolicitudesArchivo();
+      if (usuarioSolicitudes.current === id) { setSolicitudes(datos); setErrorSolicitudes(''); }
+    } catch (err) { if (usuarioSolicitudes.current === id) setErrorSolicitudes(err.message); }
+  };
+  useEffect(() => {
+    usuarioSolicitudes.current = usuario?.id;
+    setSolicitudes([]); setErrorSolicitudes('');
+    if (!usuario) return;
+    cargarSolicitudes();
+    const intervalo = setInterval(cargarSolicitudes, 60000);
+    return () => { usuarioSolicitudes.current = null; clearInterval(intervalo); };
+  }, [usuario]);
   const [verificandoSesion, setVerificandoSesion] = useState(true);
   // Explica en la pantalla de acceso por qué se cerró la sesión sola
   const [avisoSesion, setAvisoSesion] = useState(null);
@@ -858,6 +879,13 @@ function App() {
         </header>
 
         <main className={`cuerpo-pagina${vista === 'auditoria' ? ' cuerpo-pagina-amplio' : ''}`}>
+          {usuario.rol === 'admin' && solicitudes.some(s => s.estado === 'Pendiente') && <div className="aviso-solicitudes" role="status">
+            <span>{solicitudes.filter(s => s.estado === 'Pendiente').length === 1 ? 'Hay una solicitud de archivo pendiente.' : `Hay ${solicitudes.filter(s => s.estado === 'Pendiente').length} solicitudes de archivo pendientes.`}</span>
+            <button className="btn-secondary" onClick={() => setVista('solicitudes')}>Revisar solicitudes</button>
+          </div>}
+          {vista === 'solicitudes' && <BuzonSolicitudes solicitudes={solicitudes} error={errorSolicitudes} admin={usuario.rol === 'admin'}
+            alVerLead={id => { const lead = leads.find(l => l.id === id); if (lead) abrirFicha(lead); else mostrarToast('El lead ya no está en el listado activo. Actualiza el buzón.'); }}
+            alActualizar={async () => { await cargarSolicitudes(); await cargarLeads(); }} />}
           {vista === 'inicio' && (
             <Dashboard
               leads={leads}
@@ -965,6 +993,7 @@ function App() {
         alVerPropiedades={() => setVista('propiedades')}
         oculto={Boolean(panelForm || fichaLead || confirmacion)}
         alGenerar={() => { if (usuario.rol === 'admin') cargarConsumo(); }}
+        alCambios={() => { cargarLeads(); cargarTareas(); cargarVisitas(); cargarSolicitudes(); setFichaLead(null); }}
         alGuardar={(tarea) => setTareas(prev => [tarea, ...prev.filter(t => t.id !== tarea.id)])} />
 
       {/* ── Panel lateral de creación y edición ── */}

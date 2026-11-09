@@ -83,6 +83,68 @@ abiertos y concretados; Ver montos despliega los valores por moneda. El botón d
 Mobilita se reduce a un icono. La ficha del inmueble abre en un panel lateral con
 datos agrupados, dos columnas cuando caben y galería ampliable.
 
+## Ampliación local de Mobilita · posterior al cierre del sprint 6
+
+Esta ampliación fue solicitada después del cierre; no forma parte de los 28 puntos
+cerrados ni está publicada. Antes de usarla en la base existente, ejecutar
+`backend/venv/Scripts/python.exe backend/migrar.py` desde la raíz y reiniciar la API.
+La migración agrega `leads.archivado` y `solicitudes_archivo`, con un índice que evita
+solicitudes pendientes repetidas. Bryan informó que las 56 instrucciones se ejecutaron
+sin error. La conversación guiada no requiere otra migración; requiere reiniciar la API.
+
+Mobilita puede preparar hasta cinco acciones para un mismo lead: registrar un contacto,
+actualizar su estado o perfil comercial, crear o actualizar tareas, asociar una propiedad,
+agendar o reprogramar una visita. El servidor resuelve nombres y títulos; si no hay una
+coincidencia única solicita una aclaración. Las fechas relativas se interpretan con
+la fecha de Santiago enviada al modelo y se muestran como fechas concretas al revisar.
+Las visitas exigen hora y zona horaria; se comprueba el cruce de agenda al confirmar.
+
+El chat muestra el conjunto antes de guardar. Se confirma todo en una transacción;
+si una acción falla, ninguna se conserva. El navegador no puede sustituir las operaciones
+al confirmar. Se revisa de nuevo la cartera y, en actualizaciones, que los datos no hayan
+cambiado. Una confirmación repetida no vuelve a aplicar el plan. Cada acción queda auditada.
+No hay cambios masivos, envío de mensajes, edición de usuarios, roles, responsables o configuración.
+
+Para pedir borrar un lead, el ejecutivo indica un motivo y confirma una solicitud de
+archivo. La sección **Solicitudes** muestra las propias; administración ve el buzón
+completo y un aviso de pendientes al entrar (actualizado cada minuto). Sólo administración
+puede aprobar o rechazar, indicando su motivo. Aprobar archiva y cierra el lead sin borrar
+su historial; sale del listado activo y ya no admite acciones del chat. No cancela
+ni elimina automáticamente tareas, negocios o visitas existentes. El borrado definitivo
+por la API normal queda reservado a administración, fuera del chat.
+
+La regresión automática usa SQLite temporal y respuestas simuladas. La evaluación
+histórica de PostgreSQL que aparece abajo corresponde al flujo anterior de creación
+de tareas: no valida por sí sola las nuevas acciones, la migración o el buzón.
+La conversación se comprobó además con ocho llamadas reales autorizadas, todas con datos
+ficticios y una base temporal. El estimado acumulado fue US$0,00460. La primera tanda
+detectó un formato de perfil no admitido; se conservan los dos resultados rechazados y
+las dos respuestas posteriores a la corrección en `backend/evidencias/conversacion_mobilita_*20261108.json`.
+No se han actualizado Drive ni Jira por esta ampliación.
+
+### Conversación guiada
+
+Mobilita conserva hasta cinco solicitudes y prepara un bloque por vez, con un máximo
+de cinco acciones por bloque. Si hay homónimos muestra opciones de la cartera; elegir
+no consulta otra vez al proveedor. Las operaciones de ese cliente se confirman juntas.
+El resto sigue pendiente. La agenda distingue guardado y descartado; reintentar un paso
+no confirma el siguiente. Puedes corregir el bloque actual, omitirlo o descartar lo que
+queda sin deshacer lo ya guardado. Las aclaraciones mantienen los datos conocidos.
+
+Puede crear una ficha con nombre y correo, sin propiedad asociada y asignada a quien
+confirma. Si falta un dato obligatorio lo pide; no completa requisitos comerciales por
+su cuenta. Corregir un nombre conserva el ID, correo e historial de la misma persona.
+El chat distingue esa corrección de haber registrado información en otro cliente: no
+traslada historiales. Los datos y permisos se validan de nuevo antes de escribir.
+
+La memoria del diálogo y los recibos de cada confirmación quedan en el JSON de
+`propuestas_tarea_chat`. No se crea un manual por tarea ni se da acceso SQL al modelo.
+El proveedor recibe las solicitudes del usuario y el bloque pendiente, no las listas
+completas del CRM; las opciones de clientes se resuelven y muestran desde el servidor.
+Las propuestas mantienen su vigencia de 30 minutos. Para probar sin costo:
+`python -m unittest prueba_conversacion_mobilita` desde backend y
+`node --test src/mobilitaAcciones.test.js` desde frontend.
+
 ## Mobilita: asistente del CRM
 
 La concurrencia se comprobó el 4/11 directamente en PostgreSQL de Supabase,
@@ -232,7 +294,7 @@ Preparar registra la solicitud y el consumo de IA, sin crear una tarea.
 Descartar no modifica el seguimiento. Sólo el autor puede confirmar la propuesta,
 que vence a los 30 minutos. Una confirmación repetida devuelve la misma tarea,
 incluso si se perdió la respuesta del primer guardado. Una tarea eliminada no se
-recrea al reintentar. El asistente no cambia el estado del lead ni envía mensajes.
+recrea al reintentar. Crear una tarea por ese formulario no cambia el estado del lead ni envía mensajes. Las acciones compuestas se revisan en su propio resumen de cambios.
 Se muestran las tareas pendientes del cliente. Desde el chat no se puede crear
 otra pendiente con el mismo título, aunque cambie la descripción; se normalizan
 espacios, mayúsculas y tildes. Si es una acción distinta, hay que usar un título
@@ -711,13 +773,17 @@ Para cambiar la dirección, editar `frontend/.env` y usar, por ejemplo,
 
 ## Modelo de datos
 
+Este esquema describe el código local. `archivado` y `solicitudes_archivo`
+requieren la migración de la ampliación de Mobilita. Su ejecución fue informada
+por Bryan (56/56 instrucciones); no corresponde a una inspección nueva de Supabase.
+
 ```
 usuarios       id, nombre, email (único), password_hash, rol, activo, fecha_creacion
 leads          id, nombre, email, telefono, estado, prioridad, ejecutivo_id,
                tipo_operacion, presupuesto_min, presupuesto_max, moneda,
                comunas_interes, tipo_propiedad_buscada, dormitorios_min,
                banos_min, plazo_decision, financiamiento, origen,
-               proxima_accion, fecha_proxima_accion, es_demo, fecha_creacion
+               proxima_accion, fecha_proxima_accion, es_demo, archivado, fecha_creacion
 propiedades    id, titulo, tipo, tipo_operacion, precio, moneda, direccion,
                comuna, dormitorios, banos, estado, fecha_creacion
 oportunidades  id, lead_id, propiedad_id, ejecutivo_id, tipo_operacion, etapa,
@@ -735,11 +801,21 @@ propuestas_tarea_chat
                id, usuario_id, solicitud, salida_original, propuesta, estado,
                tarea_id, confirmacion, modelo, tokens_entrada, tokens_salida,
                costo_estimado_usd, fecha_creacion
+solicitudes_archivo
+               id, lead_id, lead_nombre, autor_id, autor_nombre, motivo, estado,
+               resolucion, resuelto_por_id, resuelto_por_nombre,
+               fecha_creacion, fecha_resolucion
 auditoria      id, usuario_id, usuario_email, accion, entidad, entidad_id,
                descripcion, detalle, fecha_creacion
 ```
 
 Sobre las relaciones:
+
+- Archivar no borra relaciones. La solicitud conserva nombre y autor, su motivo y
+  la decisión administrativa. Sólo puede existir una solicitud pendiente por lead.
+- Las acciones compuestas conservan su plan en `propuestas_tarea_chat`; se confirman
+  en conjunto y cada registro modificado se audita. El vínculo `tarea_id` corresponde
+  al flujo de creación de una sola tarea.
 
 - Las propuestas de tareas pertenecen a un usuario. Tras confirmar, se vinculan
   con la tarea creada. Al eliminar esa tarea se conserva la propuesta y su vínculo

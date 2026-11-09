@@ -3,6 +3,15 @@
 Este roadmap ordena el desarrollo por valor operativo. Cada módulo debe poder
 probarse y demostrarse por separado antes de pasar al siguiente.
 
+## Trabajo local posterior al cierre
+
+Por solicitud de Bryan se amplió Mobilita con propuestas de acciones del ejecutivo
+y solicitudes de archivo revisadas por administración. Se añadió la conversación
+por pasos, la selección de homónimos y la creación y corrección de nombres de leads.
+La migración fue informada como aplicada por Bryan. El código sigue local; falta
+comprobar el recorrido completo en el entorno habitual de PostgreSQL. No está incluido en el alcance
+cerrado del sprint 6. Su planificación y registro en Jira están pendientes.
+
 ## Estado actual · 8/11/2026
 
 El sprint 6 Seguimiento con IA se cerró el 8/11. Se conserva el período planificado

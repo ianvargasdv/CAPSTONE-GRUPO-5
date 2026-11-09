@@ -4,7 +4,7 @@ from typing import Literal
 from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel
-from sqlalchemy import func
+from sqlalchemy import and_, func
 
 import models
 
@@ -28,7 +28,7 @@ def ejecutar_consulta(db, usuario, consulta: Consulta):
                     'mensaje': 'El listado de ejecutivos requiere una cuenta de administrador.'}
         # Outer join conserva los ejecutivos sin cartera; no contar filas con count(*).
         q = db.query(models.Usuario.id, models.Usuario.nombre, func.count(models.Lead.id)).outerjoin(
-            models.Lead, models.Lead.ejecutivo_id == models.Usuario.id).filter(
+            models.Lead, and_(models.Lead.ejecutivo_id == models.Usuario.id, models.Lead.archivado.is_(False))).filter(
             models.Usuario.rol == 'ejecutivo', models.Usuario.activo.is_(True)).group_by(
             models.Usuario.id, models.Usuario.nombre)
         total = q.count()
@@ -50,9 +50,9 @@ def ejecutar_consulta(db, usuario, consulta: Consulta):
     datos_consulta = {}
     etiqueta = 'de tu cartera asignada' if propia else 'del CRM'
     if consulta.herramienta == 'cartera_resumen':
-        q = db.query(models.Lead.estado, func.count(models.Lead.id))
+        q = db.query(models.Lead.estado, func.count(models.Lead.id)).filter(models.Lead.archivado.is_(False))
         if propia:
-            q = q.filter(models.Lead.ejecutivo_id == usuario.id)
+            q = q.filter(models.Lead.ejecutivo_id == usuario.id, models.Lead.archivado.is_(False))
         estados = q.group_by(models.Lead.estado).order_by(models.Lead.estado).all()
         total = sum(cantidad for _, cantidad in estados)
         detalle = '; '.join(f'{estado or "Sin estado"}: {cantidad}' for estado, cantidad in estados)
@@ -66,6 +66,8 @@ def ejecutar_consulta(db, usuario, consulta: Consulta):
         if propia:
             q = q.filter(models.Lead.ejecutivo_id == usuario.id)
         vencidas = consulta.herramienta == 'tareas_vencidas'
+        if propia:
+            q = q.filter(models.Lead.archivado.is_(False))
         if vencidas:
             q = q.filter(models.Tarea.fecha_limite < fecha.date())
         total = q.count()

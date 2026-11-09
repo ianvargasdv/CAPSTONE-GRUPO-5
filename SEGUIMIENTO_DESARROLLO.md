@@ -2,6 +2,61 @@
 
 Actualizado: 8/11/2026. Control de avances y comprobaciones del proyecto.
 
+## Conversación guiada de Mobilita · ampliación local
+
+Se añadieron solicitudes por pasos, selección de clientes con nombres coincidentes,
+corrección del paso actual y creación de fichas con datos mínimos. La agenda conserva
+lo guardado, lo pendiente y lo descartado. Un recibo por paso impide que repetir una
+confirmación guarde el siguiente. Los nombres corregidos conservan el historial y
+la creación asigna la ficha al usuario que confirma. No se añaden permisos de administrador.
+
+Bryan informó la migración anterior con 56 de 56 instrucciones sin error. Esta parte
+usa el JSON existente de propuestas y no necesita otra migración. Las pruebas usaron
+bases temporales; no se conectaron a Supabase. No se abrió ni modificó un sprint en Jira.
+
+Se autorizaron seis llamadas reales con máximo estimado US$0,05. Detectaron dos
+resultados rechazados: un campo de perfil anidado impedía preparar la ficha nueva.
+Se corrigieron el contrato, el aviso y la conservación de datos durante la aclaración.
+Bryan autorizó dos llamadas adicionales: la regresión pidió sólo el correo, conservó
+Casa y guardó la ficha en la base temporal tras confirmar, asignada al ejecutivo.
+Las ocho llamadas acumularon US$0,0045998 estimados. Se conservan las respuestas
+rechazadas y la regresión en backend/evidencias, sin reemplazar el fallo por un éxito.
+
+Verificación final: 149 pruebas de backend y 63 del frontend aprobadas, junto con
+la compilación. Las pruebas del frontend incluyen renderizado de propuestas, agenda
+y selección; no sustituyen la comprobación manual en navegador. La regresión real
+se hizo sobre SQLite temporal y no verifica concurrencia de PostgreSQL.
+
+Queda la comprobación manual del recorrido en el CRM habitual, registrar la ampliación
+en Jira y actualizar los documentos de seguimiento de Drive. El código y estas notas
+siguen locales, sin commit ni push. El cierre y los puntos del sprint 6 se conservan.
+
+## Ampliación local de Mobilita · después del cierre
+
+Bryan pidió implementar las acciones de ejecutivo y un buzón de solicitudes de
+archivo. Esta petición habilita cambios de backend para ese alcance; el cierre
+anterior del sprint 6 se conserva y no se le agregan puntos ni historias retrospectivas.
+
+Se añadieron propuestas de contactos, estado y perfil comercial, tareas, intereses
+y visitas. El servidor valida cartera y referencias, conserva el plan a confirmar
+y guarda todo el conjunto o revierte los cambios. Las solicitudes de archivo
+requieren una decisión administrativa con motivo; aprobar no elimina el historial.
+Se restringió también el borrado directo de leads a administración y la escritura
+mediante los formularios afectados a la cartera del ejecutivo.
+
+En esta primera comprobación la migración aún no se había aplicado. Posteriormente
+Bryan informó su ejecución sin errores (56/56 instrucciones).
+Los cambios permanecen locales, sin commit, push ni actualización de Jira o Drive.
+La comprobación inicial con el proveedor real se registra arriba. Quedan la integración
+del nuevo flujo en PostgreSQL y el recorrido visual en el CRM habitual.
+Verificación local: 125 pruebas de los módulos afectados, incluidas 23 nuevas de
+acciones y solicitudes; 59 pruebas del frontend, incluidas seis de renderizado;
+compilación aprobada. Además, pasaron 62 verificaciones de auditoría, 15 de agenda
+y 33 de validaciones. Se usaron bases temporales y respuestas simuladas. No son
+una evaluación del modelo real ni una comprobación visual del recorrido en navegador.
+
+Esta implementación no debe presentarse como parte del sprint 6 ya aceptado.
+
 ## Cierre del sprint 6 · 8/11/2026
 
 Bryan solicitó cerrar el sprint al comprobar que el alcance estaba terminado.

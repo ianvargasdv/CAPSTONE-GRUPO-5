@@ -10,6 +10,23 @@ const API_URL = (import.meta.env.VITE_API_URL ?? 'http://localhost:8000').replac
 const BASE = `${API_URL}/api`;
 const CLAVE_TOKEN = 'crm_token';
 
+export const confirmarAccionesMobilita = (id, paso) => pedir(`/asistente/acciones/${id}/confirmar`, {
+  metodo: 'POST', cuerpo: { confirmar: true, ...(paso ? { paso } : {}) }, mensajeError: 'No se pudieron guardar los cambios',
+});
+export const elegirClienteMobilita = (id, paso, leadId) => pedir(`/asistente/conversacion/${id}/elegir`, {
+  metodo: 'POST', cuerpo: { paso, lead_id: leadId }, mensajeError: 'No se pudo seleccionar ese cliente',
+});
+export const descartarPasoMobilita = (id, paso, todos = false) => pedir(`/asistente/conversacion/${id}/descartar`, {
+  metodo: 'POST', cuerpo: { paso, todos }, mensajeError: 'No se pudo descartar la solicitud',
+});
+export const ajustarPasoMobilita = (id, paso) => pedir(`/asistente/conversacion/${id}/ajustar`, {
+  metodo: 'POST', cuerpo: { paso }, mensajeError: 'No se pudo abrir la corrección de esta solicitud',
+});
+export const obtenerSolicitudesArchivo = () => pedir('/asistente/solicitudes', { mensajeError: 'No se pudo cargar el buzón' });
+export const resolverSolicitudArchivo = (id, decision, motivo) => pedir(`/asistente/solicitudes/${id}/resolver`, {
+  metodo: 'POST', cuerpo: { decision, motivo }, mensajeError: 'No se pudo resolver la solicitud',
+});
+
 // Callback que App registra para saber cuándo la sesión dejó de ser válida
 let alExpirarSesion = null;
 

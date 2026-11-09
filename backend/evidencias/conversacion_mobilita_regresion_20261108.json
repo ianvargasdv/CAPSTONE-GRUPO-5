@@ -1,0 +1,92 @@
+{
+  "base": "SQLite temporal; sin acceso a Supabase",
+  "modelo": "gpt-6-luna",
+  "llamadas": 2,
+  "limite_estimado_usd": 0.05,
+  "cota_reservada_usd": 0.020071900000000004,
+  "consumo_estimado_acumulado_usd": 0.0045998,
+  "resultados": [
+    {
+      "salida_modelo": "{\"accion\":\"gestionar\",\"cliente\":\"José Hernández\",\"titulo\":null,\"descripcion\":null,\"aclaracion\":\"¿Cuál es su correo electrónico? Es obligatorio para crear la ficha; no asociaré una propiedad específica, ya que aún no hay una que cumpla sus requisitos.\",\"consulta\":null,\"operaciones\":[{\"tipo\":\"crear_lead\",\"referencia\":null,\"datos\":{\"nombre\":\"José Hernández\",\"tipo_propiedad_buscada\":\"Casa\"}}],\"bloques\":null}",
+      "caso": "regresion_ficha_sin_correo",
+      "solicitud": "Agrega el lead José Hernández. Está interesado en una casa; todavía no hay una propiedad específica que cumpla sus requisitos.",
+      "http": 201,
+      "respuesta": {
+        "id": 1,
+        "estado": "aclarar",
+        "mensaje": "Para preparar esta solicitud, necesito revisar: correo válido. Indícame esos datos; conservaré las demás solicitudes.",
+        "clientes": [],
+        "titulo": "",
+        "descripcion": "",
+        "modelo": "gpt-6-luna",
+        "costo_estimado_usd": 0.0005551,
+        "tokens_entrada": 3806,
+        "tokens_salida": 349,
+        "consulta": null,
+        "acciones": null,
+        "cliente_acciones": null,
+        "agenda": [
+          {
+            "numero": 1,
+            "cliente": "José Hernández",
+            "estado": "pendiente",
+            "acciones": [
+              "Crear lead en mi cartera"
+            ]
+          }
+        ],
+        "opciones_cliente": []
+      }
+    },
+    {
+      "salida_modelo": "{\"accion\":\"organizar\",\"cliente\":null,\"titulo\":null,\"descripcion\":null,\"aclaracion\":null,\"consulta\":null,\"operaciones\":null,\"bloques\":[{\"cliente\":\"José Hernández\",\"operaciones\":[{\"tipo\":\"crear_lead\",\"referencia\":null,\"datos\":{\"nombre\":\"José Hernández\",\"tipo_propiedad_buscada\":\"Casa\",\"email\":\"jose.hernandez@example.test\"}}],\"pregunta\":null}]}",
+      "caso": "regresion_completar_correo",
+      "solicitud": "Su correo es jose.hernandez@example.test; conserva que busca una casa.",
+      "http": 201,
+      "respuesta": {
+        "id": 2,
+        "estado": "pendiente",
+        "mensaje": "Revisa la ficha nueva. Se asignará a tu cuenta después de confirmar.",
+        "clientes": [],
+        "titulo": "",
+        "descripcion": "",
+        "modelo": "gpt-6-luna",
+        "costo_estimado_usd": 0.0005119,
+        "tokens_entrada": 4014,
+        "tokens_salida": 221,
+        "consulta": null,
+        "acciones": [
+          {
+            "tipo": "crear_lead",
+            "referencia": null,
+            "datos": {
+              "nombre": "José Hernández",
+              "tipo_propiedad_buscada": "Casa",
+              "email": "jose.hernandez@example.test"
+            },
+            "etiqueta": "Crear lead en mi cartera"
+          }
+        ],
+        "cliente_acciones": "José Hernández",
+        "agenda": [
+          {
+            "numero": 1,
+            "cliente": "José Hernández",
+            "estado": "pendiente",
+            "acciones": [
+              "Crear lead en mi cartera"
+            ]
+          }
+        ],
+        "opciones_cliente": []
+      },
+      "guardado_temporal": {
+        "http": 200,
+        "ficha_creada": true,
+        "tipo_propiedad": "Casa",
+        "asignada_al_ejecutivo": true
+      }
+    }
+  ],
+  "verificacion": "Regresión aprobada en los dos casos: solicitar correo faltante y preparar la ficha al recibirlo. Confirmación temporal HTTP 200, conserva Casa y asigna al usuario de la prueba. No evalúa todos los posibles diálogos."
+}

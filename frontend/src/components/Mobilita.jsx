@@ -1,5 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Icono from './Iconos';
+import AvatarMobilita from './AvatarMobilita';
+import PlanMobilita from './PlanMobilita';
+import AgendaMobilita from './AgendaMobilita';
+import { confirmarAccionesMobilita, elegirClienteMobilita, descartarPasoMobilita, ajustarPasoMobilita } from '../api';
 import { prepararTareaChat, confirmarTareaChat, cancelarTareaChat } from '../api';
 import { prepararRevisionChat, confirmacionChat, precioPropiedadChat, duplicadoConfirmacion } from '../chatTareas';
 
@@ -22,7 +26,7 @@ function ResultadoPropiedades({ consulta, alVerCatalogo }) {
   </div>;
 }
 
-export default function Mobilita({ iaConfigurada, tareas = [], alGuardar, alGenerar, alVerPropiedades, alVerTarea, oculto = false }) {
+export default function Mobilita({ iaConfigurada, tareas = [], alGuardar, alCambios, alGenerar, alVerPropiedades, alVerTarea, oculto = false }) {
   const [abierto, setAbierto] = useState(false);
   const [ampliado, setAmpliado] = useState(false);
   const [reinicioPendiente, setReinicioPendiente] = useState(false);
@@ -36,6 +40,7 @@ export default function Mobilita({ iaConfigurada, tareas = [], alGuardar, alGene
   const [revision, setRevision] = useState(null);
   const [historial, setHistorial] = useState([]);
   const [ultimoTurno, setUltimoTurno] = useState(null);
+  const [conversacion, setConversacion] = useState(null);
   const [error, setError] = useState('');
   const [duplicada, setDuplicada] = useState(null);
   const [ocupado, setOcupado] = useState(false);
@@ -110,6 +115,14 @@ export default function Mobilita({ iaConfigurada, tareas = [], alGuardar, alGene
     finally { enCurso.current = false; setOcupado(false); }
   };
 
+  const recibir = resultado => {
+    const borrador = resultado.acciones || resultado.agenda?.length ? null : prepararRevisionChat(resultado);
+    const revisable = resultado.estado === 'pendiente' && (resultado.acciones?.length || resultado.clientes.length > 0);
+    setPropuesta(revisable ? resultado : null); setRevision(revisable ? borrador : null);
+    setConversacion(resultado); setUltimoTurno(resultado.id); setMensaje('');
+    return revisable;
+  };
+
   const preparar = (e) => {
     e.preventDefault();
     if (!mensaje.trim() || propuesta || reinicioPendiente) return;
@@ -118,10 +131,7 @@ export default function Mobilita({ iaConfigurada, tareas = [], alGuardar, alGene
       setSolicitudEnCurso(solicitud);
       try {
         const resultado = await prepararTareaChat(solicitud, ultimoTurno);
-        const borrador = prepararRevisionChat(resultado);
-        const revisable = resultado.estado === 'pendiente' && resultado.clientes.length > 0;
-        setPropuesta(revisable ? resultado : null); setRevision(revisable ? borrador : null);
-        setUltimoTurno(resultado.id); setMensaje('');
+        const revisable = recibir(resultado);
         agregarMensajes({ autor: 'usuario', texto: solicitud }, { autor: 'mobilita', texto: resultado.mensaje,
           consulta: resultado.consulta });
         alGenerar?.();
@@ -142,17 +152,51 @@ export default function Mobilita({ iaConfigurada, tareas = [], alGuardar, alGene
     });
   };
 
+  const confirmarPlan = () => ejecutar(async () => {
+    const resultado = await confirmarAccionesMobilita(propuesta.id, propuesta.paso);
+    if (resultado.siguiente) recibir(resultado.siguiente);
+    else { setPropuesta(null); setRevision(null); setMensaje(''); }
+    agregarMensajes({ autor: 'mobilita', texto: resultado.mensaje });
+    if (resultado.siguiente?.estado === 'aclarar') agregarMensajes({ autor: 'mobilita', texto: resultado.siguiente.mensaje });
+    alCambios?.();
+  });
+
   const cancelar = () => ejecutar(async () => {
+    if (propuesta.agenda?.length) {
+      const siguiente = await descartarPasoMobilita(propuesta.id, propuesta.paso);
+      recibir(siguiente);
+      agregarMensajes({ autor: 'mobilita', texto: siguiente.mensaje });
+      return;
+    }
     await cancelarTareaChat(propuesta.id);
     setPropuesta(null); setRevision(null);
-    agregarMensajes({ autor: 'mobilita', texto: 'Propuesta descartada. No se creó ninguna tarea. Puedes corregir tu solicitud.' });
+    agregarMensajes({ autor: 'mobilita', texto: 'Propuesta descartada. No se guardaron cambios. Puedes corregir tu solicitud.' });
     requestAnimationFrame(() => entrada.current?.focus());
   });
 
   const reiniciar = () => ejecutar(async () => {
-    if (propuesta) await cancelarTareaChat(propuesta.id);
+    if (conversacion?.agenda?.some(b => b.estado === 'pendiente')) await descartarPasoMobilita(conversacion.id, conversacion.paso, true);
+    else if (propuesta) await cancelarTareaChat(propuesta.id);
     setPropuesta(null); setRevision(null); setHistorial([]); setUltimoTurno(null);
     setMensaje(''); setReinicioPendiente(false);
+    setConversacion(null);
+  });
+
+  const elegirCliente = id => ejecutar(async () => {
+    const resultado = await elegirClienteMobilita(conversacion.id, conversacion.paso, id);
+    recibir(resultado);
+    agregarMensajes({ autor: 'mobilita', texto: resultado.mensaje });
+  });
+  const ajustarSolicitud = () => ejecutar(async () => {
+    const resultado = await ajustarPasoMobilita(conversacion.id, conversacion.paso);
+    recibir(resultado);
+    agregarMensajes({ autor: 'mobilita', texto: resultado.mensaje });
+    requestAnimationFrame(() => entrada.current?.focus());
+  });
+  const descartarPendiente = (todos = false) => ejecutar(async () => {
+    const resultado = await descartarPasoMobilita(conversacion.id, conversacion.paso, todos);
+    recibir(resultado);
+    agregarMensajes({ autor: 'mobilita', texto: resultado.mensaje });
   });
 
   const sugerir = (texto) => {
@@ -178,19 +222,13 @@ export default function Mobilita({ iaConfigurada, tareas = [], alGuardar, alGene
         <button type="button" className="mobilita-saludo-cerrar" aria-label="Cerrar saludo de Mobilita" onClick={cerrarSaludo}>
           <Icono nombre="cerrar" tamano={14} />
         </button>
-        <strong>¡Hola! Soy Mobilita.</strong>
+        <div className="mobilita-saludo-identidad"><AvatarMobilita tamano="pequeno" /><strong>¡Hola! Soy Mobilita.</strong></div>
         <p>Te ayudo a revisar tu cartera, consultar pendientes y preparar tareas.</p>
         <button type="button" className="mobilita-saludo-abrir" onClick={abrir}>¿Lo revisamos?</button>
       </aside>}
       <button ref={lanzador} hidden={abierto} className={`mobilita-lanzador${ocupado ? ' trabajando' : ''}`} type="button" aria-expanded={abierto}
         aria-controls="mobilita-ventana" aria-label="Abrir Mobilita" onClick={abrir}>
-        <span className={`mobilita-personaje${saludoVisible && !abierto ? ' saludando' : ''}`} aria-hidden="true">
-          <svg viewBox="0 0 48 48" fill="none"><path d="M24 8V4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><circle cx="24" cy="4" r="2" fill="currentColor" />
-            <rect x="6" y="10" width="36" height="30" rx="12" fill="currentColor" opacity=".14" />
-            <g className="mobilita-ojos"><rect x="15" y="20" width="4" height="6" rx="2" fill="currentColor" /><rect x="29" y="20" width="4" height="6" rx="2" fill="currentColor" /></g>
-            <path className="mobilita-boca" d="M19 31q5 4 10 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-        </span>
+        <AvatarMobilita className="mobilita-personaje" pensando={ocupado} saludando={saludoVisible && !abierto} />
         <span className="mobilita-lanzador-texto"><strong>Mobilita</strong><small>{ocupado ? 'Preparando respuesta…' : 'Tu asistente del CRM'}</small></span>
         {ocupado && <span className="mobilita-actividad" aria-hidden="true" />}
       </button>
@@ -198,13 +236,13 @@ export default function Mobilita({ iaConfigurada, tareas = [], alGuardar, alGene
         aria-labelledby="mobilita-titulo" aria-describedby="mobilita-descripcion"
         onKeyDown={e => { if (e.key === 'Escape') { e.stopPropagation(); cerrar(); } }}>
         <header className={`mobilita-encabezado${ocupado ? ' trabajando' : ''}`}>
-          <div className="mobilita-identidad"><span className="mobilita-avatar" aria-hidden="true">M</span>
+          <div className="mobilita-identidad"><AvatarMobilita pensando={ocupado} />
             <div><h2 id="mobilita-titulo">Mobilita</h2><p>Asistente del CRM</p></div>
           </div>
           <div className="mobilita-acciones">
           <button type="button" className="mobilita-nuevo" aria-label="Nuevo chat" title="Empezar un nuevo chat"
             disabled={ocupado}
-            onClick={() => propuesta || mensaje.trim() ? setReinicioPendiente(true) : reiniciar()}>
+            onClick={() => propuesta || mensaje.trim() || conversacion?.agenda?.some(b => b.estado === 'pendiente') ? setReinicioPendiente(true) : reiniciar()}>
             <Icono nombre="editar" tamano={16} /><span>Nuevo chat</span>
           </button>
           <button type="button" className="mobilita-control mobilita-ampliar" aria-label={ampliado ? 'Reducir chat' : 'Ampliar chat'}
@@ -216,18 +254,18 @@ export default function Mobilita({ iaConfigurada, tareas = [], alGuardar, alGene
           </button>
           </div>
         </header>
-        <p id="mobilita-descripcion" className="mobilita-alcance">Consultas del CRM y tareas con tu confirmación</p>
+        <p id="mobilita-descripcion" className="mobilita-alcance">Consultas y acciones del CRM con tu confirmación</p>
         {reinicioPendiente && <div className="mobilita-reinicio" role="group" aria-label="Confirmar nuevo chat">
           <strong>¿Empezar otro chat?</strong>
-          <p>El texto y la propuesta pendientes no se guardarán como tarea.</p>
+          <p>Se descartarán el texto y la propuesta pendientes.</p>
           <div><button type="button" className="btn-secondary" disabled={ocupado} onClick={() => setReinicioPendiente(false)}>Seguir aquí</button>
             <button type="button" className="btn-primary" disabled={ocupado} onClick={reiniciar}>Empezar nuevo chat</button></div>
         </div>}
         <div ref={cuerpo} className="chat-tareas-contenido mobilita-cuerpo">
         {!historial.length && !solicitudEnCurso && <div className="mobilita-inicio">
-          <span className="mobilita-inicio-icono" aria-hidden="true"><Icono nombre="mensaje" tamano={25} /></span>
+          <AvatarMobilita tamano="grande" saludando />
           <h3>¿Qué necesitas revisar?</h3>
-          <p>Consulta tu cartera, revisa el seguimiento o prepara una tarea para un lead.</p>
+          <p>Consulta tu cartera o cuéntame qué hiciste con un cliente. Revisarás los cambios antes de guardarlos.</p>
           <div className="mobilita-sugerencias" aria-label="Consultas sugeridas">
             {[['usuarios', 'Mi cartera', '¿Cuántos leads tengo asignados en mi cartera?'],
               ['reloj', 'Tareas vencidas', '¿Qué tareas vencidas tiene mi cartera?'],
@@ -241,7 +279,7 @@ export default function Mobilita({ iaConfigurada, tareas = [], alGuardar, alGene
         <div className="mobilita-conversacion" role="log" aria-label="Conversación con Mobilita" aria-live="polite" aria-relevant="additions">
           {historial.map(item => <div key={item.id} ref={item.autor === 'mobilita' && item.id === historial[historial.length - 1]?.id ? ultimaRespuesta : undefined}
             className={`mobilita-mensaje ${item.autor === 'usuario' ? 'usuario' : 'asistente'}`}>
-            <strong>{item.autor === 'usuario' ? 'Tú' : 'Mobilita'}</strong>
+            <div className="mobilita-mensaje-identidad">{item.autor !== 'usuario' && <AvatarMobilita tamano="mini" />}<strong>{item.autor === 'usuario' ? 'Tú' : 'Mobilita'}</strong></div>
             {item.consulta?.permitida && item.consulta.herramienta === 'propiedades_disponibles' && Array.isArray(item.consulta.propiedades)
               ? <ResultadoPropiedades consulta={item.consulta} alVerCatalogo={alVerPropiedades ? () => { cerrar(); alVerPropiedades(); } : null} />
               : <p>{item.texto}</p>}
@@ -252,7 +290,7 @@ export default function Mobilita({ iaConfigurada, tareas = [], alGuardar, alGene
           {solicitudEnCurso && <div className="mobilita-mensaje usuario"><strong>Tú</strong><p>{solicitudEnCurso}</p></div>}
         </div>
         {ocupado && (solicitudEnCurso || propuesta) && <div className="mobilita-escribiendo" role="status">
-          <span className="mobilita-mini-avatar" aria-hidden="true">M</span>
+          <AvatarMobilita tamano="pequeno" pensando />
           <div><strong>Mobilita</strong><div className="mobilita-espera">
             <span className="mobilita-puntos" aria-hidden="true"><i /><i /><i /></span>
             <span>{propuesta ? 'Procesando la propuesta…' : 'Preparando respuesta…'}</span>
@@ -260,7 +298,13 @@ export default function Mobilita({ iaConfigurada, tareas = [], alGuardar, alGene
         </div>}
         {!iaConfigurada && <p role="status">El servicio de IA no está disponible. Puedes crear la tarea con el formulario habitual.</p>}
         {error && !propuesta && <p ref={avisoError} tabIndex={-1} className="alert-error" role="alert">{error}</p>}
-        {propuesta && <div className="mobilita-propuesta">
+        <AgendaMobilita conversacion={conversacion} ocupado={ocupado || reinicioPendiente}
+          alElegir={elegirCliente} alDescartar={() => descartarPendiente()} alDescartarTodos={() => descartarPendiente(true)} />
+        {propuesta?.acciones && <PlanMobilita key={`${propuesta.id}-${propuesta.paso || ''}`} propuesta={propuesta}
+          pendientes={tareas.filter(t => t.lead_id === propuesta.clientes[0]?.id && t.estado !== 'Completada')}
+          ocupado={ocupado || reinicioPendiente} error={error} alConfirmar={confirmarPlan} alDescartar={cancelar}
+          alAjustar={ajustarSolicitud} />}
+        {propuesta && !propuesta.acciones && <div className="mobilita-propuesta">
           <div className="mobilita-propuesta-titulo"><Icono nombre="tareas" tamano={18} /><div><strong>Propuesta de tarea</strong><p>Aún no está guardada. Revisa los datos.</p></div></div>
           {puedeRevisar && <form onSubmit={confirmar}>
             <fieldset disabled={ocupado || reinicioPendiente} className="chat-tareas-campos">

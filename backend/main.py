@@ -6,7 +6,7 @@ import unicodedata
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
-from sqlalchemy import case, func, literal
+from sqlalchemy import case, func, literal, text
 from sqlalchemy.orm import Session
 
 import auditoria
@@ -21,6 +21,8 @@ from origenes import cargar_origenes
 from tareas_servicio import (registrar_tarea, tareas_permitidas, obtener_tarea_permitida,
                             validar_cliente_tarea, verificar_tarea_no_repetida as _verificar_tarea_no_repetida)
 from tareas_chat import router as router_chat
+from acciones_mobilita import router as router_acciones_mobilita
+from conversacion_mobilita import router as router_conversacion_mobilita
 
 # Crear las tablas definidas en los modelos si aún no existen
 models.Base.metadata.create_all(bind=database.engine)
@@ -183,6 +185,11 @@ def _agregar_prioridad(lead, por_interacciones, por_intereses, ahora):
 
 def _buscar_lead_por_email(db: Session, email: str, excluir_id: Optional[int] = None):
     """Busca un correo sin distinguir mayúsculas y permite excluir el lead editado."""
+    if db.get_bind().dialect.name == 'postgresql':
+        # Serializa las comprobaciones del mismo correo entre chat y formulario.
+        # La consulta parametrizada no acepta SQL del modelo ni exige otra tabla.
+        db.execute(text('SELECT pg_advisory_xact_lock(hashtextextended(:correo, 0))'),
+                   {'correo': email.strip().lower()})
     consulta = db.query(models.Lead).filter(func.lower(models.Lead.email) == email.lower())
     if excluir_id is not None:
         consulta = consulta.filter(models.Lead.id != excluir_id)
@@ -220,7 +227,7 @@ def listar_leads(
     if (cartera == "mia" and (ejecutivo_id is not None or sin_asignar)) or (ejecutivo_id is not None and sin_asignar):
         raise HTTPException(status_code=400, detail="Selecciona una sola cartera: la propia, un responsable o sin asignar")
 
-    consulta = db.query(models.Lead)
+    consulta = db.query(models.Lead).filter(models.Lead.archivado.is_(False))
     if cartera == "mia":
         consulta = consulta.filter(models.Lead.ejecutivo_id == usuario.id)
     elif sin_asignar:
@@ -378,7 +385,7 @@ def actualizar_lead(
     Se toma una instantánea antes y después de aplicar los cambios para registrar
     qué campos se modificaron de verdad, no los que venían en la petición.
     """
-    lead = db.query(models.Lead).filter(models.Lead.id == lead_id).first()
+    lead = validar_cliente_tarea(db, lead_id, usuario)
     if not lead:
         raise HTTPException(status_code=404, detail="Lead no encontrado")
 
@@ -442,6 +449,8 @@ def eliminar_lead(
     objeto queda inutilizable y el registro tiene que decir qué se borró, porque la
     fila ya no existe para consultarla.
     """
+    if usuario.rol != 'admin':
+        raise HTTPException(403, 'Sólo administración puede eliminar leads. Solicita su archivo desde Mobilita.')
     lead = db.query(models.Lead).filter(models.Lead.id == lead_id).first()
     if not lead:
         raise HTTPException(status_code=404, detail="Lead no encontrado")
@@ -860,6 +869,8 @@ def _validar_disponibilidad_visita(
 ):
     if estado in ESTADOS_VISITA_SIN_BLOQUEO:
         return
+    # Todas las vías de escritura comparten el bloqueo de agenda, no sólo el chat.
+    db.query(models.Usuario).filter_by(id=ejecutivo_id).with_for_update().first()
     inicio = _como_utc(fecha_hora)
     fin = inicio + timedelta(minutes=duracion_minutos)
     consulta = db.query(models.Visita).filter(
@@ -891,6 +902,7 @@ def crear_visita(
     db: Session = Depends(database.obtener_db),
     usuario: models.Usuario = Depends(seguridad.usuario_actual),
 ):
+    validar_cliente_tarea(db, datos.lead_id, usuario)
     _validar_relaciones_visita(db, datos.lead_id, datos.propiedad_id, datos.oportunidad_id)
     _validar_disponibilidad_visita(
         db, usuario.id, datos.fecha_hora, datos.duracion_minutos, datos.estado
@@ -918,6 +930,9 @@ def actualizar_visita(
     visita = db.query(models.Visita).filter(models.Visita.id == visita_id).first()
     if not visita:
         raise HTTPException(status_code=404, detail="Visita no encontrada")
+    validar_cliente_tarea(db, visita.lead_id, usuario)
+    if usuario.rol != 'admin' and visita.ejecutivo_id != usuario.id:
+        raise HTTPException(403, 'La visita corresponde a otro ejecutivo.')
     campos = datos.model_dump(exclude_unset=True)
     propiedad_id = campos.get("propiedad_id", visita.propiedad_id)
     oportunidad_id = campos.get("oportunidad_id", visita.oportunidad_id)
@@ -1015,7 +1030,7 @@ def crear_interaccion(
     El registro de auditoría menciona al lead y no solo el id de la interacción,
     porque una interacción sin su lead no se entiende al leer el historial.
     """
-    lead = db.query(models.Lead).filter(models.Lead.id == lead_id).first()
+    lead = validar_cliente_tarea(db, lead_id, usuario)
     if not lead:
         raise HTTPException(status_code=404, detail="Lead no encontrado")
 
@@ -1190,7 +1205,7 @@ def crear_interes(
     Registra el interés de un lead en una propiedad del catálogo.
     Valida que el lead y la propiedad existan, y que el interés no esté ya registrado.
     """
-    lead = db.query(models.Lead).filter(models.Lead.id == lead_id).first()
+    lead = validar_cliente_tarea(db, lead_id, usuario)
     if not lead:
         raise HTTPException(status_code=404, detail="Lead no encontrado")
 
@@ -1759,4 +1774,6 @@ def listar_auditoria(
 # Los routers se registran al final, cuando ya tienen todos sus endpoints
 app.include_router(router_auth)
 router_privado.include_router(router_chat)
+router_privado.include_router(router_acciones_mobilita)
+router_privado.include_router(router_conversacion_mobilita)
 app.include_router(router_privado)

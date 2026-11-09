@@ -50,6 +50,8 @@ otra_propiedad = models.Propiedad(
 )
 db.add_all([usuario, lead, propiedad, otra_propiedad])
 db.commit()
+lead.ejecutivo_id = usuario.id
+db.commit()
 for registro in (usuario, lead, propiedad, otra_propiedad):
     db.refresh(registro)
 

@@ -16,7 +16,7 @@ def tareas_permitidas(db, usuario):
     consulta = db.query(models.Tarea)
     if usuario.rol != 'admin':
         consulta = consulta.join(models.Lead, models.Tarea.lead_id == models.Lead.id).filter(
-            models.Lead.ejecutivo_id == usuario.id)
+            models.Lead.ejecutivo_id == usuario.id, models.Lead.archivado.is_(False))
     return consulta
 
 
@@ -28,7 +28,7 @@ def validar_cliente_tarea(db, lead_id, usuario):
         return None
     consulta = db.query(models.Lead).filter(models.Lead.id == lead_id)
     if usuario.rol != 'admin':
-        consulta = consulta.filter(models.Lead.ejecutivo_id == usuario.id)
+        consulta = consulta.filter(models.Lead.ejecutivo_id == usuario.id, models.Lead.archivado.is_(False))
     lead = consulta.with_for_update().populate_existing().first()
     if not lead:
         raise HTTPException(404, 'Lead no encontrado o no disponible para tu cuenta')

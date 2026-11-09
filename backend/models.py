@@ -7,10 +7,12 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     Integer,
+    Index,
     JSON,
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.sql import func
 from database import Base
@@ -71,6 +73,7 @@ class Lead(Base):
     proxima_accion = Column(String(250), nullable=True)
     fecha_proxima_accion = Column(Date, nullable=True)
     es_demo = Column(Boolean, nullable=False, default=False)
+    archivado = Column(Boolean, nullable=False, default=False, server_default='false')
     fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -280,6 +283,26 @@ class PropuestaTareaChat(Base):
     tokens_salida = Column(Integer, nullable=True)
     costo_estimado_usd = Column(Float, nullable=True)
     fecha_creacion = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class SolicitudArchivo(Base):
+    """El archivo requiere decisión administrativa; nunca elimina el historial."""
+    __tablename__ = 'solicitudes_archivo'
+    __table_args__ = (Index('ux_solicitud_archivo_pendiente', 'lead_id', unique=True,
+                           postgresql_where=text("estado = 'Pendiente'"),
+                           sqlite_where=text("estado = 'Pendiente'")),)
+    id = Column(Integer, primary_key=True)
+    lead_id = Column(Integer, ForeignKey('leads.id', ondelete='SET NULL'), nullable=True, index=True)
+    lead_nombre = Column(String(100), nullable=False)
+    autor_id = Column(Integer, ForeignKey('usuarios.id', ondelete='SET NULL'), nullable=True)
+    autor_nombre = Column(String(100), nullable=False)
+    motivo = Column(Text, nullable=False)
+    estado = Column(String(20), nullable=False, default='Pendiente')
+    resolucion = Column(Text, nullable=True)
+    resuelto_por_id = Column(Integer, ForeignKey('usuarios.id', ondelete='SET NULL'), nullable=True)
+    resuelto_por_nombre = Column(String(100), nullable=True)
+    fecha_creacion = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    fecha_resolucion = Column(DateTime(timezone=True), nullable=True)
 
 
 class Auditoria(Base):

@@ -22,6 +22,8 @@ class RegistroLlamadaTest(unittest.TestCase):
         self.usuario = models.Usuario(nombre='Ejecutivo ficticio', email='ejecutivo@example.test', password_hash='sin-login', rol='ejecutivo')
         self.lead = models.Lead(nombre='Cliente de prueba', email='cliente@example.test', dormitorios_min=4, proxima_accion='Pendiente anterior')
         self.db.add_all([self.usuario, self.lead]); self.db.commit()
+        self.lead.ejecutivo_id = self.usuario.id
+        self.db.commit()
         self.client = ClientePruebas()
         main.app.dependency_overrides[database.obtener_db] = lambda: self.db
         self.config = patch.object(ia, 'esta_configurada', return_value=True)

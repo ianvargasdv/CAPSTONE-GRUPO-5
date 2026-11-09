@@ -39,8 +39,9 @@ ANALISIS = "analisis"
 OPORTUNIDAD = "oportunidad"
 VISITA = "visita"
 PROPUESTA_TAREA = "propuesta_tarea"
+SOLICITUD_ARCHIVO = "solicitud_archivo"
 
-ENTIDADES = (LEAD, PROPIEDAD, OPORTUNIDAD, VISITA, TAREA, INTERACCION, INTERES, ANALISIS, PROPUESTA_TAREA)
+ENTIDADES = (LEAD, PROPIEDAD, OPORTUNIDAD, VISITA, TAREA, INTERACCION, INTERES, ANALISIS, PROPUESTA_TAREA, SOLICITUD_ARCHIVO)
 
 # Campos que se comparan al actualizar, por entidad. Se listan explícitamente para
 # no registrar columnas internas ni los campos calculados que se agregan al objeto.

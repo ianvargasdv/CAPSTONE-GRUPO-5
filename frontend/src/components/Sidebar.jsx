@@ -40,6 +40,7 @@ const SECCIONES = [
       { id: 'oportunidades', etiqueta: 'Negocios', icono: 'negocio', contador: 'oportunidades' },
       { id: 'visitas', etiqueta: 'Visitas', icono: 'calendario', contador: 'visitas' },
       { id: 'propiedades', etiqueta: 'Propiedades', icono: 'edificio', contador: 'propiedades' },
+      { id: 'solicitudes', etiqueta: 'Solicitudes', icono: 'historial' },
       { id: 'tareas', etiqueta: 'Tareas', icono: 'tareas', contador: 'tareasPendientes', destacar: true },
     ],
   },
