@@ -83,10 +83,12 @@ abiertos y concretados; Ver montos despliega los valores por moneda. El botón d
 Mobilita se reduce a un icono. La ficha del inmueble abre en un panel lateral con
 datos agrupados, dos columnas cuando caben y galería ampliable.
 
-## Ampliación local de Mobilita · posterior al cierre del sprint 6
+## Ampliación de Mobilita · posterior al cierre del sprint 6
 
-Esta ampliación fue solicitada después del cierre; no forma parte de los 28 puntos
-cerrados ni está publicada. Antes de usarla en la base existente, ejecutar
+La ampliación se subió a `main` en GitHub el 9/11/2026, en los commits
+`8057935` y `a8a4ba6`. Está registrada como
+[SCRUM-46](https://agenteia-capstone.atlassian.net/browse/SCRUM-46), fuera del sprint 6.
+Antes de usarla en una base existente que aún no tenga la migración, ejecutar
 `backend/venv/Scripts/python.exe backend/migrar.py` desde la raíz y reiniciar la API.
 La migración agrega `leads.archivado` y `solicitudes_archivo`, con un índice que evita
 solicitudes pendientes repetidas. Bryan informó que las 56 instrucciones se ejecutaron
@@ -120,7 +122,6 @@ La conversación se comprobó además con ocho llamadas reales autorizadas, toda
 ficticios y una base temporal. El estimado acumulado fue US$0,00460. La primera tanda
 detectó un formato de perfil no admitido; se conservan los dos resultados rechazados y
 las dos respuestas posteriores a la corrección en `backend/evidencias/conversacion_mobilita_*20261108.json`.
-No se han actualizado Drive ni Jira por esta ampliación.
 
 ### Conversación guiada
 

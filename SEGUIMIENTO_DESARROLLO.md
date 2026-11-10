@@ -1,8 +1,8 @@
 # Seguimiento del desarrollo
 
-Actualizado: 8/11/2026. Control de avances y comprobaciones del proyecto.
+Actualizado: 9/11/2026. Control de avances y comprobaciones del proyecto.
 
-## Conversación guiada de Mobilita · ampliación local
+## Conversación guiada de Mobilita
 
 Se añadieron solicitudes por pasos, selección de clientes con nombres coincidentes,
 corrección del paso actual y creación de fichas con datos mínimos. La agenda conserva
@@ -27,11 +27,12 @@ la compilación. Las pruebas del frontend incluyen renderizado de propuestas, ag
 y selección; no sustituyen la comprobación manual en navegador. La regresión real
 se hizo sobre SQLite temporal y no verifica concurrencia de PostgreSQL.
 
-Queda la comprobación manual del recorrido en el CRM habitual, registrar la ampliación
-en Jira y actualizar los documentos de seguimiento de Drive. El código y estas notas
-siguen locales, sin commit ni push. El cierre y los puntos del sprint 6 se conservan.
+El 9/11/2026 se subieron a `main` en GitHub los commits `8057935` (acciones y buzón)
+y `a8a4ba6` (indicadores de carga). La ampliación se registró en Jira como
+[SCRUM-46](https://agenteia-capstone.atlassian.net/browse/SCRUM-46), fuera del sprint 6.
+Se revisaron el chat y el buzón en escritorio y móvil con datos ficticios.
 
-## Ampliación local de Mobilita · después del cierre
+## Ampliación de Mobilita · después del cierre
 
 Bryan pidió implementar las acciones de ejecutivo y un buzón de solicitudes de
 archivo. Esta petición habilita cambios de backend para ese alcance; el cierre
@@ -46,9 +47,8 @@ mediante los formularios afectados a la cartera del ejecutivo.
 
 En esta primera comprobación la migración aún no se había aplicado. Posteriormente
 Bryan informó su ejecución sin errores (56/56 instrucciones).
-Los cambios permanecen locales, sin commit, push ni actualización de Jira o Drive.
-La comprobación inicial con el proveedor real se registra arriba. Quedan la integración
-del nuevo flujo en PostgreSQL y el recorrido visual en el CRM habitual.
+La comprobación inicial con el proveedor real se registra arriba. Queda por verificar
+la concurrencia de las nuevas acciones en PostgreSQL.
 Verificación local: 125 pruebas de los módulos afectados, incluidas 23 nuevas de
 acciones y solicitudes; 59 pruebas del frontend, incluidas seis de renderizado;
 compilación aprobada. Además, pasaron 62 verificaciones de auditoría, 15 de agenda
