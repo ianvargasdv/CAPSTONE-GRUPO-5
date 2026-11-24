@@ -3,16 +3,18 @@
 Este roadmap ordena el desarrollo por valor operativo. Cada módulo debe poder
 probarse y demostrarse por separado antes de pasar al siguiente.
 
-## Trabajo local posterior al cierre
+## Ampliación de Mobilita después del Sprint 6
 
 Por solicitud de Bryan se amplió Mobilita con propuestas de acciones del ejecutivo
 y solicitudes de archivo revisadas por administración. Se añadió la conversación
 por pasos, la selección de homónimos y la creación y corrección de nombres de leads.
-La migración fue informada como aplicada por Bryan. El código sigue local; falta
-comprobar el recorrido completo en el entorno habitual de PostgreSQL. No está incluido en el alcance
-cerrado del sprint 6. Su planificación y registro en Jira están pendientes.
+Bryan informó que aplicó la migración. La ampliación se publicó en `main` el
+9/11/2026 en los commits `8057935` y `a8a4ba6`. Quedó registrada como
+[SCRUM-46](https://agenteia-capstone.atlassian.net/browse/SCRUM-46), finalizada
+fuera del Sprint 6. La prueba de concurrencia de las nuevas acciones en
+PostgreSQL queda pendiente.
 
-## Estado actual · 8/11/2026
+## Cierre del Sprint 6 · 8/11/2026
 
 El sprint 6 Seguimiento con IA se cerró el 8/11. Se conserva el período planificado
 del 2 al 9/11. Sus cinco actividades finalizaron el 7/11, con 28 puntos completados:
@@ -35,13 +37,12 @@ diez originales aprobadas, una rechazada y las dos posteriores aprobadas.
 SCRUM-42 conserva el defecto original y su corrección, con dos puntos y sin sprint.
 Estas actividades no aumentan los 28 puntos del sprint 6.
 
-El código del avance está publicado en `510e439` y la revisión aceptada en
-`7ae691a`. Hasta iniciar el próximo sprint no se modificará el backend.
-El cierre ya está reflejado en los documentos de Drive. Queda preparar la grabación local.
-Las ampliaciones siguientes se planificarán antes de implementarlas.
+El código del sprint 6 quedó publicado en `510e439` y la revisión aceptada en
+`7ae691a`. Drive registra el cierre del sprint. La consolidación de las evidencias
+y la preparación de la defensa forman parte de la entrega académica.
 
 Los apartados fechados de octubre conservan el estado de sus entregas. Sus
-pendientes son históricos; el estado actual se resume en este apartado.
+pendientes corresponden a esas fechas.
 
 ## Criterio común de terminado
 
